@@ -15,6 +15,7 @@ export default function VerifyPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     if (verified) {
@@ -29,7 +30,6 @@ export default function VerifyPage() {
       setMessage("Please enter a 6-digit OTP");
       return;
     }
-
     setLoading(true);
     setMessage("");
 
@@ -39,14 +39,12 @@ export default function VerifyPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, otp }),
       });
-
       const data = await response.json();
       setMessage(data.message);
-
       if (response.ok) {
         setVerified(true);
       }
-    } catch (error) {
+    } catch {
       setMessage("Verification failed. Please try again.");
     } finally {
       setLoading(false);
@@ -54,12 +52,30 @@ export default function VerifyPage() {
   };
 
   const handleResend = async () => {
-    setMessage("Resending OTP...");
-    // You can implement resend logic here
-    setTimeout(() => {
-      setMessage("New OTP sent to your email and phone!");
-    }, 1000);
+    setMessage("");
+    setResendLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/resendotp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      setMessage(
+        response.ok
+          ? "New OTP sent to your email and phone!"
+          : data.message || "Failed to resend OTP"
+      );
+    } catch {
+      setMessage("Network error while resending OTP");
+    } finally {
+      setResendLoading(false);
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
@@ -76,7 +92,6 @@ export default function VerifyPage() {
 
         {!verified ? (
           <>
-            {/* Contact Info Display */}
             <div className="bg-purple-50 rounded-xl p-4 mb-6 space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-purple-600">📧</span>
@@ -88,7 +103,6 @@ export default function VerifyPage() {
               </div>
             </div>
 
-            {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-blue-800 flex items-start gap-2">
                 <span className="text-xl">💡</span>
@@ -100,7 +114,6 @@ export default function VerifyPage() {
               </p>
             </div>
 
-            {/* OTP Input */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Enter 6-Digit OTP
@@ -122,7 +135,6 @@ export default function VerifyPage() {
               />
             </div>
 
-            {/* Message Display */}
             {message && (
               <div
                 className={`p-3 rounded-lg text-sm mb-4 ${
@@ -135,7 +147,6 @@ export default function VerifyPage() {
               </div>
             )}
 
-            {/* Verify Button */}
             <button
               onClick={handleVerify}
               disabled={loading || otp.length !== 6}
@@ -169,13 +180,15 @@ export default function VerifyPage() {
               )}
             </button>
 
-            {/* Resend OTP */}
             <div className="text-center">
               <button
                 onClick={handleResend}
-                className="text-purple-600 hover:text-purple-700 font-semibold text-sm"
+                disabled={resendLoading}
+                className="text-purple-600 hover:text-purple-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Didn't receive the code? Resend OTP
+                {resendLoading
+                  ? "Resending..."
+                  : "Didn't receive the code? Resend OTP"}
               </button>
             </div>
           </>

@@ -69,4 +69,4 @@ setInterval(() => {
   if (cleaned > 0) {
     console.log(`🧹 Cleaned ${cleaned} expired OTPs`);
   }
-}, 60000);
+}, 600000);
