@@ -1,9 +1,13 @@
-export interface IUser {
-  _id: string;
+import { Document, Types } from "mongoose";
+
+export interface IUser extends Document {
+  _id: Types.ObjectId;
   name: string;
   email: string;
   phoneNumber: string;
   password: string;
+  avatar?: string;
+  bio?: string;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   profileComplete: boolean;

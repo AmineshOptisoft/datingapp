@@ -33,6 +33,15 @@ const UserSchema = new Schema<IUser>(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
+    bio: {
+      type: String,
+      default: "",
+      maxlength: [500, "Bio cannot exceed 500 characters"],
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -46,9 +55,7 @@ const UserSchema = new Schema<IUser>(
       default: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const User: Model<IUser> =

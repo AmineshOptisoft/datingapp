@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSocket } from "@/lib/socket";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUserId } = useSocket();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -14,27 +16,25 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
-
     try {
-      const response = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+      const data = await res.json();
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("Login successful! Redirecting...");
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1000);
+      if (res.ok && data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        // Set userId in socket provider to trigger socket connection
+        setUserId(data.data.user.id || data.data.user._id || "");
+        router.push("/dashboard");
       } else {
-        setMessage(data.message);
+        setMessage(data.message || "Login failed");
       }
-    } catch (error) {
-      setMessage("Login failed. Please try again.");
+    } catch {
+      setMessage("Network error");
     } finally {
       setLoading(false);
     }

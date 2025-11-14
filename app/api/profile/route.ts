@@ -1,64 +1,48 @@
-import path from "path";
-import multer from "multer";
-import { createRouter } from "next-connect";
-
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 
-export const runtime = "nodejs";
-
-const storage = multer.diskStorage({
-  destination: path.join(process.cwd(), "public", "uploads"),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `avatar-${uniqueSuffix}${ext}`);
-  },
-});
-
-const upload = multer({ storage });
-
-const router = createRouter();
-
-router.use(upload.single("avatar") as any);
-
-router.post(async (req: any, res: any) => {
+export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-
-    const { userId, name, bio, email, phone } = req.body;
+    const body = await request.json();
+    const { userId, name, bio, email, phone, avatarBase64 } = body;
 
     if (!userId || !name || !email || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const updateData: any = { name, bio, email, phone };
+    await dbConnect();
 
-    if (req.file) {
-      updateData.avatar = `/uploads/${req.file.filename}`;
+    const updateData: any = { name, bio, email, phoneNumber: phone };
+
+    if (avatarBase64) {
+      // Here you need to save base64 image to storage or DB. For this example, save directly for demo:
+      updateData.avatar = avatarBase64;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     });
 
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
+    if (!updatedUser)
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Profile updated", data: updatedUser });
+    return NextResponse.json({
+      success: true,
+      message: "Profile updated",
+      data: updatedUser,
+    });
   } catch (error) {
     console.error("Profile update error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
   }
-});
-
-export const POST = router.handler();
+}

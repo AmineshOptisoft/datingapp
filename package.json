@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx server.ts",
-    "build": "next build",
-    "start": "NODE_ENV=production tsx server.ts"
+    "dev:next": "next dev",
+    "dev:socket": "tsx socket-server.ts",
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:socket\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -32,14 +32,16 @@
     "@types/formidable": "^3.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20",
+    "@types/node": "^20.19.25",
     "@types/nodemailer": "^7.0.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.2",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }

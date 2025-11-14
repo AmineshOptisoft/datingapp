@@ -1,14 +1,6 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/app/contexts/AuthContext";
 import { SocketProvider } from "@/lib/socket";
-
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Dating App",
-  description: "Find your perfect match",
-};
 
 export default function RootLayout({
   children,
@@ -17,8 +9,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <SocketProvider>{children}</SocketProvider>
+      <body>
+        <AuthProvider>
+          <SocketProvider>{children}</SocketProvider>
+        </AuthProvider>
       </body>
     </html>
   );

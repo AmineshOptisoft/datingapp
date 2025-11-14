@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-  // Example hardcoded userId; replace with auth user context in production
-  const currentUserId = "test-user-id";
-
-  // Profile state
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
@@ -16,33 +15,35 @@ export default function ProfilePage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Load existing data (mock example)
   useEffect(() => {
-    // Fetch user profile data from API here
-    const fetchProfile = async () => {
-      // Replace with real API call
-      const userData = {
-        avatar: null,
-        name: "John Doe",
-        bio: "Loves hiking and coffee",
-        email: "john@example.com",
-        phone: "+1234567890",
-      };
-      setAvatar(userData.avatar);
-      setName(userData.name);
-      setBio(userData.bio);
-      setEmail(userData.email);
-      setPhone(userData.phone);
-    };
-    fetchProfile();
-  }, []);
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-  // Preview avatar & store file on select
+    if (!token || !storedUser) {
+      router.push("/login");
+      return;
+    }
+
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
+    setName(userData.name || "");
+    setBio(userData.bio || "");
+    setEmail(userData.email || "");
+    setPhone(userData.phone || "");
+    setPreview(userData.avatar || null);
+  }, [router]);
+
+  // Convert image file to base64 string
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setAvatar(URL.createObjectURL(file));
-      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setAvatarBase64(result);
+        setPreview(result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -51,29 +52,28 @@ export default function ProfilePage() {
     setLoading(true);
     setMessage("");
 
-    const formData = new FormData();
-    formData.append("userId", currentUserId);
-    formData.append("name", name);
-    formData.append("bio", bio);
-    formData.append("email", email);
-    formData.append("phone", phone);
-
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
-    }
-
     try {
       const res = await fetch("/api/profile", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          name,
+          bio,
+          email,
+          phone,
+          avatarBase64,
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
         setMessage("Profile updated successfully!");
-        if (data.data.avatar) setAvatar(data.data.avatar);
-        setAvatarFile(null);
+        const updatedUser = { ...user, ...data.data };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        setAvatarBase64(null);
       } else {
         setMessage(data.message || "Update failed");
       }
@@ -84,29 +84,37 @@ export default function ProfilePage() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 p-8">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-3xl p-8">
+      <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-3xl p-8">
         <h1 className="text-3xl font-bold text-purple-700 mb-8">
           Edit Profile
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Upload */}
+          {/* Avatar */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Avatar
             </label>
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                {avatar ? (
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-4 border-purple-200">
+                {preview ? (
                   <img
-                    src={avatar}
+                    src={preview}
                     alt="Avatar Preview"
                     className="object-cover w-full h-full"
                   />
                 ) : (
-                  <span className="text-gray-400 select-none">No Image</span>
+                  <span className="text-4xl">👤</span>
                 )}
               </div>
               <input
@@ -118,73 +126,54 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Name */}
+          {/* Other inputs */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Full Name
             </label>
             <input
-              id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
               required
             />
           </div>
 
-          {/* Bio */}
           <div>
-            <label
-              htmlFor="bio"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Bio
             </label>
             <textarea
-              id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
               required
             />
           </div>
 
-          {/* Phone */}
           <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
             <input
-              id="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
               placeholder="+1234567890"
               required
             />

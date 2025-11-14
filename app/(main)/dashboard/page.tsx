@@ -1,29 +1,47 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSocket } from "@/lib/socket";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { disconnectSocket, setUserId } = useSocket();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    disconnectSocket();
+    setUserId("");
+    router.push("/login");
+  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col space-y-6">
-        <h2 className="text-2xl font-bold text-purple-700 mb-8">Menu</h2>
+      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col justify-between">
+        <div className="flex flex-col space-y-6">
+          <h2 className="text-2xl font-bold text-purple-700 mb-8">Menu</h2>
+
+          <button
+            onClick={() => router.push("/profile")}
+            className="py-3 px-6 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition"
+          >
+            Profile
+          </button>
+
+          <button
+            onClick={() => router.push("/messages")}
+            className="py-3 px-6 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 transition"
+          >
+            Messages
+          </button>
+        </div>
 
         <button
-          onClick={() => router.push("/profile")}
-          className="py-3 px-6 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition"
+          onClick={handleLogout}
+          className="py-3 px-6 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
         >
-          Profile
-        </button>
-
-        <button
-          onClick={() => router.push("/messages")}
-          className="py-3 px-6 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 transition"
-        >
-          Messages
+          Logout
         </button>
       </aside>
 
