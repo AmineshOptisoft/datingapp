@@ -83,7 +83,7 @@ export default function MessagesPage() {
 
       <footer className="mt-4 flex gap-2">
         <input
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
           type="text"
           placeholder={isConnected ? "Type your message..." : "Connecting..."}
           value={input}

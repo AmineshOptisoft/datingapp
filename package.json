@@ -5,7 +5,8 @@
   "scripts": {
     "dev:next": "next dev",
     "dev:socket": "tsx socket-server.ts",
-    "dev": "concurrently \"npm run dev:next\" \"npm run dev:socket\""
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:socket\"",
+    "seed:ai-profiles": "tsx scripts/seed-ai-profiles.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
