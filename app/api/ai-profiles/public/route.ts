@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { profileId } = body;
+
+    // if (process.env.NODE_ENV === "development") {
+    //   try {
+    //     await seedAIProfiles();
+    //   } catch (seedError) {
+    //     console.error("Dev auto-reseed of AI profiles (detail POST) failed:", seedError);
+    //   }
+    // }
     
     if (!profileId || typeof profileId !== 'string') {
       return NextResponse.json(
@@ -148,7 +156,7 @@ export async function POST(request: NextRequest) {
         tagline: profile.tagline,
         interests: profile.interests,
         lookingFor: profile.lookingFor,
-        onlineStatus: profile.onlineStatus,
+        onlineStatus: "online",
         lastSeen: profile.lastSeen,
         responseDelay: profile.responseDelay
       }

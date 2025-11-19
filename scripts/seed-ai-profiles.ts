@@ -1,3 +1,8 @@
+import dotenv from "dotenv";
+
+// Load environment variables (including MONGODB_URI) before anything else
+dotenv.config({ path: ".env.local" });
+
 import { seedAIProfiles } from "../lib/ai-profiles-seeder";
 
 async function main() {
