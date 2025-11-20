@@ -1,7 +1,7 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Footer from '../../components/Footer';
 import PricingModal from '../../components/PricingModal';
 import { FaPlay } from 'react-icons/fa';
@@ -11,6 +11,9 @@ export default function GirlDetailPage() {
   const params = useParams();
   const legacyId = params.id as string | undefined;
   const { profile, loading, error } = useProfileDetail('girl', legacyId);
+  const router = useRouter();
+  const id = parseInt(params.id as string);
+  // const girl = profile.find((g) => g.id === id);
 
   const [activeTab, setActiveTab] = useState<'bio' | 'features' | 'pricing'>('bio');
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
@@ -109,7 +112,10 @@ export default function GirlDetailPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6">
-                  <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm md:text-base">
+                  <button 
+                    onClick={() => router.push('/free-trial')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm md:text-base"
+                  >
                     <FaPlay className="w-4 h-4" />
                     Start Free Trial
                   </button>

@@ -38,7 +38,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <Header onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto" data-lenis-prevent>
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
