@@ -10,9 +10,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Redirect to dashboard if already logged in
+  // Redirect to homepage if already logged in
   if ((pathname === "/login" || pathname === "/register") && token) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
