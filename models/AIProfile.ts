@@ -1,10 +1,19 @@
 import mongoose, { Schema, Model } from "mongoose";
+import { AudienceSegment, RoutePrefix } from "@/types/ai-profile";
 
 export interface IAIProfile {
   _id: string;
   profileId: string;
   profileType: 'ai';
   isActive: boolean;
+  audienceSegment: AudienceSegment;
+  routePrefix: RoutePrefix;
+  legacyId: number;
+  category: string;
+  cardTitle: string;
+  monthlyPrice: number;
+  badgeHot: boolean;
+  badgePro: boolean;
   
   // BASIC INFO
   name: string;
@@ -96,6 +105,8 @@ export interface IAIProfile {
   updatedAt: Date;
 }
 
+export type AIProfileSeed = Omit<IAIProfile, "_id" | "createdAt" | "updatedAt">;
+
 const AIProfileSchema = new Schema<IAIProfile>(
   {
     profileId: {
@@ -111,6 +122,41 @@ const AIProfileSchema = new Schema<IAIProfile>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    audienceSegment: {
+      type: String,
+      enum: ['for-men', 'for-women', 'for-lgbtq'],
+      required: true,
+    },
+    routePrefix: {
+      type: String,
+      enum: ['girl', 'boy', 'companion'],
+      required: true,
+    },
+    legacyId: {
+      type: Number,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
+    cardTitle: {
+      type: String,
+      required: true,
+    },
+    monthlyPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    badgeHot: {
+      type: Boolean,
+      default: false,
+    },
+    badgePro: {
+      type: Boolean,
+      default: false,
     },
     
     // BASIC INFO

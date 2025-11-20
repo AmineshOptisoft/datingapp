@@ -3,36 +3,44 @@ import { getActiveAIProfiles } from "@/lib/ai-profiles-seeder";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all active AI profiles (no authentication required for browsing)
-    const aiProfiles = await getActiveAIProfiles();
-    
-    // Format profiles for user selection
-    const formattedProfiles = aiProfiles.map(profile => ({
-      id: profile.profileId,
+    const { searchParams } = new URL(request.url);
+    const segment = searchParams.get("segment");
+    const category = searchParams.get("category");
+
+    const aiProfiles = await getActiveAIProfiles({ segment, category });
+
+    const formattedProfiles = aiProfiles.map((profile) => ({
+      profileId: profile.profileId,
+      legacyId: profile.legacyId,
+      routePrefix: profile.routePrefix,
+      audienceSegment: profile.audienceSegment,
       name: profile.name,
-      age: profile.age,
-      profession: profile.profession,
-      location: profile.location,
+      cardTitle: profile.cardTitle,
+      category: profile.category,
+      monthlyPrice: profile.monthlyPrice,
       avatar: profile.avatar,
       bio: profile.bio,
       tagline: profile.tagline,
       interests: profile.interests,
-      profileType: 'ai' // Hidden from user, but useful for frontend
+      badgeHot: profile.badgeHot,
+      badgePro: profile.badgePro,
     }));
-    
+
     return NextResponse.json({
       success: true,
       message: "Available AI profiles fetched successfully",
       data: formattedProfiles,
-      count: formattedProfiles.length
+      count: formattedProfiles.length,
     });
-    
   } catch (error) {
     console.error("❌ Error fetching AI profiles:", error);
-    return NextResponse.json({
-      success: false,
-      message: "Failed to fetch AI profiles"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch AI profiles",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -78,6 +86,9 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         profileId: profile.profileId,
+        legacyId: profile.legacyId,
+        routePrefix: profile.routePrefix,
+        audienceSegment: profile.audienceSegment,
         name: profile.name,
         age: profile.age,
         profession: profile.profession,
@@ -87,6 +98,11 @@ export async function POST(request: NextRequest) {
         bodyType: profile.bodyType,
         ethnicity: profile.ethnicity,
         languages: profile.languages,
+        category: profile.category,
+        cardTitle: profile.cardTitle,
+        monthlyPrice: profile.monthlyPrice,
+        badgeHot: profile.badgeHot,
+        badgePro: profile.badgePro,
 
         avatar: profile.avatar,
         photos: profile.photos,
@@ -156,9 +172,9 @@ export async function POST(request: NextRequest) {
         tagline: profile.tagline,
         interests: profile.interests,
         lookingFor: profile.lookingFor,
-        onlineStatus: "online",
+        onlineStatus: profile.onlineStatus,
         lastSeen: profile.lastSeen,
-        responseDelay: profile.responseDelay
+        responseDelay: profile.responseDelay,
       }
     });
     

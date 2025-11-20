@@ -1,49 +1,43 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CategoryTabs from './components/CategoryTabs';
 import GirlCard from './components/GirlCard';
 import Footer from './components/Footer';
-import {
-  fantasyKinksGirls,
-  infidelityDramaGirls,
-  differentPersonalitiesGirls,
-  nationalitiesCulturesGirls,
-  relationshipStagesGirls,
-  animeGirls,
-  allGirls as importedAllGirls,
-  type Girl,
-} from './data/girls';
+import { useProfiles } from '@/hooks/useProfiles';
+import type { AIProfileOverview } from '@/types/ai-profile';
+
+const DEFAULT_SEGMENT = 'for-men' as const;
 
 function HomePageContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [activeCategory, setActiveCategory] = useState('All');
+  const { profiles, loading, error } = useProfiles(DEFAULT_SEGMENT);
 
-  // Update active category based on URL parameter
   useEffect(() => {
     if (categoryParam) {
       setActiveCategory(categoryParam);
     }
   }, [categoryParam]);
 
-  // Combine all girls into one array
-  const allGirls = importedAllGirls;
-
-  // Filter girls based on active category
-  const filteredGirls = activeCategory === 'All' 
-    ? allGirls 
-    : allGirls.filter(girl => girl.category === activeCategory);
-
-  // Group filtered girls by category for display
-  const groupedGirls = filteredGirls.reduce((acc, girl) => {
-    if (!acc[girl.category]) {
-      acc[girl.category] = [];
+  const filteredProfiles = useMemo(() => {
+    if (activeCategory === 'All') {
+      return profiles;
     }
-    acc[girl.category].push(girl);
-    return acc;
-  }, {} as Record<string, Girl[]>);
+    return profiles.filter((profile) => profile.category === activeCategory);
+  }, [profiles, activeCategory]);
+
+  const groupedProfiles = useMemo(() => {
+    return filteredProfiles.reduce<Record<string, AIProfileOverview[]>>((acc, profile) => {
+      if (!acc[profile.category]) {
+        acc[profile.category] = [];
+      }
+      acc[profile.category].push(profile);
+      return acc;
+    }, {});
+  }, [filteredProfiles]);
 
   return (
     <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
@@ -98,8 +92,21 @@ function HomePageContent() {
               <CategoryTabs activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
             </div>
 
-            {/* Dynamic Sections based on filtered category */}
-            {Object.entries(groupedGirls).map(([category, girls]) => (
+            {loading && (
+              <div className="text-white text-center py-12">Loading profiles...</div>
+            )}
+
+            {error && !loading && (
+              <div className="text-red-400 text-center py-12">{error}</div>
+            )}
+
+            {!loading && !error && Object.keys(groupedProfiles).length === 0 && (
+              <div className="text-zinc-300 text-center py-12">
+                No profiles found for this category.
+              </div>
+            )}
+
+            {!loading && !error && Object.entries(groupedProfiles).map(([category, girls]) => (
               <section key={category} className="mb-12">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-3xl font-bold text-white">{category}</h2>
@@ -112,7 +119,17 @@ function HomePageContent() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {girls.map((girl) => (
-                    <GirlCard key={girl.id} {...girl} />
+                    <GirlCard
+                      key={girl.profileId}
+                      legacyId={girl.legacyId}
+                      routePrefix={girl.routePrefix}
+                      name={girl.name}
+                      cardTitle={girl.cardTitle}
+                      monthlyPrice={girl.monthlyPrice}
+                      avatar={girl.avatar}
+                      badgeHot={girl.badgeHot}
+                      badgePro={girl.badgePro}
+                    />
                   ))}
                 </div>
               </section>

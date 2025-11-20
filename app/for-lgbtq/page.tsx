@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import GirlCard from '../components/GirlCard';
 import Footer from '../components/Footer';
 import FAQSection, { type FAQItem } from '../components/FAQSection';
-import { allLGBTQCompanions } from '../data/lgbtq';
+import { useProfiles } from '@/hooks/useProfiles';
+import type { AIProfileOverview } from '@/types/ai-profile';
 
 // Shuffle array function with seed for consistent initial render
 function shuffleArray<T>(array: T[], seed: number = 0): T[] {
@@ -25,18 +26,12 @@ function shuffleArray<T>(array: T[], seed: number = 0): T[] {
 }
 
 export default function ForLGBTQPage() {
-  const [isClient, setIsClient] = useState(false);
+  const { profiles, loading, error } = useProfiles('for-lgbtq');
 
-  // Use a fixed seed for initial server/client render consistency
-  const initialCompanions = useMemo(() => shuffleArray(allLGBTQCompanions, 99999), []);
-  
-  // After hydration, we can use true random if needed
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Use initial shuffled companions (consistent between server and client)
-  const randomCompanions = initialCompanions;
+  const randomCompanions = useMemo<AIProfileOverview[]>(() => {
+    if (!profiles.length) return [];
+    return shuffleArray(profiles, 99999);
+  }, [profiles]);
 
   const faqs: FAQItem[] = [
     {
@@ -113,14 +108,33 @@ export default function ForLGBTQPage() {
               </h2>
             </section>
 
-            {/* Companions Grid - Random from all categories */}
-            <section className="mb-16">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {randomCompanions.slice(0, 16).map((companion) => (
-                  <GirlCard key={companion.id} {...companion} />
-                ))}
-              </div>
-            </section>
+            {loading && (
+              <div className="text-white text-center py-12">Loading profiles...</div>
+            )}
+
+            {error && !loading && (
+              <div className="text-red-400 text-center py-12">{error}</div>
+            )}
+
+            {!loading && !error && (
+              <section className="mb-16">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {randomCompanions.slice(0, 16).map((companion) => (
+                  <GirlCard
+                    key={companion.profileId}
+                      legacyId={companion.legacyId}
+                      routePrefix={companion.routePrefix}
+                      name={companion.name}
+                      cardTitle={companion.cardTitle}
+                      monthlyPrice={companion.monthlyPrice}
+                      avatar={companion.avatar}
+                      badgeHot={companion.badgeHot}
+                      badgePro={companion.badgePro}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Features Section */}
             <section className="mb-16">

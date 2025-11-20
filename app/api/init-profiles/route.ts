@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
 
     // Use the main seeder which already clears old AI profiles and inserts aiProfilesData
     const createdProfiles = await seedAIProfiles();
-    const activeProfiles = await getActiveAIProfiles();
+    const activeProfiles = await getActiveAIProfiles({
+      selectFields: "profileId name age profession location",
+    });
 
     return NextResponse.json({
       success: true,

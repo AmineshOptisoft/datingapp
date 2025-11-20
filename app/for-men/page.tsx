@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import GirlCard from '../components/GirlCard';
 import Footer from '../components/Footer';
 import FAQSection, { type FAQItem } from '../components/FAQSection';
-import { allGirls } from '../data/girls';
+import { useProfiles } from '@/hooks/useProfiles';
+import type { AIProfileOverview } from '@/types/ai-profile';
 
 function shuffleArray<T>(array: T[], seed: number = 0): T[] {
   const shuffled = [...array];
@@ -23,15 +24,12 @@ function shuffleArray<T>(array: T[], seed: number = 0): T[] {
 }
 
 export default function ForMenPage() {
-  const [isClient, setIsClient] = useState(false);
+  const { profiles, loading, error } = useProfiles('for-men');
 
-  const initialGirls = useMemo(() => shuffleArray(allGirls, 12345), []);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const randomGirls = initialGirls;
+  const randomGirls = useMemo<AIProfileOverview[]>(() => {
+    if (!profiles.length) return [];
+    return shuffleArray(profiles, 12345);
+  }, [profiles]);
 
   const faqs: FAQItem[] = [
     {
@@ -117,14 +115,33 @@ export default function ForMenPage() {
         </h2>
       </section>
 
-      {/* Girls Grid - Random from all categories */}
-      <section className="mb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {randomGirls.slice(0, 16).map((girl) => (
-            <GirlCard key={girl.id} {...girl} />
-          ))}
-        </div>
-      </section>
+      {loading && (
+        <div className="text-white text-center py-12">Loading profiles...</div>
+      )}
+
+      {error && !loading && (
+        <div className="text-red-400 text-center py-12">{error}</div>
+      )}
+
+      {!loading && !error && (
+        <section className="mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {randomGirls.slice(0, 16).map((girl) => (
+              <GirlCard
+                key={girl.profileId}
+                legacyId={girl.legacyId}
+                routePrefix={girl.routePrefix}
+                name={girl.name}
+                cardTitle={girl.cardTitle}
+                monthlyPrice={girl.monthlyPrice}
+                avatar={girl.avatar}
+                badgeHot={girl.badgeHot}
+                badgePro={girl.badgePro}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="mb-16">

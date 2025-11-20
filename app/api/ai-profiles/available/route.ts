@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all active AI profiles
-    const aiProfiles = await getActiveAIProfiles();
+    const aiProfiles = await getActiveAIProfiles({
+      selectFields:
+        "profileId legacyId routePrefix audienceSegment name age profession location avatar bio tagline interests category monthlyPrice badgeHot badgePro",
+    });
     
     // Format profiles for user selection
     const formattedProfiles = aiProfiles.map(profile => ({
@@ -36,7 +39,14 @@ export async function GET(request: NextRequest) {
       bio: profile.bio,
       tagline: profile.tagline,
       interests: profile.interests,
-      profileType: 'ai' // Hidden from user, but useful for frontend
+      audienceSegment: profile.audienceSegment,
+      routePrefix: profile.routePrefix,
+      legacyId: profile.legacyId,
+      category: profile.category,
+      monthlyPrice: profile.monthlyPrice,
+      badgeHot: profile.badgeHot,
+      badgePro: profile.badgePro,
+      profileType: 'ai'
     }));
     
     return NextResponse.json({
