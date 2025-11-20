@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { allGirls } from '../data/girls';
+import { girlProfiles as allGirls } from '@/lib/data/girls';
 
 export default function FreeTrialPage() {
   return (
@@ -65,10 +65,10 @@ export default function FreeTrialPage() {
         {/* Right Column - AI Girlfriend Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {allGirls.slice(0, 2).map((girl) => (
-            <div key={girl.id} className="relative group">
+            <div key={girl.profileId} className="relative group">
               <div className="relative rounded-2xl overflow-hidden aspect-3/4">
                 <img
-                  src={girl.imageUrl}
+                  src={girl.avatar}
                   alt={girl.name}
                   className="w-full h-full object-cover"
                 />
@@ -79,7 +79,7 @@ export default function FreeTrialPage() {
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <h3 className="text-white text-xl font-bold mb-4">
-                    {girl.name} <span className="text-zinc-300 text-sm">({girl.description} - TRIAL)</span>
+                    {girl.name} <span className="text-zinc-300 text-sm">({girl.category} - TRIAL)</span>
                   </h3>
                   
                   {/* Action Buttons */}
