@@ -3,21 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/lib/socket";
+import { useAuth } from "@/app/contexts/AuthContext";
 import AIProfileSelector from "@/components/features/ai-profiles/AIProfileSelector";
 import { Button } from "@/components/ui/Button";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { disconnectSocket, setUserId } = useSocket();
+  const { user, logout } = useAuth();
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    // Use central auth logout so header + socket stay in sync
     disconnectSocket();
     setUserId("");
-    router.push("/login");
+    logout();
   };
 
   const handleProfileSelect = (profileId: string) => {
@@ -58,128 +59,128 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col justify-between">
-        <div className="flex flex-col space-y-6">
-          <h2 className="text-2xl font-bold text-purple-700 mb-8">Menu</h2>
+    <main className="px-4 md:px-8 py-6 space-y-8">
+      {/* Hero / Welcome section */}
+      <section className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              Welcome back{user?.name ? `, ${user.name}` : ""} 💕
+            </h1>
+            <p className="text-zinc-300 max-w-2xl">
+              Choose your favourite AI girlfriend, start a private chat, and continue your ongoing
+              conversations in one place.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/messages")}
+              className="px-4 py-2 rounded-full text-sm font-medium bg-pink-600 hover:bg-pink-700 text-white transition-colors"
+            >
+              Open Chats
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-full text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
 
-          <button
-            onClick={() => router.push("/profile")}
-            className="py-3 px-6 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition"
-          >
-            Profile
-          </button>
-
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => router.push("/select-profile")}
-            className="py-3 px-6 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 transition"
+            className="bg-zinc-900/60 border border-white/10 rounded-xl p-4 flex items-center gap-3 hover:border-pink-500/60 hover:bg-zinc-900 transition-colors"
           >
-            Find Someone to Chat
+            <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
+              <span className="text-lg">💕</span>
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium text-white">Find Someone to Chat</p>
+              <p className="text-xs text-zinc-400">Browse AI profiles and pick your companion.</p>
+            </div>
           </button>
 
           <button
             onClick={() => router.push("/messages")}
-            className="py-3 px-6 rounded-lg bg-purple-500 text-white font-semibold hover:bg-purple-600 transition"
+            className="bg-zinc-900/60 border border-white/10 rounded-xl p-4 flex items-center gap-3 hover:border-purple-500/60 hover:bg-zinc-900 transition-colors"
           >
-            My Conversations
+            <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+              <span className="text-lg">💬</span>
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium text-white">My Conversations</p>
+              <p className="text-xs text-zinc-400">Jump back into your latest chats.</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push("/profile")}
+            className="bg-zinc-900/60 border border-white/10 rounded-xl p-4 flex items-center gap-3 hover:border-blue-500/60 hover:bg-zinc-900 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <span className="text-lg">👤</span>
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium text-white">My Profile</p>
+              <p className="text-xs text-zinc-400">Update your details & preferences.</p>
+            </div>
           </button>
         </div>
+      </section>
 
-        <button
-          onClick={handleLogout}
-          className="py-3 px-6 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 p-12">
-        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-700 mb-4">
-          Welcome to AI Dating! 💕
-        </h1>
-        <p className="text-lg text-gray-700 max-w-3xl mb-8">
-          Connect with amazing people and have meaningful conversations. 
-          Choose from our curated profiles and start chatting instantly!
-        </p>
-
-        {/* Quick Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <div 
-            onClick={() => router.push("/select-profile")}
-            className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow duration-300 border-l-4 border-pink-500"
-          >
-            <div className="flex items-center mb-4">
-              <div className="bg-pink-100 p-3 rounded-full">
-                <span className="text-2xl">💕</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 ml-3">Find Someone</h3>
+      {/* Main dashboard content */}
+      <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)] gap-6 items-start">
+        {/* AI Profile selector */}
+        <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 md:p-7 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Choose Someone to Chat With</h2>
+              <p className="text-xs md:text-sm text-zinc-400">
+                Select a profile below to start an emotionally engaging AI conversation.
+              </p>
             </div>
-            <p className="text-gray-600">
-              Browse through 5 amazing profiles and find someone special to chat with.
-            </p>
           </div>
 
-          <div 
-            onClick={() => router.push("/messages")}
-            className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow duration-300 border-l-4 border-purple-500"
-          >
-            <div className="flex items-center mb-4">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <span className="text-2xl">💬</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 ml-3">My Chats</h3>
-            </div>
-            <p className="text-gray-600">
-              Continue your ongoing conversations and see your message history.
-            </p>
-          </div>
-
-          <div 
-            onClick={() => router.push("/profile")}
-            className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow duration-300 border-l-4 border-blue-500"
-          >
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <span className="text-2xl">👤</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 ml-3">My Profile</h3>
-            </div>
-            <p className="text-gray-600">
-              Update your profile information and manage your account settings.
-            </p>
-          </div>
-        </div>
-
-        {/* AI Profile Selector embedded on dashboard */}
-        <div className="mt-12 bg-white/70 rounded-2xl p-6 shadow-lg">
           <AIProfileSelector
             onProfileSelect={handleProfileSelect}
             selectedProfileId={selectedProfileId}
           />
         </div>
 
-        {/* Start Chat button (same behavior as select-profile page) */}
-        {selectedProfileId && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-            <Button
-              onClick={handleStartChat}
-              disabled={loading}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full shadow-lg text-lg font-semibold"
-            >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Starting Chat...
-                </div>
-              ) : (
-                "Start Chatting 💬"
-              )}
-            </Button>
+        {/* Start chat panel */}
+        <div className="space-y-4">
+          <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col justify-between h-full min-h-[200px]">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-white mb-1">Start Chatting</h3>
+              <p className="text-sm text-zinc-400">
+                Pick a profile on the left, then launch a private chat room powered by your AI
+                girlfriend.
+              </p>
+            </div>
+
+            <div className="mt-auto">
+              <Button
+                onClick={handleStartChat}
+                disabled={loading || !selectedProfileId}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6 py-3 rounded-full shadow-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                    <span>Starting Chat...</span>
+                  </div>
+                ) : selectedProfileId ? (
+                  "Start Chatting 💬"
+                ) : (
+                  "Select a profile first"
+                )}
+              </Button>
+            </div>
           </div>
-        )}
-      </main>
-    </div>
+        </div>
+      </section>
+    </main>
   );
 }

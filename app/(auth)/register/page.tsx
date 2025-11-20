@@ -46,18 +46,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center px-4 md:px-8">
+      <div className="bg-zinc-900/70 border border-white/10 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-2">
-            💖 Dating App
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            💖 Create Your Account
           </h1>
-          <p className="text-gray-600">Create your account</p>
+          <p className="text-zinc-400 text-sm md:text-base">Join and unlock your personal AI companionship experience.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Full Name
             </label>
             <input
@@ -66,14 +66,14 @@ export default function RegisterPage() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 border border-white/15 bg-zinc-900/70 rounded-lg text-zinc-100 placeholder-zinc-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
               placeholder="John Doe"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Email Address
             </label>
             <input
@@ -89,7 +89,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Phone Number
             </label>
             <input
@@ -102,13 +102,13 @@ export default function RegisterPage() {
               placeholder="+1234567890"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Include country code (e.g., +1 for US)
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Password
             </label>
             <input
@@ -122,15 +122,15 @@ export default function RegisterPage() {
               required
               minLength={6}
             />
-            <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+            <p className="text-xs text-zinc-500 mt-1">Minimum 6 characters</p>
           </div>
 
           {message && (
             <div
               className={`p-3 rounded-lg text-sm ${
                 message.includes("success")
-                  ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-red-700 border border-red-200"
+                  ? "bg-green-500/10 text-green-400 border border-green-500/40"
+                  : "bg-red-500/10 text-red-400 border border-red-500/40"
               }`}
             >
               {message}
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-full font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
           >
             {loading ? (
               <span className="flex items-center justify-center">
@@ -168,16 +168,16 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-gray-600">
+        <p className="text-center mt-6 text-sm text-zinc-400">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-purple-600 hover:text-purple-700 font-semibold"
+            className="text-pink-400 hover:text-pink-300 font-semibold"
           >
             Sign In
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

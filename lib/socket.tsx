@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from "react";
 import { io, Socket } from "socket.io-client";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface Message {
   _id?: string;
@@ -35,19 +36,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const [userId, setUserId] = useState("");
+  const { user } = useAuth();
 
+  // Keep socket userId in sync with authenticated user
   useEffect(() => {
-    // Initialize user from localStorage if available
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserId(user.id || user._id || "");
-      } catch (err) {
-        console.error("Failed to parse user data", err);
-      }
+    if (user) {
+      setUserId((user as any).id || (user as any)._id || "");
+    } else {
+      setUserId("");
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!userId) {

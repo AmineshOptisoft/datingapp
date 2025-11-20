@@ -20,7 +20,7 @@ export default function ProfilePage() {
     const storedUser = localStorage.getItem("user");
 
     if (!token || !storedUser) {
-      router.push("/login");
+      router.push("/");
       return;
     }
 
@@ -86,27 +86,27 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center text-zinc-300 bg-zinc-950/90">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 p-8">
-      <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-3xl p-8">
-        <h1 className="text-3xl font-bold text-purple-700 mb-8">
+    <main className="min-h-screen px-4 md:px-8 py-6">
+      <div className="max-w-3xl mx-auto bg-zinc-900/70 border border-white/10 shadow-2xl rounded-3xl p-6 md:p-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6">
           Edit Profile
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Avatar
             </label>
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-4 border-purple-200">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-zinc-800 flex items-center justify-center border-4 border-pink-500/40">
                 {preview ? (
                   <img
                     src={preview}
@@ -121,59 +121,59 @@ export default function ProfilePage() {
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarChange}
-                className="cursor-pointer text-sm text-purple-600 focus:outline-none"
+                className="cursor-pointer text-sm text-pink-400 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Other inputs */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Full Name
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
+              className="w-full border border-white/15 bg-zinc-900/70 text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 outline-none placeholder-zinc-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Bio
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+              className="w-full border border-white/15 bg-zinc-900/70 text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 outline-none resize-none placeholder-zinc-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
+              className="w-full border border-white/15 bg-zinc-900/70 text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 outline-none placeholder-zinc-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Phone Number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 outline-none"
+              className="w-full border border-white/15 bg-zinc-900/70 text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 outline-none placeholder-zinc-500"
               placeholder="+1234567890"
               required
             />
@@ -183,7 +183,7 @@ export default function ProfilePage() {
           {message && (
             <p
               className={`text-center ${
-                message.includes("success") ? "text-green-600" : "text-red-600"
+                message.includes("success") ? "text-green-400" : "text-red-400"
               }`}
             >
               {message}
@@ -194,7 +194,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 transition"
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-full hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 transition shadow-lg"
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>

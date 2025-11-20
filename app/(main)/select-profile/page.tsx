@@ -52,37 +52,36 @@ export default function SelectProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Welcome to AI Dating! 💕
+    <main className="px-4 md:px-8 py-6 space-y-8">
+      {/* Header */}
+      <section className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl">
+        <div className="text-center mb-4">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Choose Your AI Girlfriend 💕
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Meet amazing people and have interesting conversations. 
-            Choose someone you'd like to chat with and start your journey!
+          <p className="text-zinc-300 max-w-2xl mx-auto text-sm md:text-base">
+            Browse through carefully crafted AI companions and pick someone who matches your vibe.
           </p>
         </div>
 
-        {/* Profile Selector */}
-        <AIProfileSelector 
-          onProfileSelect={handleProfileSelect}
-          selectedProfileId={selectedProfileId}
-        />
+        <div className="mt-6">
+          <AIProfileSelector
+            onProfileSelect={handleProfileSelect}
+            selectedProfileId={selectedProfileId}
+          />
+        </div>
 
-        {/* Start Chat Button */}
         {selectedProfileId && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="mt-6 flex justify-center">
             <Button
               onClick={handleStartChat}
               disabled={loading}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full shadow-lg text-lg font-semibold"
+              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full shadow-lg text-sm md:text-base font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Starting Chat...
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  <span>Starting Chat...</span>
                 </div>
               ) : (
                 "Start Chatting 💬"
@@ -90,45 +89,7 @@ export default function SelectProfilePage() {
             </Button>
           </div>
         )}
-
-        {/* Instructions */}
-        {/* <div className="mt-12 bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            How it works:
-          </h3>
-          <div className="space-y-3 text-gray-600">
-            <div className="flex items-start">
-              <span className="bg-pink-100 text-pink-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                1
-              </span>
-              <p>Browse through the available profiles and read their bios</p>
-            </div>
-            <div className="flex items-start">
-              <span className="bg-pink-100 text-pink-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                2
-              </span>
-              <p>Click on a profile that interests you to select them</p>
-            </div>
-            <div className="flex items-start">
-              <span className="bg-pink-100 text-pink-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                3
-              </span>
-              <p>Hit "Start Chatting" to begin your conversation</p>
-            </div>
-            <div className="flex items-start">
-              <span className="bg-pink-100 text-pink-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                4
-              </span>
-              <p>Enjoy natural, engaging conversations!</p>
-            </div>
-          </div>
-        </div> */}
-
-        {/* Footer */}
-        <div className="text-center mt-12 text-gray-500">
-          <p>✨ All conversations are private and secure ✨</p>
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

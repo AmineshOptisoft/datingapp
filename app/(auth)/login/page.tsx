@@ -1,79 +1,64 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSocket } from "@/lib/socket";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { setUserId } = useSocket();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setMessage("");
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        // Set userId in socket provider to trigger socket connection
-        setUserId(data.data.user.id || data.data.user._id || "");
-        router.push("/dashboard");
-      } else {
-        setMessage(data.message || "Login failed");
-      }
-    } catch {
-      setMessage("Network error");
+      await login(email, password);
+      // AuthContext.login will handle redirect to /dashboard
+    } catch (err: any) {
+      setMessage(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center px-4 md:px-8">
+      <div className="w-full max-w-md bg-zinc-900/70 border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             💖 Welcome Back
           </h1>
-          <p className="text-gray-600">Sign in to continue</p>
+          <p className="text-zinc-400 text-sm md:text-base">Sign in to continue chatting with your AI girlfriends.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 border border-white/15 bg-zinc-900/70 rounded-lg text-zinc-100 placeholder-zinc-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
               placeholder="john@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 border border-white/15 bg-zinc-900/70 rounded-lg text-zinc-100 placeholder-zinc-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
               placeholder="••••••••"
               required
             />
@@ -83,8 +68,8 @@ export default function LoginPage() {
             <div
               className={`p-3 rounded-lg text-sm ${
                 message.includes("success")
-                  ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-red-700 border border-red-200"
+                  ? "bg-green-500/10 text-green-400 border border-green-500/40"
+                  : "bg-red-500/10 text-red-400 border border-red-500/40"
               }`}
             >
               {message}
@@ -94,7 +79,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-full font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
           >
             {loading ? (
               <span className="flex items-center justify-center">
@@ -122,16 +107,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-gray-600">
+        <p className="text-center mt-6 text-sm text-zinc-400">
           Don't have an account?{" "}
           <Link
             href="/register"
-            className="text-purple-600 hover:text-purple-700 font-semibold"
+            className="text-pink-400 hover:text-pink-300 font-semibold"
           >
             Create Account
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

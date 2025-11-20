@@ -78,33 +78,33 @@ export default function VerifyPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center px-4 md:px-8">
+      <div className="bg-zinc-900/70 border border-white/10 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔐</div>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-2">
+          <div className="text-5xl mb-4">🔐</div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
             Verify Your Account
           </h1>
-          <p className="text-gray-600">
-            Enter the OTP sent to your email or phone
+          <p className="text-zinc-400 text-sm md:text-base">
+            Enter the OTP sent to your email or phone.
           </p>
         </div>
 
         {!verified ? (
           <>
-            <div className="bg-purple-50 rounded-xl p-4 mb-6 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-purple-600">📧</span>
-                <span className="text-gray-700">{email}</span>
+            <div className="bg-zinc-900/80 rounded-xl p-4 mb-6 space-y-2 border border-white/10">
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
+                <span className="text-purple-400">📧</span>
+                <span>{email}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-purple-600">📱</span>
-                <span className="text-gray-700">{phone}</span>
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
+                <span className="text-purple-400">📱</span>
+                <span>{phone}</span>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-800 flex items-start gap-2">
+            <div className="bg-zinc-900/80 border border-purple-500/40 rounded-lg p-4 mb-6">
+              <p className="text-sm text-zinc-200 flex items-start gap-2">
                 <span className="text-xl">💡</span>
                 <span>
                   <strong>Use either channel:</strong> The same OTP has been
@@ -115,7 +115,7 @@ export default function VerifyPage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Enter 6-Digit OTP
               </label>
               <input
@@ -129,7 +129,7 @@ export default function VerifyPage() {
                     handleVerify();
                   }
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl font-mono tracking-[1em] focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-white/15 bg-zinc-900/70 rounded-lg text-center text-2xl font-mono tracking-[1em] text-zinc-100 placeholder-zinc-600 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                 placeholder="000000"
                 maxLength={6}
               />
@@ -139,8 +139,8 @@ export default function VerifyPage() {
               <div
                 className={`p-3 rounded-lg text-sm mb-4 ${
                   message.includes("success") || message.includes("sent")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
+                    ? "bg-green-500/10 text-green-400 border border-green-500/40"
+                    : "bg-red-500/10 text-red-400 border border-red-500/40"
                 }`}
               >
                 {message}
@@ -150,7 +150,7 @@ export default function VerifyPage() {
             <button
               onClick={handleVerify}
               disabled={loading || otp.length !== 6}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition mb-4"
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-full font-semibold hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition mb-4 shadow-lg"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -184,7 +184,7 @@ export default function VerifyPage() {
               <button
                 onClick={handleResend}
                 disabled={resendLoading}
-                className="text-purple-600 hover:text-purple-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-pink-400 hover:text-pink-300 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {resendLoading
                   ? "Resending..."
@@ -194,9 +194,9 @@ export default function VerifyPage() {
           </>
         ) : (
           <div className="text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-10 h-10 text-green-600"
+                className="w-10 h-10 text-green-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -209,16 +209,16 @@ export default function VerifyPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-white mb-2">
               Account Verified! ✅
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-zinc-300 mb-4">
               Both your email and phone have been verified successfully.
             </p>
-            <p className="text-sm text-gray-500">Redirecting to login...</p>
+            <p className="text-sm text-zinc-500">Redirecting to login...</p>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
