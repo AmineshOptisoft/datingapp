@@ -16,6 +16,7 @@ interface UserMenuProps {
 export default function UserMenu({ user, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const displayName = user?.name || user?.email || '';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -37,15 +38,15 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
         {user.avatar ? (
           <img
             src={user.avatar}
-            alt={user.name}
+            alt={displayName}
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-pink-600 flex items-center justify-center text-white font-semibold">
-            {user.name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="text-white text-sm font-medium hidden md:block">{user.name}</span>
+        <span className="text-white text-sm font-medium hidden md:block">{displayName}</span>
         <svg
           className={`w-4 h-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
@@ -64,16 +65,16 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
               {user.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.name}
+                  alt={displayName}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-pink-600 flex items-center justify-center text-white font-semibold text-lg">
-                  {user.name.charAt(0).toUpperCase()}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{user.name}</p>
+                <p className="text-white font-medium truncate">{displayName}</p>
                 <p className="text-zinc-400 text-sm truncate">{user.email}</p>
               </div>
             </div>
