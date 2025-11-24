@@ -7,12 +7,12 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 const transporter =
   EMAIL_USER && EMAIL_PASS
     ? nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: EMAIL_USER,
-          pass: EMAIL_PASS,
-        },
-      })
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    })
     : null;
 
 export async function sendEmailOTP(
@@ -51,7 +51,7 @@ export async function sendEmailOTP(
                 padding: 0;
               }
               .container { 
-                max-width: 600px; 
+                max-width: 600px;
                 margin: 20px auto; 
                 background: white;
                 border-radius: 16px;
