@@ -46,22 +46,22 @@ export default function Footer() {
             <h3 className="text-white font-bold text-lg mb-4">Explore</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/for-men" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   Female Companions
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/for-women" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   Male Companions
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   Explore Characters
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/monetize" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   Monetize Your Character
                 </a>
               </li>
@@ -73,41 +73,18 @@ export default function Footer() {
             <h3 className="text-white font-bold text-lg mb-4">Support</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/faq" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   FAQ
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                <a href="/privacy-policy" className="text-zinc-400 hover:text-white text-sm transition-colors">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
-                  Terms of Service
-                </a>
-              </li>
-            </ul>
-            <h3 className="text-white font-bold text-lg mt-6 mb-4">Comparison</h3>
-            <ul className="space-y-3">
-              <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
-                  Nomi AI vs Idyll AI
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
-                  Character AI vs Idyll AI
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
-                  Idyll AI vs DreamGF
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">
-                  Idyll AI vs Candy AI
+                <a href="/terms-and-conditions" className="text-zinc-400 hover:text-white text-sm transition-colors">
+                  Terms and Conditions
                 </a>
               </li>
             </ul>
