@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import Footer from '../../components/Footer';
 import PricingModal from '../../components/PricingModal';
@@ -11,6 +11,7 @@ export default function BoyDetailPage() {
   const params = useParams();
   const legacyId = params.id as string | undefined;
   const { profile, loading, error } = useProfileDetail('boy', legacyId);
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<'bio' | 'features' | 'pricing'>('bio');
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
@@ -30,6 +31,19 @@ export default function BoyDetailPage() {
         `${profile.name} loves talking about ${profile.topicPreferences[0] ?? 'shared adventures'}.`,
     }));
   }, [profile]);
+
+  const handleStartChat = () => {
+    if (!profile) return;
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('selectedAIProfile', JSON.stringify(profile));
+      }
+    } catch (error) {
+      console.error('Failed to persist selected AI profile for chat:', error);
+    }
+
+    router.push(`/messages?ai=${profile.profileId}`);
+  };
 
   if (loading) {
     return (
@@ -108,7 +122,7 @@ export default function BoyDetailPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6 items-center sm:items-stretch">
                   <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm md:text-base">
                     <FaPlay className="w-4 h-4" />
                     Start Free Trial
@@ -118,6 +132,13 @@ export default function BoyDetailPage() {
                     className="bg-pink-600 hover:bg-pink-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all text-sm md:text-base"
                   >
                     Buy Monthly @ {priceLabel}
+                  </button>
+                  <button
+                    onClick={handleStartChat}
+                    className="sm:ml-auto bg-yellow-400 hover:bg-yellow-500 text-black rounded-full w-12 h-12 flex items-center justify-center font-bold shadow-lg transition-all"
+                    aria-label="Chat now"
+                  >
+                    💬
                   </button>
                 </div>
 
