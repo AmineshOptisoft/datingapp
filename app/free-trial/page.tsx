@@ -12,7 +12,7 @@ export default function FreeTrialPage() {
       </h1>
 
       {/* Main Grid - Steps on left, Cards on right */}
-      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column - Steps */}
         <div className="space-y-8">
           {/* Step 1 */}
@@ -63,10 +63,10 @@ export default function FreeTrialPage() {
         </div>
 
         {/* Right Column - AI Girlfriend Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {allGirls.slice(0, 2).map((girl) => (
             <div key={girl.profileId} className="relative group">
-              <div className="relative rounded-2xl overflow-hidden aspect-3/4">
+              <div className="relative rounded-2xl overflow-hidden h-[400px]">
                 <img
                   src={girl.avatar}
                   alt={girl.name}
