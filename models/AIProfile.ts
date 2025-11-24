@@ -89,6 +89,17 @@ export interface IAIProfile {
   backstoryElements: string[];
   relationshipProgression: string;
   engagementLevel: string;
+
+  // VOICE + AI CONFIG
+  personaPrompt?: string;
+  realtimeVoiceEnabled?: boolean;
+  voiceId?: string;
+  voiceModelId?: string;
+  voiceAgentId?: string;
+  voiceStability?: number;
+  voiceSimilarity?: number;
+  voiceStyle?: number;
+  voiceDescription?: string;
   
   // PROFILE METADATA
   bio: string;
@@ -273,6 +284,44 @@ const AIProfileSchema = new Schema<IAIProfile>(
     backstoryElements: [String],
     relationshipProgression: String,
     engagementLevel: String,
+
+    // VOICE + AI CONFIG
+    personaPrompt: {
+      type: String,
+      default: null,
+    },
+    realtimeVoiceEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    voiceId: {
+      type: String,
+      default: null,
+    },
+    voiceModelId: {
+      type: String,
+      default: "eleven_monolingual_v1",
+    },
+    voiceAgentId: {
+      type: String,
+      default: null,
+    },
+    voiceStability: {
+      type: Number,
+      default: 0.55,
+    },
+    voiceSimilarity: {
+      type: Number,
+      default: 0.75,
+    },
+    voiceStyle: {
+      type: Number,
+      default: 0.35,
+    },
+    voiceDescription: {
+      type: String,
+      default: null,
+    },
     
     // PROFILE METADATA
     bio: {

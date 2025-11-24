@@ -40,10 +40,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   ];
 
   const premiumCategories = [
-    { icon: FaHeart, label: 'Infidelity & Drama', id: 'infidelity', href: '/?category=Infidelity & Drama' },
-    { icon: FaHeart, label: 'Relationship Stages', id: 'relationship', href: '/?category=Relationship Stages' },
-    { icon: FaHeart, label: 'Fantasy & Kinks', id: 'fantasy', href: '/?category=Fantasy & Kinks' },
-    { icon: FaHeart, label: 'Nationalities & Cultures', id: 'nationalities', href: '/?category=Nationalities & Cultures' },
+    { icon: FaHeart, label: 'Infidelity & Drama', id: 'infidelity' },
+    { icon: FaHeart, label: 'Relationship Stages', id: 'relationship' },
+    { icon: FaHeart, label: 'Fantasy & Kinks', id: 'fantasy' },
+    { icon: FaHeart, label: 'Nationalities & Cultures', id: 'nationalities' },
   ];
 
   const socialIcons = [
@@ -143,7 +143,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               {premiumCategories.map((item) => (
                 <Link
                   key={item.id}
-                  href={item.href}
+                  href={{
+                    pathname: '/',
+                    query: { category: item.label },
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${
                     pathname === '/' &&
                     typeof window !== 'undefined' &&

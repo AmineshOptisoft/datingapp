@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import Footer from '../../components/Footer';
 import PricingModal from '../../components/PricingModal';
+import VoiceChatPanel from '../../components/VoiceChatPanel';
 import { FaPlay } from 'react-icons/fa';
 import { useProfileDetail } from '@/hooks/useProfileDetail';
 
@@ -54,6 +55,9 @@ export default function CompanionDetailPage() {
 
   const priceLabel = `$${profile.monthlyPrice.toFixed(2)}`;
   const primaryPhoto = profile.photos?.[0] ?? profile.avatar;
+  const voiceChatEnabled =
+    profile.audienceSegment === 'for-men' &&
+    (profile.realtimeVoiceEnabled ?? true);
 
   return (
     <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
@@ -218,6 +222,17 @@ export default function CompanionDetailPage() {
                 </div>
               </div>
             </div>
+
+            {voiceChatEnabled && (
+              <section className="mb-12">
+                <VoiceChatPanel
+                  profileId={profile.profileId}
+                  profileName={profile.name}
+                  cardTitle={profile.cardTitle}
+                  enabled={voiceChatEnabled}
+                />
+              </section>
+            )}
 
             {/* Description Section */}
             <section className="mb-12">

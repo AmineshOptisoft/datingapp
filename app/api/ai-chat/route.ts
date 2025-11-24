@@ -1,22 +1,15 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.status(405).json({ reply: "Method not allowed" });
-    return;
+export async function POST(request: NextRequest) {
+  const { message } = await request.json();
+
+  if (!message || typeof message !== "string" || !message.trim()) {
+    return NextResponse.json(
+      { reply: "Please send a message!" },
+      { status: 400 }
+    );
   }
 
-  const { message } = req.body;
-
-  if (!message || message.trim() === "") {
-    res.status(400).json({ reply: "Please send a message!" });
-    return;
-  }
-
-  // Simulated AI response - replace with real AI call if needed
   const mockResponses = [
     "That's interesting! Tell me more.",
     "I understand. How can I help you further?",
@@ -27,8 +20,14 @@ export default async function handler(
 
   const reply = mockResponses[Math.floor(Math.random() * mockResponses.length)];
 
-  // Simulate delay
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  res.status(200).json({ reply });
+  return NextResponse.json({ reply });
+}
+
+export function GET() {
+  return NextResponse.json(
+    { reply: "Method not allowed" },
+    { status: 405 }
+  );
 }
