@@ -34,6 +34,19 @@ export default function GirlDetailPage() {
     }));
   }, [profile]);
 
+  const handleStartChat = () => {
+    if (!profile) return;
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('selectedAIProfile', JSON.stringify(profile));
+      }
+    } catch (error) {
+      console.error('Failed to persist selected AI profile for chat:', error);
+    }
+
+    router.push(`/messages?ai=${profile.profileId}`);
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-950 text-white">
@@ -111,7 +124,7 @@ export default function GirlDetailPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6 items-center sm:items-stretch">
                   <button 
                     onClick={() => router.push('/free-trial')}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm md:text-base"
@@ -124,6 +137,13 @@ export default function GirlDetailPage() {
                     className="bg-pink-600 hover:bg-pink-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all text-sm md:text-base"
                   >
                     Buy Monthly @ {priceLabel}
+                  </button>
+                  <button
+                    onClick={handleStartChat}
+                    className="sm:ml-auto bg-yellow-400 hover:bg-yellow-500 text-black rounded-full w-12 h-12 flex items-center justify-center font-bold shadow-lg transition-all"
+                    aria-label="Chat now"
+                  >
+                    💬
                   </button>
                 </div>
 

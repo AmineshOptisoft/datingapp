@@ -90,6 +90,16 @@ export interface AIProfileDetail extends AIProfileOverview {
   onlineStatus: "online" | "offline" | "recently_active";
   lastSeen: string | Date;
   responseDelay: number;
+
+  personaPrompt?: string | null;
+  realtimeVoiceEnabled?: boolean;
+  voiceId?: string | null;
+  voiceModelId?: string | null;
+  voiceAgentId?: string | null;
+  voiceStability?: number | null;
+  voiceSimilarity?: number | null;
+  voiceStyle?: number | null;
+  voiceDescription?: string | null;
 }
 
 

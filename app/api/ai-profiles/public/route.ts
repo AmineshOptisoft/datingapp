@@ -175,6 +175,17 @@ export async function POST(request: NextRequest) {
         onlineStatus: profile.onlineStatus,
         lastSeen: profile.lastSeen,
         responseDelay: profile.responseDelay,
+
+        // Voice & persona config
+        personaPrompt: profile.personaPrompt,
+        realtimeVoiceEnabled: profile.realtimeVoiceEnabled,
+        voiceId: profile.voiceId,
+        voiceModelId: profile.voiceModelId,
+        voiceAgentId: profile.voiceAgentId,
+        voiceStability: profile.voiceStability,
+        voiceSimilarity: profile.voiceSimilarity,
+        voiceStyle: profile.voiceStyle,
+        voiceDescription: profile.voiceDescription,
       }
     });
     

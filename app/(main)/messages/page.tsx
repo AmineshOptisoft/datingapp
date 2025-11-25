@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaImage, FaSmile, FaMicrophone, FaTimes, FaPlus } from 'react-icons/fa';
 import dynamic from 'next/dynamic';
 import {
@@ -23,6 +24,7 @@ interface Conversation {
   timestamp: string;
   unread: boolean;
   online: boolean;
+  profileId?: string;
 }
 
 interface Message {
@@ -37,6 +39,7 @@ interface Message {
 }
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,8 +55,7 @@ export default function MessagesPage() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock conversations data
-  const conversations: Conversation[] = [
+  const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: 1,
       name: 'Emma Wilson',
@@ -70,7 +72,7 @@ export default function MessagesPage() {
       lastMessage: 'See you tomorrow! 😊',
       timestamp: '1h',
       unread: false,
-      online: false,
+      online: true,
     },
     {
       id: 3,
@@ -81,12 +83,11 @@ export default function MessagesPage() {
       unread: false,
       online: true,
     },
-  ];
+  ]);
 
   // Initialize messages with conversation history
   useEffect(() => {
     if (selectedConversation) {
-      // Load initial messages for the conversation
       const initialMessages: Message[] = [
         {
           id: 1,
@@ -99,6 +100,45 @@ export default function MessagesPage() {
       setMessages(initialMessages);
     }
   }, [selectedConversation]);
+
+  // Auto-select conversation when arriving from a profile page
+  useEffect(() => {
+    const aiProfileId = searchParams.get('ai');
+    if (!aiProfileId) return;
+
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('selectedAIProfile') : null;
+      if (!stored) return;
+
+      const data = JSON.parse(stored) as { profileId?: string; name?: string; avatar?: string; onlineStatus?: string };
+      if (!data.profileId || data.profileId !== aiProfileId) return;
+
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.profileId === aiProfileId);
+        if (existing) {
+          setSelectedConversation(existing.id);
+          return prev;
+        }
+
+        const nextId = prev.length ? Math.max(...prev.map((c) => c.id)) + 1 : 1;
+        const newConversation: Conversation = {
+          id: nextId,
+          name: data.name || 'AI Companion',
+          avatar: data.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+          lastMessage: 'Say hi 👋',
+          timestamp: 'now',
+          unread: false,
+          online: true,
+          profileId: aiProfileId,
+        };
+
+        setSelectedConversation(newConversation.id);
+        return [newConversation, ...prev];
+      });
+    } catch (error) {
+      console.error('Failed to load selected AI profile for messages page:', error);
+    }
+  }, [searchParams]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -352,7 +392,7 @@ export default function MessagesPage() {
                 </div>
                 <div>
                     <h2 className="font-semibold text-white">{selectedConv.name}</h2>
-                    <p className="text-xs text-zinc-400">{selectedConv.online ? 'Active now' : 'Offline'}</p>
+                    <p className="text-xs text-zinc-400">Active now</p>
                 </div>
                 </div>
             </div>
