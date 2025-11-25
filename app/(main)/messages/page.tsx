@@ -4,6 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaImage, FaSmile, FaMicrophone, FaTimes, FaPlus } from 'react-icons/fa';
 import dynamic from 'next/dynamic';
+import { VoiceCallPanel } from '@/components/VoiceCallPanel';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Popover,
   PopoverContent,
@@ -45,12 +51,13 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<{ type: 'image' | 'video', url: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -154,7 +161,7 @@ export default function MessagesPage() {
       "I'm always here for you 💕",
       "You make me smile! 😄",
     ];
-    
+
     setTimeout(() => {
       const newMessage: Message = {
         id: Date.now(),
@@ -181,7 +188,7 @@ export default function MessagesPage() {
       setMessages(prev => [...prev, newMessage]);
       setMessageText('');
       setShowEmojiPicker(false);
-      
+
       // Trigger auto-reply
       if (selectedConversation) {
         sendAutoReply(selectedConversation);
@@ -206,7 +213,7 @@ export default function MessagesPage() {
           isOwn: true,
         };
         setMessages(prev => [...prev, newMessage]);
-        
+
         // Trigger auto-reply
         if (selectedConversation) {
           sendAutoReply(selectedConversation);
@@ -229,7 +236,7 @@ export default function MessagesPage() {
           isOwn: true,
         };
         setMessages(prev => [...prev, newMessage]);
-        
+
         // Trigger auto-reply
         if (selectedConversation) {
           sendAutoReply(selectedConversation);
@@ -261,7 +268,7 @@ export default function MessagesPage() {
             isOwn: true,
           };
           setMessages(prev => [...prev, newMessage]);
-          
+
           // Trigger auto-reply
           if (selectedConversation) {
             sendAutoReply(selectedConversation);
@@ -295,9 +302,8 @@ export default function MessagesPage() {
   return (
     <div className="h-[calc(100vh-80px)] flex">
       {/* Left Sidebar - Conversations List */}
-      <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-white/10 flex flex-col bg-zinc-900/20 ${
-        selectedConversation && 'hidden md:flex'
-      }`}>
+      <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-white/10 flex flex-col bg-zinc-900/20 ${selectedConversation && 'hidden md:flex'
+        }`}>
         {/* Header */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between mb-4">
@@ -328,9 +334,8 @@ export default function MessagesPage() {
             <button
               key={conv.id}
               onClick={() => setSelectedConversation(conv.id)}
-              className={`w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 ${
-                selectedConversation === conv.id ? 'bg-white/10' : ''
-              }`}
+              className={`w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 ${selectedConversation === conv.id ? 'bg-white/10' : ''
+                }`}
             >
               {/* Avatar */}
               <div className="relative shrink-0">
@@ -370,37 +375,43 @@ export default function MessagesPage() {
           {/* Chat Header */}
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-3">
-                {/* Back Button for Mobile */}
-                <button
+              {/* Back Button for Mobile */}
+              <button
                 onClick={() => setSelectedConversation(null)}
                 className="md:hidden text-zinc-400 hover:text-white transition-colors mr-3"
-                >
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                </button>
-                <div className="flex items-center gap-3">
+              </button>
+              <div className="flex items-center gap-3">
                 <div className="relative">
-                    <img
+                  <img
                     src={selectedConv.avatar}
                     alt={selectedConv.name}
                     className="w-10 h-10 rounded-full object-cover"
-                    />
-                    {selectedConv.online && (
+                  />
+                  {selectedConv.online && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900" />
-                    )}
+                  )}
                 </div>
                 <div>
-                    <h2 className="font-semibold text-white">{selectedConv.name}</h2>
-                    <p className="text-xs text-zinc-400">Active now</p>
+                  <h2 className="font-semibold text-white">{selectedConv.name}</h2>
+                  <p className="text-xs text-zinc-400">Active now</p>
                 </div>
-                </div>
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-4">
-              <button className="text-zinc-400 hover:text-white transition-colors">
-                <FaPhone className="w-5 h-5" />
+              {/* Voice Call Button (Yellow Circle) */}
+              <button
+                onClick={() => setShowVoiceCall(true)}
+                className="relative w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 flex items-center justify-center transition-all shadow-lg hover:shadow-yellow-500/50"
+                title="Start Voice Call"
+              >
+                <FaPhone className="w-5 h-5 text-white" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse" />
               </button>
               <button className="text-zinc-400 hover:text-white transition-colors">
                 <FaVideo className="w-5 h-5" />
@@ -425,22 +436,21 @@ export default function MessagesPage() {
                     className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
                   />
                 )}
-                
+
                 <div className={`max-w-[70%] ${message.isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
                   {message.text && (
                     <div
-                      className={`rounded-2xl px-4 py-2 ${
-                        message.isOwn
+                      className={`rounded-2xl px-4 py-2 ${message.isOwn
                           ? 'bg-purple-600 text-white'
                           : 'bg-zinc-800/50 text-white'
-                      }`}
+                        }`}
                     >
                       <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.text}</p>
                     </div>
                   )}
-                  
+
                   {message.image && (
-                    <div 
+                    <div
                       className="rounded-2xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setSelectedMedia({ type: 'image', url: message.image! })}
                     >
@@ -453,7 +463,7 @@ export default function MessagesPage() {
                   )}
 
                   {message.video && (
-                    <div 
+                    <div
                       className="rounded-2xl overflow-hidden cursor-pointer"
                       onClick={() => setSelectedMedia({ type: 'video', url: message.video! })}
                     >
@@ -466,13 +476,12 @@ export default function MessagesPage() {
                   )}
 
                   {message.audio && (
-                    <div className={`rounded-full px-4 py-2 ${
-                      message.isOwn ? 'bg-purple-600' : 'bg-zinc-800/50'
-                    }`}>
+                    <div className={`rounded-full px-4 py-2 ${message.isOwn ? 'bg-purple-600' : 'bg-zinc-800/50'
+                      }`}>
                       <audio src={message.audio} controls className="h-10" />
                     </div>
                   )}
-                  
+
                   <span className="text-xs text-zinc-500 mt-1">{message.timestamp}</span>
                 </div>
 
@@ -506,7 +515,7 @@ export default function MessagesPage() {
               {/* Media Upload Popover */}
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                  <button 
+                  <button
                     className="text-zinc-400 hover:text-white transition-colors"
                     title="Add media"
                   >
@@ -541,14 +550,14 @@ export default function MessagesPage() {
 
               {/* Emoji Picker */}
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className="text-zinc-400 hover:text-white transition-colors"
                   title="Add emoji"
                 >
                   <FaSmile className="w-5 h-5 mt-2" />
                 </button>
-                
+
                 {showEmojiPicker && (
                   <div className="absolute bottom-12 left-0 z-50">
                     <Picker
@@ -560,7 +569,7 @@ export default function MessagesPage() {
                   </div>
                 )}
               </div>
-              
+
               {/* Text Input */}
               <div className="flex-1 relative">
                 <input
@@ -582,7 +591,7 @@ export default function MessagesPage() {
                   Send
                 </button>
               ) : (
-                <button 
+                <button
                   onClick={isRecording ? stopRecording : startRecording}
                   className={`transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
                   title={isRecording ? "Stop recording" : "Record voice message"}
@@ -607,7 +616,7 @@ export default function MessagesPage() {
 
       {/* Media Viewer Modal */}
       {selectedMedia && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setSelectedMedia(null)}
         >
@@ -638,6 +647,24 @@ export default function MessagesPage() {
           </div>
         </div>
       )}
+
+      {/* Voice Call Modal */}
+      <Dialog open={showVoiceCall} onOpenChange={setShowVoiceCall}>
+        <DialogContent className="max-w-md p-0 bg-transparent border-none" showCloseButton={false}>
+          <DialogTitle className="sr-only">Voice Call with {selectedConv?.name}</DialogTitle>
+          {selectedConv?.profileId && (
+            <VoiceCallPanel
+              profile={{
+                profileId: selectedConv.profileId,
+                name: selectedConv.name,
+                avatar: selectedConv.avatar,
+                cardTitle: 'AI Girlfriend',
+                category: 'Different Personalities',
+              } as any}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
