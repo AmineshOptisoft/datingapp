@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
+import { useAuth } from '@/app/contexts/AuthContext'
 
 interface VoiceCallState {
     callState: 'idle' | 'connecting' | 'active' | 'ended'
@@ -9,6 +10,8 @@ interface VoiceCallState {
 }
 
 export function useVoiceCall(profileId: string) {
+    const { user } = useAuth()
+
     const [state, setState] = useState<VoiceCallState>({
         callState: 'idle',
         isMuted: false,
@@ -56,10 +59,14 @@ export function useVoiceCall(profileId: string) {
             const processor = audioContextRef.current.createScriptProcessor(4096, 1, 1)
             processorRef.current = processor
 
-            // 4. Connect to Socket.io (Main Server on port 4000)
+            // 4. Connect to Socket.io server
+            if (!user?.id) {
+                throw new Error('You must be logged in to make voice calls')
+            }
+
             const socket = io('http://localhost:4000', {
                 auth: {
-                    userId: profileId,
+                    userId: user.id,
                 },
             })
             socketRef.current = socket
@@ -141,7 +148,7 @@ export function useVoiceCall(profileId: string) {
                 error: errorMessage,
             }))
         }
-    }, [profileId, state.isMuted])
+    }, [profileId, state.isMuted, user])
 
     // End call
     const endCall = useCallback(() => {

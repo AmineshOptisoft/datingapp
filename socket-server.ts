@@ -8,7 +8,7 @@ import VoiceSession from "./models/VoiceSession";
 import { buildEnhancedPersona } from "./lib/voice-persona-enhanced";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
 
-dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 const PORT = 4000;
 const MONGO_URI =
@@ -248,8 +248,8 @@ async function processUserAudio(
     const recentMessages = call.session.messages.slice(-5).map((m: any) => m.content);
     const personaPrompt = buildEnhancedPersona(call.profile, transcript, recentMessages);
 
-    // 3. Generate AI response with Grok-3
-    const history = call.session.messages.slice(-10);
+    // 3. Generate AI response with Grok-3 (optimized: last 5 messages only)
+    const history = call.session.messages.slice(-5);
     const llmMessages = [
       { role: 'system', content: personaPrompt },
       ...history.map((m: any) => ({ role: m.role, content: m.content })),
@@ -285,15 +285,44 @@ async function processUserAudio(
   }
 }
 
+// Helper: Convert raw PCM to WAV format
+function encodeWAV(samples: Buffer, sampleRate: number, numChannels: number = 1, bitsPerSample: number = 16): Buffer {
+  const dataLength = samples.length;
+  const buffer = Buffer.alloc(44 + dataLength);
+
+  // WAV Header
+  buffer.write('RIFF', 0);                                    // ChunkID
+  buffer.writeUInt32LE(36 + dataLength, 4);                  // ChunkSize
+  buffer.write('WAVE', 8);                                    // Format
+  buffer.write('fmt ', 12);                                   // Subchunk1ID
+  buffer.writeUInt32LE(16, 16);                              // Subchunk1Size (PCM)
+  buffer.writeUInt16LE(1, 20);                               // AudioFormat (PCM)
+  buffer.writeUInt16LE(numChannels, 22);                     // NumChannels
+  buffer.writeUInt32LE(sampleRate, 24);                      // SampleRate
+  buffer.writeUInt32LE(sampleRate * numChannels * bitsPerSample / 8, 28); // ByteRate
+  buffer.writeUInt16LE(numChannels * bitsPerSample / 8, 32); // BlockAlign
+  buffer.writeUInt16LE(bitsPerSample, 34);                   // BitsPerSample
+  buffer.write('data', 36);                                   // Subchunk2ID
+  buffer.writeUInt32LE(dataLength, 40);                      // Subchunk2Size
+
+  // Copy audio data
+  samples.copy(buffer, 44);
+
+  return buffer;
+}
+
 // ElevenLabs STT
 async function transcribeAudio(audioBuffer: Buffer, sampleRate: number): Promise<string> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('Missing ELEVENLABS_API_KEY');
 
+  // Convert raw PCM to proper WAV format
+  const wavBuffer = encodeWAV(audioBuffer, sampleRate);
+
   const formData = new FormData();
-  const audioBlob = new Blob([audioBuffer as any], { type: 'audio/wav' });
+  const audioBlob = new Blob([new Uint8Array(wavBuffer)], { type: 'audio/wav' });
   formData.append('file', audioBlob, 'audio.wav');
-  formData.append('model_id', process.env.ELEVENLABS_STT_MODEL_ID || 'eleven_multilingual_v2');
+  formData.append('model_id', process.env.ELEVENLABS_STT_MODEL_ID || 'scribe_v2');
   formData.append('language_code', 'en');
 
   const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
@@ -312,7 +341,7 @@ async function transcribeAudio(audioBuffer: Buffer, sampleRate: number): Promise
 
 // Grok LLM with Grok-3 model
 async function callGrok(messages: { role: string; content: string }[]) {
-  const apiKey = process.env.GROK_API_KEY;
+  const apiKey = (process.env.GROK_API_KEY || '').trim().replace(/\.$/, '');
   if (!apiKey) throw new Error('Missing GROK_API_KEY');
 
   const response = await fetch('https://api.x.ai/v1/chat/completions', {
@@ -325,17 +354,26 @@ async function callGrok(messages: { role: string; content: string }[]) {
       model: 'grok-3',
       temperature: 0.85,
       stream: false,
+      max_tokens: 100,
       messages,
     }),
   });
 
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload?.error?.message || 'Grok request failed');
+    console.error('❌ Grok API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: payload
+    });
+    throw new Error(payload?.error?.message || `Grok request failed: ${response.status}`);
   }
 
   const choice = payload.choices?.[0]?.message;
-  if (!choice) throw new Error('Empty Grok response');
+  if (!choice) {
+    console.error('❌ Empty Grok response:', payload);
+    throw new Error('Empty Grok response');
+  }
 
   if (Array.isArray(choice.content)) {
     return choice.content.map((c: any) => c.text || c).join('').trim();
