@@ -26,7 +26,7 @@ export default function QuickProfilePreview() {
     try {
       const response = await fetch('/api/ai-profiles/public');
       const data = await response.json();
-      
+
       if (data.success) {
         // Show only first 3 profiles as preview
         setProfiles(data.data.slice(0, 3));
@@ -81,11 +81,11 @@ export default function QuickProfilePreview() {
           >
             <div className="relative">
               <img
-                src={profile.avatar || '/default-avatar.jpg'}
+                src={profile.avatar || 'https://img.freepik.com/premium-psd/avatar-portraits-with-digital-enhancements_1297808-1612.jpg?w=1380'}
                 alt={profile.name}
                 className="w-12 h-12 rounded-full object-cover"
                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                  (e.target as HTMLImageElement).src = '/default-avatar.jpg';
+                  (e.target as HTMLImageElement).src = 'https://img.freepik.com/premium-psd/avatar-portraits-with-digital-enhancements_1297808-1612.jpg?w=1380';
                 }}
               />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>

@@ -11,14 +11,32 @@ interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileImage?: string;
+  aiProfileId?: string;
+  aiProfileName?: string;
+  pricing?: {
+    monthlyPrice: number;
+    annualPrice: number;
+    lifetimePrice: number;
+    monthlyPriceId: string;
+    annualPriceId: string;
+    lifetimePriceId: string;
+  };
 }
 
-export default function PricingModal({ isOpen, onClose, profileImage }: PricingModalProps) {
+export default function PricingModal({
+  isOpen,
+  onClose,
+  profileImage,
+  aiProfileId,
+  aiProfileName,
+  pricing
+}: PricingModalProps) {
   const [timeLeft, setTimeLeft] = useState({
     hours: 4,
     minutes: 59,
     seconds: 38,
   });
+  const [loading, setLoading] = useState<'monthly' | 'annual' | 'lifetime' | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,7 +68,55 @@ export default function PricingModal({ isOpen, onClose, profileImage }: PricingM
     return () => clearInterval(timer);
   }, [isOpen]);
 
+  const handleCheckout = async (planType: 'monthly' | 'annual' | 'lifetime') => {
+    if (!aiProfileId) {
+      alert('AI Profile information is missing. Please try again.');
+      return;
+    }
+
+    setLoading(planType);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to continue');
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          aiProfileId,
+          planType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        alert(data.message || 'Failed to create checkout session');
+        setLoading(null);
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('Failed to initiate checkout. Please try again.');
+      setLoading(null);
+    }
+  };
+
   const formatTime = (num: number) => String(num).padStart(2, '0');
+
+  // Use pricing data if available, otherwise use hardcoded values
+  const annualPrice = pricing?.annualPrice || 14.99;
+  const lifetimePrice = pricing?.lifetimePrice || 24.99;
+  const monthlyPrice = pricing?.monthlyPrice || 3.99;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -112,35 +178,47 @@ export default function PricingModal({ isOpen, onClose, profileImage }: PricingM
             </div>
 
             {/* Annual Deal */}
-            <button className="w-full bg-linear-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 rounded-2xl p-5 mb-3 transition-all transform hover:scale-[1.02] shadow-xl">
+            <button
+              onClick={() => handleCheckout('annual')}
+              disabled={loading !== null}
+              className="w-full bg-linear-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 rounded-2xl p-5 mb-3 transition-all transform hover:scale-[1.02] shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div className="text-white text-center">
                 <div className="text-base font-bold mb-1">ANNUAL DEAL</div>
                 <div className="text-3xl font-bold mb-1">
-                  $14.99 <span className="text-base font-normal">/yr</span>
+                  ${annualPrice.toFixed(2)} <span className="text-base font-normal">/yr</span>
                 </div>
                 <div className="text-xs opacity-90 leading-tight">
-                  Save big with yearly access! Best value for long-term connections.
+                  {loading === 'annual' ? 'Processing...' : 'Save big with yearly access! Best value for long-term connections.'}
                 </div>
               </div>
             </button>
 
             {/* Lifetime Deal */}
-            <button className="w-full bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl p-5 mb-3 transition-all transform hover:scale-[1.02] shadow-xl">
+            <button
+              onClick={() => handleCheckout('lifetime')}
+              disabled={loading !== null}
+              className="w-full bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl p-5 mb-3 transition-all transform hover:scale-[1.02] shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div className="text-white text-center">
                 <div className="text-base font-bold mb-1">LIFETIME</div>
                 <div className="text-3xl font-bold mb-1">
-                  $24.99 <span className="text-base font-normal">/lifetime</span>
+                  ${lifetimePrice.toFixed(2)} <span className="text-base font-normal">/lifetime</span>
                 </div>
                 <div className="text-xs opacity-90 leading-tight">
-                  Pay once, own forever! No recurring fees, unlimited access.
+                  {loading === 'lifetime' ? 'Processing...' : 'Pay once, own forever! No recurring fees, unlimited access.'}
                 </div>
               </div>
             </button>
 
             {/* Monthly Option */}
-            <button className="w-full bg-gray-200 hover:bg-gray-300 rounded-2xl p-4 transition-all">
+            <button
+              onClick={() => handleCheckout('monthly')}
+              disabled={loading !== null}
+              className="w-full bg-gray-200 hover:bg-gray-300 rounded-2xl p-4 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div className="text-gray-700 text-center font-semibold text-sm">
-                Continue at 3.99/month
+                {loading === 'monthly' ? 'Processing...' : `Continue at ${monthlyPrice.toFixed(2)}/month`}
               </div>
             </button>
           </div>

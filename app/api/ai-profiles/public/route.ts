@@ -196,6 +196,7 @@ export async function POST(request: NextRequest) {
         voiceSimilarity: profile.voiceSimilarity,
         voiceStyle: profile.voiceStyle,
         voiceDescription: profile.voiceDescription,
+        pricing: profile.pricing,
       }
     });
 

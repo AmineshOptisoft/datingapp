@@ -159,8 +159,8 @@ export default function BoyDetailPage() {
               <button
                 onClick={() => setActiveTab('bio')}
                 className={`pb-3 px-4 font-semibold transition-all ${activeTab === 'bio'
-                    ? 'text-white border-b-2 border-purple-500'
-                    : 'text-zinc-400 hover:text-white'
+                  ? 'text-white border-b-2 border-purple-500'
+                  : 'text-zinc-400 hover:text-white'
                   }`}
               >
                 👤 Bio
@@ -168,8 +168,8 @@ export default function BoyDetailPage() {
               <button
                 onClick={() => setActiveTab('features')}
                 className={`pb-3 px-4 font-semibold transition-all ${activeTab === 'features'
-                    ? 'text-white border-b-2 border-purple-500'
-                    : 'text-zinc-400 hover:text-white'
+                  ? 'text-white border-b-2 border-purple-500'
+                  : 'text-zinc-400 hover:text-white'
                   }`}
               >
                 ⚙️ Features
@@ -177,8 +177,8 @@ export default function BoyDetailPage() {
               <button
                 onClick={() => setActiveTab('pricing')}
                 className={`pb-3 px-4 font-semibold transition-all ${activeTab === 'pricing'
-                    ? 'text-white border-b-2 border-purple-500'
-                    : 'text-zinc-400 hover:text-white'
+                  ? 'text-white border-b-2 border-purple-500'
+                  : 'text-zinc-400 hover:text-white'
                   }`}
               >
                 💰 Pricing
@@ -273,6 +273,9 @@ export default function BoyDetailPage() {
         isOpen={isPricingModalOpen}
         onClose={() => setIsPricingModalOpen(false)}
         profileImage={primaryPhoto}
+        aiProfileId={(profile as any).profileId}
+        aiProfileName={profile.name}
+        pricing={(profile as any).pricing}
       />
 
       {/* Footer */}
