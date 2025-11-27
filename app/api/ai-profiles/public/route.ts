@@ -47,7 +47,17 @@ export async function GET(request: NextRequest) {
 // Get specific AI profile details (also public for initial browsing)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      // Handle empty or malformed JSON (e.g., from aborted requests)
+      return NextResponse.json(
+        { success: false, message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
     const { profileId } = body;
 
     // if (process.env.NODE_ENV === "development") {
@@ -57,7 +67,7 @@ export async function POST(request: NextRequest) {
     //     console.error("Dev auto-reseed of AI profiles (detail POST) failed:", seedError);
     //   }
     // }
-    
+
     if (!profileId || typeof profileId !== 'string') {
       return NextResponse.json(
         { success: false, message: "Valid Profile ID required" },
@@ -67,20 +77,20 @@ export async function POST(request: NextRequest) {
 
     const AIProfile = (await import("@/models/AIProfile")).default;
     await (await import("@/lib/db")).default();
-    
-    const profile = await AIProfile.findOne({ 
-      profileId, 
-      profileType: 'ai', 
-      isActive: true 
+
+    const profile = await AIProfile.findOne({
+      profileId,
+      profileType: 'ai',
+      isActive: true
     });
-    
+
     if (!profile) {
       return NextResponse.json(
         { success: false, message: "Profile not found" },
         { status: 404 }
       );
     }
-    
+
     // Return detailed profile for chat initialization and profile detail view
     return NextResponse.json({
       success: true,
@@ -188,7 +198,7 @@ export async function POST(request: NextRequest) {
         voiceDescription: profile.voiceDescription,
       }
     });
-    
+
   } catch (error) {
     console.error("❌ Error fetching specific AI profile:", error);
     return NextResponse.json({

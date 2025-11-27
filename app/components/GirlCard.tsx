@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { RoutePrefix } from '@/types/ai-profile';
+import { getProfileRoute } from '@/lib/url-helpers';
 
 interface GirlCardProps {
   legacyId: number;
@@ -13,9 +14,6 @@ interface GirlCardProps {
   badgeHot?: boolean;
   badgePro?: boolean;
 }
-
-const getProfileRoute = (routePrefix: RoutePrefix, legacyId: number) =>
-  `/${routePrefix}/${legacyId}`;
 
 export default function GirlCard({
   legacyId,
@@ -31,7 +29,7 @@ export default function GirlCard({
 
   return (
     <Link
-      href={getProfileRoute(routePrefix, legacyId)}
+      href={getProfileRoute(routePrefix, name, cardTitle, legacyId)}
       className="group relative bg-zinc-800 rounded-2xl overflow-hidden hover:ring-2 hover:ring-pink-500 transition-all duration-300 cursor-pointer block"
     >
       <div className="relative aspect-3/4 overflow-hidden">
