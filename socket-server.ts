@@ -354,7 +354,7 @@ async function callGrok(messages: { role: string; content: string }[]) {
       model: 'grok-3',
       temperature: 0.85,
       stream: false,
-      max_tokens: 100,
+      max_tokens: 80,
       messages,
     }),
   });
