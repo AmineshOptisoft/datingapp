@@ -5,6 +5,7 @@ import {
     handleSubscriptionCreated,
     handleSubscriptionUpdated,
     handleSubscriptionDeleted,
+    handlePaymentIntentSucceeded,
 } from "@/lib/stripe-utils";
 import dbConnect from "@/lib/db";
 import Stripe from "stripe";
@@ -70,10 +71,10 @@ export async function POST(request: NextRequest) {
 
         // Handle different event types
         switch (event.type) {
-            // case "checkout.session.completed":
-            //     const session = event.data.object as Stripe.Checkout.Session;
-            //     await handleCheckoutCompleted(session);
-            //     break;
+            case "checkout.session.completed":
+                const session = event.data.object as Stripe.Checkout.Session;
+                await handleCheckoutCompleted(session);
+                break;
 
             case "customer.subscription.created":
                 const subscriptionCreated = event.data.object as Stripe.Subscription;
@@ -92,13 +93,18 @@ export async function POST(request: NextRequest) {
                 await handleSubscriptionDeleted(subscriptionDeleted);
                 break;
 
-            // case "invoice.payment_succeeded":
-            //     console.log("✅ Payment succeeded for invoice:", event.data.object.id);
-            //     break;
+            case "invoice.payment_succeeded":
+                console.log("✅ Payment succeeded for invoice:", event.data.object.id);
+                break;
 
-            // case "invoice.payment_failed":
-            //     console.log("❌ Payment failed for invoice:", event.data.object.id);
-            //     break;
+            case "invoice.payment_failed":
+                console.log("❌ Payment failed for invoice:", event.data.object.id);
+                break;
+
+            case "payment_intent.succeeded":
+                const paymentIntent = event.data.object as Stripe.PaymentIntent;
+                await handlePaymentIntentSucceeded(paymentIntent);
+                break;
 
             default:
                 console.log(`Unhandled event type: ${event.type}`);

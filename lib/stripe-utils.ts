@@ -163,39 +163,42 @@ export async function createCheckoutSession(
         // ensure stripe customer exists
         const customerId = await getOrCreateStripeCustomer(userId, email, name);
 
-        // ▶️ Always create a subscription
-        const session = await stripe.checkout.sessions.create({
+        // Prepare metadata
+        const metadata = {
+            userId: userId.toString(),
+            aiProfileId: aiProfileId.toString(),
+            planType,
+            amount: amount.toString(),
+        };
+
+        // Create checkout session with different configurations for payment vs subscription
+        const sessionConfig: Stripe.Checkout.SessionCreateParams = {
             customer: customerId,
             mode: planType === 'lifetime' ? "payment" : "subscription",
-
             line_items: [
                 {
                     price: priceId,
                     quantity: 1,
                 },
             ],
-
             success_url: `http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `http://localhost:3000/checkout/cancel`,
+            metadata,
+        };
 
-            // Metadata on checkout session (optional but useful)
-            metadata: {
-                userId: userId.toString(),
-                aiProfileId: aiProfileId.toString(),
-                planType,
-                amount: amount.toString(),
-            },
+        // Add payment_intent_data for one-time payments (lifetime)
+        if (planType === 'lifetime') {
+            sessionConfig.payment_intent_data = {
+                metadata,
+            };
+        } else {
+            // Add subscription_data for recurring payments (monthly/annual)
+            sessionConfig.subscription_data = {
+                metadata,
+            };
+        }
 
-            // 👇 MOST IMPORTANT: metadata on subscription
-            subscription_data: {
-                metadata: {
-                    userId: userId.toString(),
-                    aiProfileId: aiProfileId.toString(),
-                    planType,
-                    amount: amount.toString(),
-                },
-            },
-        });
+        const session = await stripe.checkout.sessions.create(sessionConfig);
 
         return session;
     } catch (error) {
@@ -306,6 +309,36 @@ export async function handleCheckoutCompleted(
 
         // For lifetime purchases (one-time payment)
         if (metadata.planType === 'lifetime') {
+            // Retrieve the full session with expanded line_items to get price info
+            const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ['line_items', 'payment_intent'],
+            });
+
+            let priceId = '';
+            let amount = parseInt(metadata.amount || '0');
+            let currency = session.currency || 'usd';
+
+            // Get price info from line items if available
+            if (fullSession.line_items && fullSession.line_items.data.length > 0) {
+                const lineItem = fullSession.line_items.data[0];
+                if (lineItem.price) {
+                    priceId = lineItem.price.id;
+                    amount = lineItem.price.unit_amount || amount;
+                }
+            }
+
+            // Get payment intent metadata if available (as backup)
+            if (fullSession.payment_intent && typeof fullSession.payment_intent === 'object') {
+                const paymentIntent = fullSession.payment_intent as Stripe.PaymentIntent;
+                if (paymentIntent.metadata) {
+                    // Use payment intent metadata if session metadata is incomplete
+                    metadata.userId = metadata.userId || paymentIntent.metadata.userId;
+                    metadata.aiProfileId = metadata.aiProfileId || paymentIntent.metadata.aiProfileId;
+                    metadata.planType = metadata.planType || paymentIntent.metadata.planType;
+                    metadata.amount = metadata.amount || paymentIntent.metadata.amount;
+                }
+            }
+
             await UserSubscription.create({
                 userId: metadata.userId,
                 aiProfileId: metadata.aiProfileId,
@@ -314,9 +347,9 @@ export async function handleCheckoutCompleted(
                 planType: 'lifetime',
                 status: 'active',
                 cancelAtPeriodEnd: false,
-                priceId: session.line_items?.data[0]?.price?.id || '',
-                amount: parseInt(metadata.amount || '0'),
-                currency: session.currency || 'usd',
+                priceId,
+                amount,
+                currency,
             });
 
             console.log('✅ Lifetime purchase completed:', session.id);
@@ -340,6 +373,87 @@ export async function handleCheckoutCompleted(
         }
     } catch (error) {
         console.error('Error handling checkout completed:', error);
+        throw error;
+    }
+}
+
+/**
+ * Handle payment intent succeeded event (backup for lifetime purchases)
+ */
+export async function handlePaymentIntentSucceeded(
+    paymentIntent: Stripe.PaymentIntent
+): Promise<void> {
+    try {
+        const metadata = paymentIntent.metadata;
+
+        if (!metadata || !metadata.userId || !metadata.aiProfileId || !metadata.planType) {
+            console.log('Payment intent missing metadata, likely not a lifetime purchase:', paymentIntent.id);
+            return;
+        }
+
+        // Only process lifetime purchases
+        if (metadata.planType !== 'lifetime') {
+            console.log('Payment intent is not for lifetime plan, skipping:', paymentIntent.id);
+            return;
+        }
+
+        // Check if we already created a subscription for this payment
+        const existingSubscription = await UserSubscription.findOne({
+            userId: metadata.userId,
+            aiProfileId: metadata.aiProfileId,
+            planType: 'lifetime',
+            amount: paymentIntent.amount,
+        });
+
+        if (existingSubscription) {
+            console.log('Lifetime subscription already exists for this payment, skipping:', paymentIntent.id);
+            return;
+        }
+
+        // Try to find priceId from the checkout session
+        let priceId = '';
+
+        // Search for checkout sessions with this payment intent
+        const sessions = await stripe.checkout.sessions.list({
+            payment_intent: paymentIntent.id,
+            limit: 1,
+        });
+
+        if (sessions.data.length > 0) {
+            const session = await stripe.checkout.sessions.retrieve(sessions.data[0].id, {
+                expand: ['line_items'],
+            });
+
+            if (session.line_items && session.line_items.data.length > 0) {
+                const lineItem = session.line_items.data[0];
+                if (lineItem.price) {
+                    priceId = lineItem.price.id;
+                }
+            }
+        }
+
+        // Fallback: if still no priceId, we can't create the record
+        if (!priceId) {
+            console.error('Could not retrieve priceId for payment intent:', paymentIntent.id);
+            throw new Error('Missing priceId for lifetime purchase');
+        }
+
+        await UserSubscription.create({
+            userId: metadata.userId,
+            aiProfileId: metadata.aiProfileId,
+            stripeSubscriptionId: paymentIntent.id, // Use payment intent ID
+            stripeCustomerId: paymentIntent.customer as string,
+            planType: 'lifetime',
+            status: 'active',
+            cancelAtPeriodEnd: false,
+            priceId,
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+        });
+
+        console.log('✅ Lifetime purchase completed via payment_intent.succeeded:', paymentIntent.id);
+    } catch (error) {
+        console.error('Error handling payment intent succeeded:', error);
         throw error;
     }
 }
