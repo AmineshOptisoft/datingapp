@@ -1,24 +1,79 @@
 "use client";
 
 import React from "react";
+import { getProfileRoute } from "@/lib/url-helpers";
 
 export default function CheckoutSuccessPage() {
+    const [redirecting, setRedirecting] = React.useState(true);
+    const [profileRoute, setProfileRoute] = React.useState<string | null>(null);
+
     React.useEffect(() => {
-        // Get session_id from URL params
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('session_id');
+        const handleRedirect = async () => {
+            // Get session_id and profileId from URL params
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id');
+            const profileId = params.get('profileId');
 
-        if (sessionId) {
-            console.log('Checkout successful! Session ID:', sessionId);
-        }
+            if (sessionId) {
+                console.log('Checkout successful! Session ID:', sessionId);
+            }
 
-        // Redirect to dashboard after 3 seconds
-        const timer = setTimeout(() => {
-            window.location.href = '/dashboard';
-        }, 3000);
+            // If we have a profileId, fetch the profile to get the correct route
+            if (profileId) {
+                try {
+                    const response = await fetch(`/api/ai-profiles/public`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ profileId }),
+                    });
 
-        return () => clearTimeout(timer);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const profile = data.profile || data.data;
+
+                        if (profile) {
+                            // Generate SEO-friendly URL
+                            const seoUrl = getProfileRoute(
+                                profile.routePrefix,
+                                profile.name,
+                                profile.cardTitle,
+                                profile.legacyId
+                            );
+                            setProfileRoute(seoUrl);
+                        } else {
+                            // Fallback to dashboard if no profile data
+                            setProfileRoute('/dashboard');
+                        }
+                    } else {
+                        // Fallback to dashboard if API fails
+                        setProfileRoute('/dashboard');
+                    }
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                    // Fallback to dashboard
+                    setProfileRoute('/dashboard');
+                }
+            } else {
+                // No profileId, redirect to dashboard
+                setProfileRoute('/dashboard');
+            }
+        };
+
+        handleRedirect();
     }, []);
+
+    // Redirect after route is determined
+    React.useEffect(() => {
+        if (profileRoute) {
+            const timer = setTimeout(() => {
+                window.location.href = profileRoute;
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [profileRoute]);
 
     return (
         <div className="success-container">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   FaMars,
   FaVenus,
@@ -31,6 +31,8 @@ interface SidebarProps {
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const [activeNav, setActiveNav] = useState('');
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentCategory = searchParams.get('category');
 
   const navigationItems = [
     { icon: FaMars, label: 'For Male', id: 'male', href: '/for-men' },
@@ -108,11 +110,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${
-                    pathname === item.href
-                      ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
-                      : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
-                  }`}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === item.href
+                    ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
+                    : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -149,13 +150,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     pathname: '/',
                     query: { category: item.label },
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${
-                    pathname === '/' &&
-                    typeof window !== 'undefined' &&
-                    new URLSearchParams(window.location.search).get('category') === item.label
-                      ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
-                      : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
-                  }`}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === '/' && currentCategory === item.label
+                    ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
+                    : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <item.icon className="w-4 h-4 shrink-0" />
