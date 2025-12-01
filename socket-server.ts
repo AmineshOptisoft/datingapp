@@ -8,6 +8,50 @@ import VoiceSession from "./models/VoiceSession";
 import { buildEnhancedPersona } from "./lib/voice-persona-enhanced";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
 
+// ==================== TYPES & INTERFACES ====================
+
+interface VoiceSettings {
+  voiceId: string;
+  voiceModelId: string;
+  stability: number;
+  similarity: number;
+  style: number;
+}
+
+interface ActiveCall {
+  userId: string;
+  profileId: string;
+  audioBuffer: AudioBuffer;
+  session: any; // VoiceSession document
+  profile: any; // AIProfile document
+  isProcessing: boolean; // Processing lock
+  isSaving: boolean; // Save lock to prevent parallel saves
+  startTime: number; // Call start timestamp
+  timeoutId?: NodeJS.Timeout; // Call timeout handler
+  lastActivityTime: number; // Last activity timestamp
+}
+
+interface LLMMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+enum ErrorType {
+  PROFILE_NOT_FOUND = 'PROFILE_NOT_FOUND',
+  STT_FAILED = 'STT_FAILED',
+  LLM_FAILED = 'LLM_FAILED',
+  TTS_FAILED = 'TTS_FAILED',
+  PROCESSING_ERROR = 'PROCESSING_ERROR',
+  CALL_TIMEOUT = 'CALL_TIMEOUT',
+  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+}
+
+interface VoiceError {
+  type: ErrorType;
+  message: string;
+  details?: any;
+}
+
 dotenv.config({ path: '.env.local' });
 
 const PORT = 4000;
@@ -35,14 +79,118 @@ const io = new SocketIOServer(server, {
   },
 });
 
+// ==================== CONSTANTS ====================
+
+const CALL_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 20; // Max 20 processing requests per minute (prevent ElevenLabs blocking)
+
+// ==================== STATE MANAGEMENT ====================
+
 // Store active voice call sessions
-const activeCalls = new Map<string, {
-  userId: string
-  profileId: string
-  audioBuffer: AudioBuffer
-  session: any
-  profile: any
-}>();
+const activeCalls = new Map<string, ActiveCall>();
+
+// Rate limiting: Map<userId, Array<timestamp>>
+const rateLimitMap = new Map<string, number[]>();
+
+// ==================== HELPER FUNCTIONS ====================
+
+// Check if user is rate limited
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const userRequests = rateLimitMap.get(userId) || [];
+
+  // Remove old timestamps outside the window
+  const recentRequests = userRequests.filter(
+    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS
+  );
+
+  // Update map
+  rateLimitMap.set(userId, recentRequests);
+
+  // Check if limit exceeded
+  if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
+    return false; // Rate limited
+  }
+
+  // Add current request
+  recentRequests.push(now);
+  rateLimitMap.set(userId, recentRequests);
+
+  return true; // Not rate limited
+}
+
+// Setup call timeout
+function setupCallTimeout(socketId: string, call: ActiveCall): void {
+  // Clear existing timeout if any
+  if (call.timeoutId) {
+    clearTimeout(call.timeoutId);
+  }
+
+  // Set new timeout
+  call.timeoutId = setTimeout(() => {
+    console.log(`⏰ Call timeout for user ${call.userId}`);
+
+    // Get socket and emit timeout event
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.emit('voice:error', {
+        type: ErrorType.CALL_TIMEOUT,
+        message: 'Call exceeded maximum duration (30 minutes)',
+      });
+      socket.emit('voice:ended', { reason: 'timeout' });
+    }
+
+    // Cleanup
+    cleanupCall(socketId, call);
+  }, CALL_TIMEOUT_MS);
+}
+
+// Cleanup call resources
+async function cleanupCall(socketId: string, call: ActiveCall): Promise<void> {
+  try {
+    // Clear timeout
+    if (call.timeoutId) {
+      clearTimeout(call.timeoutId);
+    }
+
+    // Save session (with lock to prevent parallel saves)
+    if (call.session && !call.isSaving) {
+      call.isSaving = true;
+      try {
+        await call.session.save();
+      } catch (saveError) {
+        console.error('Error saving session:', saveError);
+      } finally {
+        call.isSaving = false;
+      }
+    }
+
+    // Clear audio buffer
+    if (call.audioBuffer) {
+      call.audioBuffer.clear();
+    }
+
+    // Remove from active calls
+    activeCalls.delete(socketId);
+
+    console.log(`🧹 Cleaned up call for user ${call.userId}`);
+  } catch (error) {
+    console.error('Error cleaning up call:', error);
+  }
+}
+
+// Send typed error to client
+function sendVoiceError(
+  socket: any,
+  type: ErrorType,
+  message: string,
+  details?: any
+): void {
+  const error: VoiceError = { type, message, details };
+  socket.emit('voice:error', error);
+  console.error(`❌ ${type}: ${message}`, details || '');
+}
 
 io.use((socket, next) => {
   const userId = socket.handshake.auth.userId;
@@ -58,11 +206,11 @@ io.on("connection", (socket) => {
 
   // Save and broadcast user message + AI reply sequence
   socket.on("send_message", async (data) => {
-    const { message } = data;
+    const { message, profileId } = data;
     if (!message) return;
 
     const userId = socket.data.userId;
-    const aiBotId = "ai_bot";
+    const aiBotId = profileId || "ai_bot";
 
     try {
       // Save user's message (receiver = AI bot)
@@ -74,23 +222,84 @@ io.on("connection", (socket) => {
         message,
       });
 
-      // Simulate AI reply here (replace with real AI logic)
-      const aiReply = `AI reply to: "${message}"`;
+      // Generate AI reply using Grok
+      try {
+        // Load AI profile if profileId provided
+        let aiPersona = "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
 
-      // Save AI reply (sender = AI bot, receiver = user)
-      await Message.create({
-        sender: aiBotId,
-        receiver: userId,
-        message: aiReply,
-      });
+        if (profileId && profileId !== "ai_bot") {
+          const profile = await AIProfile.findOne({
+            profileId,
+            profileType: 'ai',
+            isActive: true,
+          });
 
-      socket.emit("receive_message", {
-        sender: aiBotId,
-        receiver: userId,
-        message: aiReply,
-      });
+          if (profile) {
+            aiPersona = buildEnhancedPersona(profile, message, []);
+          }
+        }
+
+        // Get recent conversation history
+        const recentMessages = await Message.find({
+          $or: [
+            { sender: userId, receiver: aiBotId },
+            { sender: aiBotId, receiver: userId },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .lean();
+
+        // Build conversation context
+        const conversationHistory: LLMMessage[] = recentMessages
+          .reverse()
+          .map((msg: any) => ({
+            role: msg.sender === userId ? 'user' : 'assistant',
+            content: msg.message,
+          }));
+
+        // Generate AI response
+        const llmMessages: LLMMessage[] = [
+          { role: 'system', content: aiPersona },
+          ...conversationHistory.slice(-8), // Last 8 messages for context
+          { role: 'user', content: message },
+        ];
+
+        const aiReply = await callGrok(llmMessages);
+
+        // Save AI reply (sender = AI bot, receiver = user)
+        await Message.create({
+          sender: aiBotId,
+          receiver: userId,
+          message: aiReply,
+        });
+
+        socket.emit("receive_message", {
+          sender: aiBotId,
+          receiver: userId,
+          message: aiReply,
+        });
+      } catch (aiError) {
+        console.error("AI generation error:", aiError);
+
+        // Fallback response
+        const fallbackReply = "I'm having trouble connecting right now. Could you try again?";
+
+        await Message.create({
+          sender: aiBotId,
+          receiver: userId,
+          message: fallbackReply,
+        });
+
+        socket.emit("receive_message", {
+          sender: aiBotId,
+          receiver: userId,
+          message: fallbackReply,
+        });
+      }
     } catch (err) {
       console.error("Error saving message:", err);
+      socket.emit("message_error", { message: "Failed to send message" });
     }
   });
 
@@ -132,7 +341,7 @@ io.on("connection", (socket) => {
       });
 
       if (!profile) {
-        socket.emit('voice:error', { message: 'Profile not found' });
+        sendVoiceError(socket, ErrorType.PROFILE_NOT_FOUND, 'AI profile not found or inactive');
         return;
       }
 
@@ -148,15 +357,25 @@ io.on("connection", (socket) => {
 
       // Initialize audio buffer
       const audioBuffer = new AudioBuffer();
+      const now = Date.now();
 
-      // Store active call
-      activeCalls.set(socket.id, {
+      // Store active call with all required properties
+      const call: ActiveCall = {
         userId,
         profileId,
         audioBuffer,
         session,
         profile,
-      });
+        isProcessing: false, // Processing lock
+        isSaving: false, // Save lock
+        startTime: now,
+        lastActivityTime: now,
+      };
+
+      activeCalls.set(socket.id, call);
+
+      // Setup call timeout (30 minutes)
+      setupCallTimeout(socket.id, call);
 
       socket.emit('voice:ready', {
         profileName: profile.name,
@@ -166,7 +385,7 @@ io.on("connection", (socket) => {
       console.log(`✅ Call ready: ${profile.name}`);
     } catch (error) {
       console.error('Error starting call:', error);
-      socket.emit('voice:error', { message: 'Failed to start call' });
+      sendVoiceError(socket, ErrorType.PROCESSING_ERROR, 'Failed to start call', error);
     }
   });
 
@@ -176,23 +395,54 @@ io.on("connection", (socket) => {
       const call = activeCalls.get(socket.id);
       if (!call) return;
 
+      // Update last activity time
+      call.lastActivityTime = Date.now();
+
       // Convert base64 to buffer
       const audioChunk = Buffer.from(audio, 'base64');
       call.audioBuffer.addChunk(audioChunk);
 
       // Check if user stopped speaking (silence detection)
       if (detectSilence(call.audioBuffer)) {
+        // Check if already processing (prevent race condition)
+        if (call.isProcessing) {
+          console.log('⚠️ Already processing audio, skipping...');
+          return;
+        }
+
+        // Check rate limiting (only when starting new processing)
+        if (!checkRateLimit(call.userId)) {
+          sendVoiceError(
+            socket,
+            ErrorType.RATE_LIMIT_EXCEEDED,
+            'Too many requests. Please slow down.'
+          );
+          call.audioBuffer.clear(); // Clear buffer to prevent repeated errors
+          return;
+        }
+
         console.log('🔇 Silence detected, processing audio...');
+
+        // Set processing lock
+        call.isProcessing = true;
 
         // Get complete audio
         const completeAudio = call.audioBuffer.getAudio();
         call.audioBuffer.clear();
 
         // Process audio in background
-        processUserAudio(socket, call, completeAudio, sampleRate);
+        processUserAudio(socket, call, completeAudio, sampleRate)
+          .finally(() => {
+            // Release processing lock
+            call.isProcessing = false;
+          });
       }
     } catch (error) {
       console.error('Error processing audio chunk:', error);
+      const call = activeCalls.get(socket.id);
+      if (call) {
+        call.isProcessing = false; // Release lock on error
+      }
     }
   });
 
@@ -209,16 +459,16 @@ io.on("connection", (socket) => {
   socket.on('voice:end', async () => {
     const call = activeCalls.get(socket.id);
     if (call) {
-      await call.session.save();
-      activeCalls.delete(socket.id);
-      console.log(`📴 Call ended: User ${call.userId}`);
+      await cleanupCall(socket.id, call);
+      socket.emit('voice:ended', { reason: 'user_ended' });
+      console.log(`📴 Call ended by user: ${call.userId}`);
     }
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     const call = activeCalls.get(socket.id);
     if (call) {
-      activeCalls.delete(socket.id);
+      await cleanupCall(socket.id, call);
       console.log(`🔌 Voice call disconnected: ${call.userId}`);
     }
     console.log(`User disconnected: ${socket.data.userId}`);
@@ -278,7 +528,15 @@ async function processUserAudio(
       call.session.messages = call.session.messages.slice(-50);
     }
 
-    await call.session.save();
+    // Save with lock to prevent parallel saves
+    if (!call.isSaving) {
+      call.isSaving = true;
+      try {
+        await call.session.save();
+      } finally {
+        call.isSaving = false;
+      }
+    }
   } catch (error) {
     console.error('Error processing user audio:', error);
     socket.emit('voice:error', { message: 'Failed to process audio' });
@@ -330,7 +588,7 @@ async function transcribeAudio(audioBuffer: Buffer, sampleRate: number): Promise
     headers: { 'xi-api-key': apiKey },
     body: formData,
   });
-
+  console.log(response)
   if (!response.ok) {
     throw new Error(`STT error: ${await response.text()}`);
   }
@@ -354,7 +612,7 @@ async function callGrok(messages: { role: string; content: string }[]) {
       model: 'grok-3',
       temperature: 0.85,
       stream: false,
-      max_tokens: 80,
+      max_tokens: 90,
       messages,
     }),
   });
@@ -399,7 +657,7 @@ async function synthesizeSpeech(text: string, settings: any): Promise<string> {
     },
     body: JSON.stringify({
       text,
-      model_id: settings.voiceModelId || 'eleven_monolingual_v1',
+      model_id: settings.voiceModelId || 'eleven_multilingual_v2',
       voice_settings: {
         stability: settings.stability ?? 0.55,
         similarity_boost: settings.similarity ?? 0.75,

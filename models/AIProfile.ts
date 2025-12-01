@@ -373,7 +373,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
 );
 
 // Indexes for better performance
-AIProfileSchema.index({ profileId: 1 });
+// Note: profileId index is auto-created by unique: true constraint
 AIProfileSchema.index({ isActive: 1 });
 AIProfileSchema.index({ age: 1, location: 1 });
 AIProfileSchema.index({ interests: 1 });
