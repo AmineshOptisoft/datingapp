@@ -1,8 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+
+function SidebarWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  return (
+    <Suspense fallback={<div className="w-[200px] bg-zinc-900/50 animate-pulse" />}>
+      <Sidebar isOpen={isOpen} onClose={onClose} />
+    </Suspense>
+  );
+}
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,7 +31,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
       {/* Desktop Sidebar - Only renders above 768px */}
       <div className="hidden md:block">
-        <Sidebar isOpen={true} onClose={() => {}} />
+        <SidebarWrapper isOpen={true} onClose={() => {}} />
       </div>
       
       {/* Main Content */}
@@ -31,7 +39,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {/* Mobile Sidebar - Only renders below 768px as overlay */}
         {isSidebarOpen && (
           <div className="md:hidden fixed inset-0 z-50">
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <SidebarWrapper isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
           </div>
         )}
         {/* Header */}
@@ -45,4 +53,5 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     </div>
   );
 }
+
 

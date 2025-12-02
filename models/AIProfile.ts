@@ -113,7 +113,7 @@ export interface IAIProfile {
   responseDelay: number; // in seconds
 
   // PRICING
-  pricing: {
+  pricing?: {
     monthlyPrice: number,
     annualPrice: number,
     lifetimePrice: number,

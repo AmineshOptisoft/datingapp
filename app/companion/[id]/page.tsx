@@ -50,10 +50,21 @@ export default function CompanionDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950 text-white">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Loading profile...</h1>
-          <p className="text-zinc-400">Hang tight while we fetch your AI companion.</p>
+      <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
+          {/* Image Skeleton */}
+          <div className="relative rounded-2xl overflow-hidden aspect-3/4 bg-zinc-800/50"></div>
+          
+          {/* Info Skeleton */}
+          <div className="space-y-4">
+            <div className="h-12 bg-zinc-800/50 rounded-lg w-3/4"></div>
+            <div className="h-6 bg-zinc-800/50 rounded-lg w-1/2"></div>
+            <div className="flex gap-3 mt-6">
+              <div className="h-12 bg-zinc-800/50 rounded-xl w-40"></div>
+              <div className="h-12 bg-zinc-800/50 rounded-xl w-40"></div>
+            </div>
+            <div className="h-64 bg-zinc-800/50 rounded-2xl mt-6"></div>
+          </div>
         </div>
       </div>
     );
