@@ -305,7 +305,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                         handleVerify();
                       }
                     }}
-                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center text-2xl font-mono tracking-[1em] text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center text-2xl font-mono tracking-widest text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     placeholder="000000"
                     maxLength={6}
                     disabled={isLoading}
