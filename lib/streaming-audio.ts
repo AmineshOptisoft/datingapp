@@ -2,7 +2,7 @@ export class AudioBuffer {
     private chunks: Buffer[] = []
     private lastSpeechTime: number = Date.now()
     private silenceThreshold: number = 0.01 // Adjusted for better detection
-    private minSilenceDuration: number = 1500 // Reduced to 1.5 seconds (more responsive)
+    private minSilenceDuration: number = 1000 // 1 second for faster streaming responses
     private lastChunkTime: number = Date.now()
 
     addChunk(chunk: Buffer) {

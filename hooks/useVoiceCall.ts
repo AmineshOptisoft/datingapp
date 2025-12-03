@@ -85,6 +85,7 @@ export function useVoiceCall(profileId: string) {
                 setState(prev => ({ ...prev, isAISpeaking: true }))
             })
 
+            // Non-streaming audio (fallback)
             socket.on('voice:ai-audio', (audioData: { base64: string }) => {
                 // Play AI voice
                 if (audioPlayerRef.current) {
@@ -96,6 +97,39 @@ export function useVoiceCall(profileId: string) {
                     audioPlayerRef.current.onended = () => {
                         setState(prev => ({ ...prev, isAISpeaking: false }))
                         URL.revokeObjectURL(audioUrl)
+                    }
+                }
+            })
+
+            // Streaming audio chunks (new!)
+            const audioChunks: Blob[] = []
+            socket.on('voice:ai-audio-chunk', (data: { chunk: string; isLast: boolean }) => {
+                if (data.isLast) {
+                    // End of stream - play all accumulated chunks
+                    if (audioChunks.length > 0 && audioPlayerRef.current) {
+                        const fullBlob = new Blob(audioChunks, { type: 'audio/mpeg' })
+                        const audioUrl = URL.createObjectURL(fullBlob)
+                        audioPlayerRef.current.src = audioUrl
+                        audioPlayerRef.current.play()
+
+                        audioPlayerRef.current.onended = () => {
+                            setState(prev => ({ ...prev, isAISpeaking: false }))
+                            URL.revokeObjectURL(audioUrl)
+                            audioChunks.length = 0 // Clear chunks
+                        }
+                    } else {
+                        setState(prev => ({ ...prev, isAISpeaking: false }))
+                    }
+                } else if (data.chunk) {
+                    // Accumulate audio chunk
+                    const chunkBlob = base64ToBlob(data.chunk, 'audio/mpeg')
+                    audioChunks.push(chunkBlob)
+                    
+                    // Start playing as soon as we have first chunk
+                    if (audioChunks.length === 1 && audioPlayerRef.current && !audioPlayerRef.current.src) {
+                        const audioUrl = URL.createObjectURL(chunkBlob)
+                        audioPlayerRef.current.src = audioUrl
+                        audioPlayerRef.current.play().catch(e => console.error('Play error:', e))
                     }
                 }
             })

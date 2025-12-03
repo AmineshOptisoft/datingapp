@@ -16,6 +16,7 @@ interface Message {
   sender: string;
   receiver: string;
   message: string;
+  createdAt?: Date | string;
 }
 
 interface SocketContextType {

@@ -34,7 +34,7 @@ interface Message {
   sender: string;
   receiver: string;
   message: string;
-  createdAt?: Date;
+  createdAt?: Date | string;
 }
 
 export default function MessagesClient() {
@@ -46,6 +46,8 @@ export default function MessagesClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasProcessedUrlParam = useRef(false);
@@ -56,12 +58,17 @@ export default function MessagesClient() {
   // Fetch all conversations when component mounts
   useEffect(() => {
     const fetchConversations = async () => {
-      if (!userId) return;
+      if (!userId) {
+        setIsLoadingConversations(false);
+        return;
+      }
 
+      setIsLoadingConversations(true);
       try {
         const response = await fetch(`/api/conversations?userId=${userId}`);
         if (!response.ok) {
           console.error('Failed to fetch conversations');
+          setIsLoadingConversations(false);
           return;
         }
 
@@ -95,6 +102,8 @@ export default function MessagesClient() {
         }
       } catch (error) {
         console.error('Error fetching conversations:', error);
+      } finally {
+        setIsLoadingConversations(false);
       }
     };
 
@@ -234,48 +243,91 @@ export default function MessagesClient() {
 
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
-          {filteredConversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => {
-                setSelectedConversation(conv.id);
-                if (conv.profileId) {
-                  setSelectedProfileId(conv.profileId);
-                  fetchConversation(conv.profileId);
-                }
-              }}
-              className={`w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 ${selectedConversation === conv.id ? 'bg-white/10' : ''
-                }`}
-            >
-              {/* Avatar */}
-              <div className="relative shrink-0">
-                <img
-                  src={conv.avatar}
-                  alt={conv.name}
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-                {conv.online && (
-                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900" />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 text-left">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold text-white truncate">{conv.name}</h3>
-                  <span className="text-xs text-zinc-500 shrink-0">{conv.timestamp}</span>
+          {isLoadingConversations ? (
+            <div className="flex flex-col items-center justify-center h-full py-12">
+              <div className="relative w-20 h-20 mb-6">
+                {/* Outer spinning ring */}
+                <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full"></div>
+                {/* Inner spinning ring */}
+                <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin"></div>
+                {/* Pulsing center */}
+                <div className="absolute inset-3 bg-purple-500/20 rounded-full animate-pulse"></div>
+                {/* Icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
-                <p className={`text-sm truncate ${conv.unread ? 'text-white font-medium' : 'text-zinc-400'}`}>
-                  {conv.lastMessage}
-                </p>
               </div>
+              <div className="text-center space-y-2">
+                <p className="text-white font-semibold text-lg">Loading Conversations</p>
+                <p className="text-zinc-400 text-sm">Finding your connections...</p>
+              </div>
+              {/* Animated dots */}
+              <div className="flex gap-2 mt-4">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-12 px-6">
+              <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <p className="text-white font-semibold text-lg mb-2">No Conversations Yet</p>
+              <p className="text-zinc-400 text-sm text-center">Start chatting with AI companions from their profiles</p>
+            </div>
+          ) : (
+            filteredConversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => {
+                  setSelectedConversation(conv.id);
+                  if (conv.profileId) {
+                    setIsLoadingMessages(true);
+                    setSelectedProfileId(conv.profileId);
+                    fetchConversation(conv.profileId);
+                    // Simulate loading delay for smooth transition
+                    setTimeout(() => setIsLoadingMessages(false), 800);
+                  }
+                }}
+                className={`w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-all duration-300 border-b border-white/5 ${
+                  selectedConversation === conv.id ? 'bg-white/10' : ''
+                  }`}
+              >
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  <img
+                    src={conv.avatar}
+                    alt={conv.name}
+                    className="w-14 h-14 rounded-full object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                  {conv.online && (
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse" />
+                  )}
+                </div>
 
-              {/* Unread Indicator */}
-              {conv.unread && (
-                <div className="w-2 h-2 bg-purple-500 rounded-full shrink-0" />
-              )}
-            </button>
-          ))}
+                {/* Content */}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-semibold text-white truncate">{conv.name}</h3>
+                    <span className="text-xs text-zinc-500 shrink-0">{conv.timestamp}</span>
+                  </div>
+                  <p className={`text-sm truncate ${conv.unread ? 'text-white font-medium' : 'text-zinc-400'}`}>
+                    {conv.lastMessage}
+                  </p>
+                </div>
+
+                {/* Unread Indicator */}
+                {conv.unread && (
+                  <div className="w-2 h-2 bg-purple-500 rounded-full shrink-0 animate-pulse" />
+                )}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -334,47 +386,81 @@ export default function MessagesClient() {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {socketMessages.map((message, index) => {
-              const isOwn = message.sender === userId;
-              return (
-                <div
-                  key={message._id || index}
-                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isOwn && (
-                    <img
-                      src={selectedConv.avatar}
-                      alt={selectedConv.name}
-                      className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
-                    />
-                  )}
-
-                  <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-                    <div
-                      className={`rounded-2xl px-4 py-2 ${
-                        isOwn
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-zinc-800/50 text-white'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.message}</p>
-                    </div>
-
-                    {/* <span className="text-xs text-zinc-500 mt-1">
-                      {message.createdAt 
-                        ? new Date(message.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        : 'now'
-                      }
-                    </span> */}
+            {isLoadingMessages ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="relative w-24 h-24 mb-6">
+                  {/* Animated gradient ring */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-20 animate-spin" style={{ animationDuration: '3s' }}></div>
+                  {/* Main spinner */}
+                  <div className="absolute inset-2 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
+                  {/* Inner glow */}
+                  <div className="absolute inset-4 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full animate-pulse"></div>
+                  {/* Center icon */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-purple-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
                   </div>
-
-                  {isOwn && (
-                    <div className="w-8 ml-2" />
-                  )}
                 </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
+                <div className="text-center space-y-2">
+                  <p className="text-white font-semibold text-lg">Loading Messages</p>
+                  <p className="text-zinc-400 text-sm">Preparing your conversation...</p>
+                </div>
+                {/* Shimmer effect */}
+                <div className="flex gap-2 mt-6">
+                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '200ms' }}></div>
+                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '400ms' }}></div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {socketMessages.map((message, index) => {
+                  const isOwn = message.sender === userId;
+                  return (
+                    <div
+                      key={message._id || index}
+                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {!isOwn && (
+                        <img
+                          src={selectedConv.avatar}
+                          alt={selectedConv.name}
+                          className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
+                        />
+                      )}
+
+                      <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+                        <div
+                          className={`rounded-2xl px-4 py-2 transition-all duration-300 hover:scale-[1.02] ${
+                            isOwn
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-zinc-800/50 text-white'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.message}</p>
+                        </div>
+
+                        <span className="text-xs text-zinc-500 mt-1">
+                          {(() => {
+                            const timestamp = message.createdAt;
+                            return timestamp 
+                              ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                              : 'now';
+                          })()}
+                        </span>
+                      </div>
+
+                      {isOwn && (
+                        <div className="w-8 ml-2" />
+                      )}
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </>
+            )}
           </div>
 
           {/* Message Input */}

@@ -311,7 +311,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     },
     voiceModelId: {
       type: String,
-      default: "eleven_monolingual_v1",
+      default: "eleven_flash_v2_5",  // Updated to Flash v2.5 for low latency
     },
     voiceAgentId: {
       type: String,

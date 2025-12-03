@@ -11,7 +11,7 @@ export interface UserTone {
 
 export interface OptimizedContext {
   systemPrompt: string;
-  conversationHistory: Array<{ role: string; content: string }>;
+  conversationHistory: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   tokenEstimate: number;
 }
 
@@ -125,7 +125,10 @@ CRITICAL RULES (HIGHEST PRIORITY):
 6. Respond like a real person texting, not an AI assistant or therapist`;
 
   // Optimize conversation history - keep last 6 messages (3 exchanges)
-  const recentHistory = conversationHistory.slice(-6);
+  const recentHistory = conversationHistory.slice(-6).map(msg => ({
+    role: msg.role as "system" | "user" | "assistant",
+    content: msg.content
+  }));
   
   // Estimate tokens (rough: 1 token ≈ 4 characters)
   const tokenEstimate = Math.ceil(
