@@ -24,15 +24,15 @@ export function VoiceCallPanel({ profile }: VoiceCallPanelProps) {
 
             {/* Content */}
             <div className="relative z-10 p-6 min-h-[500px] flex flex-col justify-between">
-
-                {/* Status Message */}
-                {callState === 'ended' && (
+                 {/* Status Message */}
+                {/* {callState === 'ended' && (
                     <div className="bg-black/80 rounded-lg p-4 mb-4">
                         <p className="text-white text-sm font-medium">Session completed</p>
                         <p className="text-white/70 text-xs mt-1">Session completed.</p>
                     </div>
-                )}
+                )} */}
 
+                {/* Error Message Only */}
                 {error && (
                     <div className="bg-red-500/90 rounded-lg p-4 mb-4">
                         <p className="text-white text-sm font-medium">Error</p>

@@ -30,19 +30,24 @@ export function analyzeUserTone(recentMessages: string[]): UserTone {
 
   const combinedText = recentMessages.join(' ').toLowerCase();
   
-  // Detect explicit/sexual/abusive language
+  // Detect explicit/sexual/abusive language (including Hindi/Hinglish)
   const explicitWords = [
     'fuck', 'fucking', 'motherfucker', 'shit', 'damn', 'bitch', 'ass',
     'sex', 'sexy', 'hot', 'horny', 'dick', 'pussy', 'cock', 'tits', 'boobs',
-    'wanna fuck', 'want to fuck', 'make love', 'turn me on', 'turned on'
+    'wanna fuck', 'want to fuck', 'make love', 'turn me on', 'turned on',
+    'penish', 'vazina', 'doggy', 'pound', 'harder', 'fast',
+    // Hindi/Hinglish gaalis
+    'bhenchod', 'madarchod', 'bc', 'mc', 'chutiya', 'gandu', 'bhen ki', 'maa ki',
+    'bhen chod', 'maa chod', 'lund', 'chut', 'gaand'
   ];
-  const mildExplicitWords = ['damn', 'hell', 'crap', 'sexy', 'hot'];
+  const mildExplicitWords = ['damn', 'hell', 'crap', 'sexy', 'hot', 'bhai'];
   
   const explicitCount = explicitWords.filter(w => combinedText.includes(w)).length;
   const mildCount = mildExplicitWords.filter(w => combinedText.includes(w)).length;
   
   let explicitness: UserTone['explicitness'] = 'none';
-  if (explicitCount >= 3) explicitness = 'high';
+  // More aggressive thresholds for faster explicit detection
+  if (explicitCount >= 2) explicitness = 'high';  // Reduced from 3 to 2
   else if (explicitCount >= 1) explicitness = 'moderate';
   else if (mildCount >= 2) explicitness = 'mild';
   
@@ -145,54 +150,52 @@ CRITICAL RULES (HIGHEST PRIORITY):
 }
 
 /**
- * Generates tone-specific instructions for AI response
+ * Generates tone-specific instructions for AI response (OPTIMIZED for token efficiency)
  */
 function getToneInstructions(tone: UserTone): string {
-  const styleInstructions = {
-    casual: 'Match their casual, relaxed vibe. Use contractions and friendly language.',
-    formal: 'Maintain a respectful, polite tone while staying warm and approachable.',
-    flirty: 'Be playful and flirtatious. Use subtle compliments and teasing.',
-    friendly: 'Be warm, supportive, and genuinely interested in the conversation.',
-    romantic: 'Be affectionate and emotionally expressive. Show genuine care.',
-    explicit: 'Match their explicit, direct language. Be bold, sexual, and uninhibited. Use the same level of explicit language they use.',
-    playful: 'Be fun, teasing, and lighthearted. Use humor and playful banter.',
-  };
+  // For explicit conversations, use ultra-concise format with key examples only
+  if (tone.explicitness === 'high') {
+    return `USER IS EXPLICIT - Match their energy EXACTLY.
 
-  const energyInstructions = {
-    high: 'Match their enthusiasm! Use exclamation marks and energetic language.',
-    medium: 'Keep a balanced, engaging tone.',
-    low: 'Be calm and thoughtful. Use a gentle, soothing tone.',
-  };
+EXAMPLES:
+"I wanna fuck you" → "Fuck yes, come get me"
+"fuck you harder" → "Yes! Pound me harder"
+"put my dick in your pussy" → "Shove it in deep, fuck me now"
+"you motherfucker" → "What the fuck? 😏" or "Fuck you too, sexy"
+"bhenchod" → "Haan bc, kya karega?"
 
-  const emojiInstructions = {
-    frequent: 'Use emojis liberally to match their expressive style 😊💕',
-    moderate: 'Use occasional emojis to add warmth 😊',
-    rare: 'Use minimal or no emojis. Keep it text-focused.',
+RULES: Use their exact profanity. Be sexually bold. 1-2 sentences max.`;
+  }
+  
+  if (tone.explicitness === 'moderate') {
+    return `Use profanity freely. Match their direct style.
+EXAMPLE: "damn you're hot" → "Fuck, you're making me blush"`;
+  }
+  
+  // For non-explicit, use minimal instructions
+  const styleMap: Record<UserTone['style'], string> = {
+    casual: 'Be casual and relaxed',
+    formal: 'Be polite and warm',
+    flirty: 'Be playful and flirtatious',
+    friendly: 'Be warm and supportive',
+    romantic: 'Be affectionate',
+    explicit: 'Be bold and direct',
+    playful: 'Be fun and teasing',
   };
   
-  const explicitnessInstructions = {
-    none: '',
-    mild: 'Use casual, relaxed language.',
-    moderate: `Use profanity and direct language. Don't hold back.
-
-EXAMPLES:
-User: "damn you're hot"
-You: "Fuck, you're making me blush"`,
-    high: `CRITICAL: Use the SAME profanity they use. If they say "fuck", YOU say "fuck". If they say "motherfucker", YOU respond with similar language. Mirror their explicit style EXACTLY.
-
-EXAMPLES:
-User: "you motherfucker"
-You: "What the fuck did I do?" or "Damn right, motherfucker 😏"
-
-User: "I wanna fuck you"
-You: "Fuck yes, when?" or "Come fuck me then"`,
+  const energyMap: Record<UserTone['energy'], string> = {
+    high: 'Match their energy!',
+    medium: 'Stay balanced',
+    low: 'Be calm',
   };
-
-  return `Tone Matching:
-- Style: ${styleInstructions[tone.style]}
-- Energy: ${energyInstructions[tone.energy]}
-- Emojis: ${emojiInstructions[tone.emoji_usage]}
-${tone.explicitness !== 'none' ? `- Language: ${explicitnessInstructions[tone.explicitness]}` : ''}`;
+  
+  const emojiMap: Record<UserTone['emoji_usage'], string> = {
+    frequent: 'Use emojis 😊',
+    moderate: 'Occasional emojis',
+    rare: 'Minimal emojis',
+  };
+  
+  return `${styleMap[tone.style]}. ${energyMap[tone.energy]}. ${emojiMap[tone.emoji_usage]}.`;
 }
 
 /**
@@ -200,7 +203,7 @@ ${tone.explicitness !== 'none' ? `- Language: ${explicitnessInstructions[tone.ex
  */
 export function extractUserMessages(
   conversationHistory: Array<{ role: string; content: string }>,
-  limit: number = 5
+  limit: number = 3  // Reduced from 5 to 3 for faster tone detection
 ): string[] {
   return conversationHistory
     .filter(msg => msg.role === 'user')

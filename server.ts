@@ -403,10 +403,14 @@ async function transcribeAudio(
   return (result.text || result.transcription || "").trim();
 }
 
-async function callGrok(messages: { role: string; content: string }[]) {
+async function callGrok(messages: { role: string; content: string }[], userTone?: any) {
   console.log("messages", messages);
   const apiKey = (process.env.GROK_API_KEY || "").trim().replace(/\.$/, "");
   if (!apiKey) throw new Error("Missing GROK_API_KEY");
+  
+  // Dynamic temperature: 1.0 for high explicitness, 0.95 for normal
+  const temperature = userTone?.explicitness === 'high' ? 1.0 : 0.95;
+  
   const response = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -415,7 +419,7 @@ async function callGrok(messages: { role: string; content: string }[]) {
     },
     body: JSON.stringify({
       model: "grok-3",
-      temperature: 0.95,  // Increased for more creative/bold responses
+      temperature,
       stream: false,
       max_tokens: 50,  // Reduced for shorter, more natural responses
       messages,
@@ -723,7 +727,7 @@ app.prepare().then(async () => {
             );
             systemPrompt = optimized.systemPrompt;
             optimizedHistory = optimized.conversationHistory as LLMMessage[];
-            console.log(`💡 Token estimate: ${optimized.tokenEstimate} | User tone: ${userTone.style}`);
+            console.log(`💡 Token estimate: ${optimized.tokenEstimate} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`);
           } else {
             systemPrompt = "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
             optimizedHistory = conversationHistory.slice(-6) as LLMMessage[];
@@ -736,7 +740,7 @@ app.prepare().then(async () => {
             { role: "user", content: message },
           ];
 
-          const aiReply = await callGrok(llmMessages);
+          const aiReply = await callGrok(llmMessages, userTone);
           await Message.create({
             sender: aiBotId,
             receiver: userId,
