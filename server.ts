@@ -8,10 +8,10 @@ import Message from "./models/Message";
 import AIProfile from "./models/AIProfile";
 import VoiceSession from "./models/VoiceSession";
 import { buildEnhancedPersona } from "./lib/voice-persona-enhanced";
-import { 
-  analyzeUserTone, 
-  optimizeConversationContext, 
-  extractUserMessages 
+import {
+  analyzeUserTone,
+  optimizeConversationContext,
+  extractUserMessages,
 } from "./lib/chat-tone-analyzer";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
 
@@ -173,7 +173,7 @@ async function processUserAudio(
       return;
     }
     console.log(`📝 User said: "${transcript}"`);
-    
+
     // Build conversation history from session messages (last 6 messages = 3 exchanges)
     const conversationHistory: LLMMessage[] = call.session.messages
       .slice(-6)
@@ -181,11 +181,11 @@ async function processUserAudio(
         role: m.role as "system" | "user" | "assistant",
         content: m.content,
       }));
-    
+
     // Analyze user's tone from recent voice messages
     const userMessages = extractUserMessages(conversationHistory);
     const userTone = analyzeUserTone(userMessages);
-    
+
     // Optimize context for token efficiency (same as text chat)
     const optimized = optimizeConversationContext(
       call.profile,
@@ -193,50 +193,57 @@ async function processUserAudio(
       conversationHistory,
       userTone
     );
-    
+
     // Print token estimate to terminal for voice calls
-    console.log(`🎙️ Voice Call Token Estimate: ${optimized.tokenEstimate} tokens | User Tone: ${userTone.style} | Energy: ${userTone.energy}`);
-    
+    console.log(
+      `🎙️ Voice Call Token Estimate: ${optimized.tokenEstimate} tokens | User Tone: ${userTone.style} | Energy: ${userTone.energy}`
+    );
+
     // Build optimized LLM messages
     const llmMessages: LLMMessage[] = [
       { role: "system", content: optimized.systemPrompt },
       ...optimized.conversationHistory,
       { role: "user", content: transcript },
     ];
-    
+
     // STREAMING PIPELINE: Stream LLM → Stream TTS → Send audio chunks
     let fullResponse = "";
     let sentenceBuffer = "";
     let chunkCount = 0;
     let firstAudioTime: number | null = null;
-    
+
     socket.emit("voice:ai-speaking");
     const voiceSettings = getVoiceSettings(call.profile);
-    
+
     try {
       // Stream LLM response token by token
       for await (const token of callGrokStreaming(llmMessages)) {
         fullResponse += token;
         sentenceBuffer += token;
-        
+
         // When we have a complete sentence or enough text, stream TTS
         const hasSentenceEnd = /[.!?]\s*$/.test(sentenceBuffer);
         const hasEnoughText = sentenceBuffer.length > 40;
-        
+
         if (hasSentenceEnd || hasEnoughText) {
           const textToSpeak = sentenceBuffer.trim();
           if (textToSpeak) {
             // Stream TTS for this chunk of text
-            for await (const audioChunk of synthesizeSpeechStreaming(textToSpeak, voiceSettings)) {
+            for await (const audioChunk of synthesizeSpeechStreaming(
+              textToSpeak,
+              voiceSettings
+            )) {
               if (!firstAudioTime) {
                 firstAudioTime = Date.now();
-                console.log(`⏱️ Time to first audio: ${firstAudioTime - startTime}ms`);
+                console.log(
+                  `⏱️ Time to first audio: ${firstAudioTime - startTime}ms`
+                );
               }
-              
+
               // Send audio chunk to client immediately
               socket.emit("voice:ai-audio-chunk", {
                 chunk: audioChunk.toString("base64"),
-                isLast: false
+                isLast: false,
               });
               chunkCount++;
             }
@@ -244,32 +251,41 @@ async function processUserAudio(
           sentenceBuffer = "";
         }
       }
-      
+
       // Handle any remaining text
       if (sentenceBuffer.trim()) {
-        for await (const audioChunk of synthesizeSpeechStreaming(sentenceBuffer.trim(), voiceSettings)) {
+        for await (const audioChunk of synthesizeSpeechStreaming(
+          sentenceBuffer.trim(),
+          voiceSettings
+        )) {
           if (!firstAudioTime) {
             firstAudioTime = Date.now();
-            console.log(`⏱️ Time to first audio: ${firstAudioTime - startTime}ms`);
+            console.log(
+              `⏱️ Time to first audio: ${firstAudioTime - startTime}ms`
+            );
           }
-          
+
           socket.emit("voice:ai-audio-chunk", {
             chunk: audioChunk.toString("base64"),
-            isLast: false
+            isLast: false,
           });
           chunkCount++;
         }
       }
-      
+
       // Signal end of audio stream
       socket.emit("voice:ai-audio-chunk", { chunk: "", isLast: true });
-      
+
       const totalTime = Date.now() - startTime;
       console.log(`💬 AI response: "${fullResponse}"`);
-      console.log(`🎵 Sent ${chunkCount} audio chunks | Total time: ${totalTime}ms`);
-      
+      console.log(
+        `🎵 Sent ${chunkCount} audio chunks | Total time: ${totalTime}ms`
+      );
     } catch (streamError) {
-      console.error("❌ Streaming error, falling back to non-streaming:", streamError);
+      console.error(
+        "❌ Streaming error, falling back to non-streaming:",
+        streamError
+      );
       // Fallback to non-streaming if streaming fails
       const aiResponse = await callGrok(llmMessages);
       console.log(`💬 AI response (fallback): "${aiResponse}"`);
@@ -277,7 +293,7 @@ async function processUserAudio(
       socket.emit("voice:ai-audio", { base64: audioBase64 });
       fullResponse = aiResponse;
     }
-    
+
     // Save to database
     call.session.messages.push(
       { role: "user", content: transcript, createdAt: new Date() },
@@ -403,14 +419,16 @@ async function transcribeAudio(
   return (result.text || result.transcription || "").trim();
 }
 
-async function callGrok(messages: { role: string; content: string }[], userTone?: any) {
-  console.log("messages", messages);
+async function callGrok(
+  messages: { role: string; content: string }[],
+  userTone?: any
+) {
   const apiKey = (process.env.GROK_API_KEY || "").trim().replace(/\.$/, "");
   if (!apiKey) throw new Error("Missing GROK_API_KEY");
-  
+
   // Dynamic temperature: 1.0 for high explicitness, 0.95 for normal
-  const temperature = userTone?.explicitness === 'high' ? 1.0 : 0.95;
-  
+  const temperature = userTone?.explicitness === "high" ? 1.0 : 0.95;
+
   const response = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -421,7 +439,7 @@ async function callGrok(messages: { role: string; content: string }[], userTone?
       model: "grok-3",
       temperature,
       stream: false,
-      max_tokens: 50,  // Reduced for shorter, more natural responses
+      max_tokens: 50, // Reduced for shorter, more natural responses
       messages,
     }),
   });
@@ -451,10 +469,12 @@ async function callGrok(messages: { role: string; content: string }[], userTone?
 }
 
 // Streaming version of callGrok for lower latency
-async function* callGrokStreaming(messages: { role: string; content: string }[]) {
+async function* callGrokStreaming(
+  messages: { role: string; content: string }[]
+) {
   const apiKey = (process.env.GROK_API_KEY || "").trim().replace(/\.$/, "");
   if (!apiKey) throw new Error("Missing GROK_API_KEY");
-  
+
   const response = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -464,7 +484,7 @@ async function* callGrokStreaming(messages: { role: string; content: string }[])
     body: JSON.stringify({
       model: "grok-3",
       temperature: 0.95,
-      stream: true,  // Enable streaming
+      stream: true, // Enable streaming
       max_tokens: 50,
       messages,
     }),
@@ -551,9 +571,9 @@ async function* synthesizeSpeechStreaming(text: string, settings: any) {
   if (!apiKey) throw new Error("Missing ELEVENLABS_API_KEY");
   const voiceId = settings.voiceId || process.env.ELEVENLABS_FEMALE_VOICE_ID;
   if (!voiceId) throw new Error("Missing voice ID");
-  
+
   const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,  // Streaming endpoint
+    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, // Streaming endpoint
     {
       method: "POST",
       headers: {
@@ -563,7 +583,7 @@ async function* synthesizeSpeechStreaming(text: string, settings: any) {
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_flash_v2_5",  // Ultra-low latency model
+        model_id: "eleven_flash_v2_5", // Ultra-low latency model
         voice_settings: {
           stability: settings.stability ?? 0.55,
           similarity_boost: settings.similarity ?? 0.75,
@@ -674,6 +694,11 @@ app.prepare().then(async () => {
       if (!message) return;
       const userId = socket.data.userId;
       const aiBotId = profileId || "ai_bot";
+
+      console.log(
+        `📨 send_message event received: "${message}" from user ${userId}`
+      );
+
       try {
         await Message.create({ sender: userId, receiver: aiBotId, message });
         socket.emit("receive_message", {
@@ -703,12 +728,24 @@ app.prepare().then(async () => {
             .limit(10)
             .lean();
 
+          console.log(`📚 Fetched ${recentMessages.length} messages from DB`);
+          console.log(
+            `📚 Last 3 messages:`,
+            recentMessages
+              .slice(0, 3)
+              .map((m) => ({ sender: m.sender, message: m.message }))
+          );
+
           const conversationHistory: LLMMessage[] = recentMessages
             .reverse()
             .map((msg: any) => ({
               role: msg.sender === userId ? "user" : "assistant",
               content: msg.message,
             }));
+
+          console.log(
+            `📜 conversationHistory length: ${conversationHistory.length}`
+          );
 
           // Analyze user's tone from recent messages
           const userMessages = extractUserMessages(conversationHistory);
@@ -727,18 +764,25 @@ app.prepare().then(async () => {
             );
             systemPrompt = optimized.systemPrompt;
             optimizedHistory = optimized.conversationHistory as LLMMessage[];
-            console.log(`💡 Token estimate: ${optimized.tokenEstimate} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`);
+            console.log(
+              `💡 Token estimate: ${optimized.tokenEstimate} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`
+            );
           } else {
-            systemPrompt = "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
+            systemPrompt =
+              "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
             optimizedHistory = conversationHistory.slice(-6) as LLMMessage[];
           }
 
           // Build Grok API messages
+          // NOTE: We don't add the current message again here because it's already
+          // in the database (saved at line 678) and included in optimizedHistory
           const llmMessages: LLMMessage[] = [
             { role: "system", content: systemPrompt },
             ...optimizedHistory,
-            { role: "user", content: message },
           ];
+
+          // Debug log to verify no duplication
+          console.log("messages", llmMessages);
 
           const aiReply = await callGrok(llmMessages, userTone);
           await Message.create({

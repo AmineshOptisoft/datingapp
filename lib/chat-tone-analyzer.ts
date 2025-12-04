@@ -35,7 +35,7 @@ export function analyzeUserTone(recentMessages: string[]): UserTone {
     'fuck', 'fucking', 'motherfucker', 'shit', 'damn', 'bitch', 'ass',
     'sex', 'sexy', 'hot', 'horny', 'dick', 'pussy', 'cock', 'tits', 'boobs',
     'wanna fuck', 'want to fuck', 'make love', 'turn me on', 'turned on',
-    'penish', 'vazina', 'doggy', 'pound', 'harder', 'fast',
+    'penis', 'vagina', 'doggy', 'pound', 'harder', 'fast',
     // Hindi/Hinglish gaalis
     'bhenchod', 'madarchod', 'bc', 'mc', 'chutiya', 'gandu', 'bhen ki', 'maa ki',
     'bhen chod', 'maa chod', 'lund', 'chut', 'gaand'
