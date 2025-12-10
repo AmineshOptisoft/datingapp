@@ -296,6 +296,9 @@ export default function CompanionDetailPage() {
         isOpen={isPricingModalOpen}
         onClose={() => setIsPricingModalOpen(false)}
         profileImage={primaryPhoto}
+        aiProfileId={(profile as any).profileId}
+        aiProfileName={profile.name}
+        pricing={(profile as any).pricing}
       />
 
       {/* Footer */}

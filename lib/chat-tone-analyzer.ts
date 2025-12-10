@@ -16,6 +16,26 @@ export interface OptimizedContext {
 }
 
 /**
+ * More accurate token estimation (closer to real tokenizers)
+ * Uses word count + penalties for special characters and emojis
+ */
+function estimateTokens(text: string): number {
+  // More accurate heuristic:
+  // - Average word is ~1.3 tokens
+  // - Special characters and punctuation add overhead
+  // - Emojis cost more tokens
+  
+  const words = text.split(/\s+/).length;
+  const baseTokens = words * 1.3;
+  
+  // Add penalty for special characters and emojis
+  const specialChars = (text.match(/[^\w\s]/g) || []).length;
+  const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
+  
+  return Math.ceil(baseTokens + (specialChars * 0.3) + (emojiCount * 1.5));
+}
+
+/**
  * Analyzes user's recent messages to detect their communication tone
  */
 export function analyzeUserTone(recentMessages: string[]): UserTone {
@@ -135,12 +155,11 @@ CRITICAL RULES (HIGHEST PRIORITY):
     content: msg.content
   }));
   
-  // Estimate tokens (rough: 1 token ≈ 4 characters)
-  const tokenEstimate = Math.ceil(
-    (systemPrompt.length + 
-     recentHistory.reduce((sum, msg) => sum + msg.content.length, 0) +
-     userMessage.length) / 4
-  );
+  // Estimate tokens using improved word-based calculation
+  const tokenEstimate = 
+    estimateTokens(systemPrompt) +
+    recentHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0) +
+    estimateTokens(userMessage);
 
   return {
     systemPrompt,
@@ -188,7 +207,17 @@ EXAMPLE: "damn you're hot" → "Fuck, you're making me blush"`;
     medium: 'Stay balanced',
     low: 'Be calm',
   };
-  
+//   if (tone.literacy === 'low') {
+//   extra += `
+//     CRITICAL: User uses broken English.
+//     YOU MUST:
+//     - use short sentences
+//     - copy their grammar level
+//     - include occasional typos
+//     - avoid advanced vocabulary
+//     - avoid long paragraphs
+//   `;
+// }
   const emojiMap: Record<UserTone['emoji_usage'], string> = {
     frequent: 'Use emojis 😊',
     moderate: 'Occasional emojis',

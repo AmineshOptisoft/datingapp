@@ -181,8 +181,8 @@ export async function createCheckoutSession(
                     quantity: 1,
                 },
             ],
-            success_url: `http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `http://localhost:3000/checkout/cancel`,
+            success_url: `http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}&profileId=${aiProfileId}`,
+            cancel_url: `http://localhost:3000/checkout/cancel?profileId=${aiProfileId}`,
             metadata,
         };
 

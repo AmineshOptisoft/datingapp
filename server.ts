@@ -404,7 +404,7 @@ async function transcribeAudio(
   formData.append("file", audioBlob, "audio.wav");
   formData.append(
     "model_id",
-    process.env.ELEVENLABS_STT_MODEL_ID || "scribe_v2"
+    process.env.ELEVENLABS_STT_MODEL_ID || "scribe_v2"//  used for speech to text converter 
   );
   formData.append("language_code", "en");
   const response = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
