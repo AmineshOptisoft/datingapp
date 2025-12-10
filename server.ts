@@ -706,6 +706,10 @@ app.prepare().then(async () => {
           receiver: aiBotId,
           message,
         });
+
+        // Emit typing indicator - AI is processing
+        socket.emit("ai_typing_start", { profileId: aiBotId });
+
         try {
           // Fetch AI profile if specific profileId provided
           let profile = null;
@@ -795,6 +799,9 @@ app.prepare().then(async () => {
             receiver: userId,
             message: aiReply,
           });
+
+          // Stop typing indicator - AI finished responding
+          socket.emit("ai_typing_stop", { profileId: aiBotId });
         } catch (aiError) {
           console.error("AI generation error:", aiError);
           const fallbackReply =
@@ -809,6 +816,9 @@ app.prepare().then(async () => {
             receiver: userId,
             message: fallbackReply,
           });
+
+          // Stop typing indicator even on error
+          socket.emit("ai_typing_stop", { profileId: aiBotId });
         }
       } catch (err) {
         console.error("Error saving message:", err);

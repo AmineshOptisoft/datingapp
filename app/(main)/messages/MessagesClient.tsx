@@ -39,7 +39,7 @@ interface Message {
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
-  const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId } = useSocket();
+  const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId, isAITyping } = useSocket();
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messageText, setMessageText] = useState('');
@@ -458,6 +458,59 @@ export default function MessagesClient() {
                     </div>
                   );
                 })}
+                
+                {/* Premium Typing Indicator */}
+                {isAITyping && (
+                  <div className="flex justify-start animate-fadeIn">
+                    {/* Avatar with glow effect */}
+                    <div className="relative shrink-0 mr-3">
+                      <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-md animate-pulse"></div>
+                      <img
+                        src={selectedConv.avatar}
+                        alt={selectedConv.name}
+                        className="relative w-8 h-8 rounded-full object-cover ring-2 ring-purple-500/30"
+                      />
+                    </div>
+                    
+                    {/* Glassmorphism bubble with gradient */}
+                    <div className="relative group">
+                      {/* Gradient background animation */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-2xl blur-sm animate-pulse"></div>
+                      
+                      {/* Main bubble */}
+                      <div className="relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 shadow-lg">
+                        <div className="flex items-center gap-1.5">
+                          {/* Animated dots with gradient */}
+                          <div className="flex items-center gap-1">
+                            <div 
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50" 
+                              style={{ animationDelay: '0ms', animationDuration: '1.4s' }}
+                            ></div>
+                            <div 
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 animate-bounce shadow-lg shadow-pink-500/50" 
+                              style={{ animationDelay: '200ms', animationDuration: '1.4s' }}
+                            ></div>
+                            <div 
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50" 
+                              style={{ animationDelay: '400ms', animationDuration: '1.4s' }}
+                            ></div>
+                          </div>
+                          
+                          {/* Typing text with fade animation */}
+                          <span className="ml-2 text-xs text-zinc-400 font-medium animate-pulse">
+                            typing...
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Shimmer effect on hover */}
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-2xl animate-shimmer"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div ref={messagesEndRef} />
               </>
             )}

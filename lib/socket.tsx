@@ -30,6 +30,7 @@ interface SocketContextType {
   fetchConversation: (profileId: string) => void;
   disconnectSocket: () => void;
   setUserId: (id: string) => void;
+  isAITyping: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -40,6 +41,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [userId, setUserId] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [isAITyping, setIsAITyping] = useState(false);
   const { user } = useAuth();
 
   // Keep socket userId in sync with authenticated user
@@ -88,12 +90,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setMessages(msgs);
     });
 
+    // Listen for AI typing events
+    socket.on("ai_typing_start", () => {
+      setIsAITyping(true);
+    });
+
+    socket.on("ai_typing_stop", () => {
+      setIsAITyping(false);
+    });
+
     socketRef.current = socket;
 
     return () => {
       socket.disconnect();
       setIsConnected(false);
       setMessages([]);
+      setIsAITyping(false);
     };
   }, [userId]);
 
@@ -131,6 +143,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         fetchConversation,
         disconnectSocket,
         setUserId,
+        isAITyping,
       }}
     >
       {children}
