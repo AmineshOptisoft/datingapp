@@ -25,11 +25,12 @@ export async function GET(request: NextRequest) {
     // Get all active AI profiles
     const aiProfiles = await getActiveAIProfiles({
       selectFields:
-        "profileId legacyId routePrefix audienceSegment name age profession location avatar bio tagline interests category monthlyPrice badgeHot badgePro",
+        "_id profileId legacyId routePrefix audienceSegment name age profession location avatar bio tagline interests category monthlyPrice badgeHot badgePro",
     });
     
     // Format profiles for user selection
     const formattedProfiles = aiProfiles.map(profile => ({
+      _id: profile._id,
       id: profile.profileId,
       name: profile.name,
       age: profile.age,

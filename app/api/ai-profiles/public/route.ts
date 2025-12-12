@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const aiProfiles = await getActiveAIProfiles({ segment, category });
 
     const formattedProfiles = aiProfiles.map((profile) => ({
+      _id: profile._id,
       profileId: profile.profileId,
       legacyId: profile.legacyId,
       routePrefix: profile.routePrefix,

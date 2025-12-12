@@ -71,7 +71,8 @@ export async function getActiveAIProfiles(filters: GetProfilesFilters = {}) {
 
     return AIProfile.find(query)
       .select(selectFields)
-      .sort({ legacyId: 1 });
+      .sort({ legacyId: 1 })
+      .lean();
   } catch (error) {
     console.error("❌ Error while fetching AI profiles:", error);
     return [];
