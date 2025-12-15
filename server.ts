@@ -61,7 +61,7 @@ interface VoiceError {
 
 // ==================== CONFIGURATION ====================
 
-dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
