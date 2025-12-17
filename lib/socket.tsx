@@ -99,6 +99,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setIsAITyping(false);
     });
 
+    // Listen for rate limit errors
+    socket.on("rate_limit_exceeded", (data: { message: string; retryAfter?: number }) => {
+      console.warn("⚠️ Rate limit exceeded:", data.message);
+      // Show error notification to user
+      if (typeof window !== 'undefined') {
+        alert(data.message); // Simple alert for now, can be replaced with toast notification
+      }
+    });
+
     socketRef.current = socket;
 
     return () => {

@@ -699,6 +699,16 @@ app.prepare().then(async () => {
         `📨 send_message event received: "${message}" from user ${userId}`
       );
 
+      // Check rate limit to prevent spam and control API costs
+      if (!checkRateLimit(userId)) {
+        console.log(`⚠️ Rate limit exceeded for user ${userId}`);
+        socket.emit("rate_limit_exceeded", {
+          message: "Too many messages. Please wait a moment.",
+          retryAfter: 60, // seconds
+        });
+        return;
+      }
+
       try {
         await Message.create({ sender: userId, receiver: aiBotId, message });
         socket.emit("receive_message", {
