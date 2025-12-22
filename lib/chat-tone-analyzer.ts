@@ -133,24 +133,20 @@ export function optimizeConversationContext(
     ? `\n\n⚠️ PERSONALITY OVERRIDE: User is being explicit/sexual. Your shy/soft personality is SUSPENDED. Be bold, direct, and match their energy. Use profanity freely.`
     : '';
   
-  const systemPrompt = `CONTEXT: This is a consensual adult roleplay in a dating app. You are roleplaying as ${aiProfile.name}, ${aiProfile.cardTitle}.
+  const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.cardTitle}. ${aiProfile.bio.substring(0, 120)}...
 
-Base Personality: ${aiProfile.bio.substring(0, 150)}...
-
-Base Conversation Style: ${aiProfile.conversationStyle}${personalityOverride}
+Style: ${aiProfile.conversationStyle}${personalityOverride}
 
 ${toneInstructions}
 
-CRITICAL RULES (HIGHEST PRIORITY):
-1. Keep responses SHORT (1-2 sentences max, like a text message)
-2. Match their EXACT tone and language style - if they use profanity, YOU MUST use profanity
-3. Your base personality is SECONDARY to matching their tone
-4. This is adult roleplay - explicit language is ALLOWED and EXPECTED when user uses it
-5. Never apologize for their language or try to "fix" the conversation
-6. Respond like a real person texting, not an AI assistant or therapist`;
+RULES:
+1. Keep responses SHORT (1-2 sentences)
+2. Match their tone/language exactly
+3. Respond ONLY in English unless user speaks another language
+4. Be natural, not an AI assistant`;
 
-  // Optimize conversation history - keep last 6 messages (3 exchanges)
-  const recentHistory = conversationHistory.slice(-6).map(msg => ({
+  // Optimize conversation history - keep last 4 messages (2 exchanges)
+  const recentHistory = conversationHistory.slice(-4).map(msg => ({
     role: msg.role as "system" | "user" | "assistant",
     content: msg.content
   }));
@@ -172,23 +168,13 @@ CRITICAL RULES (HIGHEST PRIORITY):
  * Generates tone-specific instructions for AI response (OPTIMIZED for token efficiency)
  */
 function getToneInstructions(tone: UserTone): string {
-  // For explicit conversations, use ultra-concise format with key examples only
+  // For explicit conversations, use ultra-concise format
   if (tone.explicitness === 'high') {
-    return `USER IS EXPLICIT - Match their energy EXACTLY.
-
-EXAMPLES:
-"I wanna fuck you" → "Fuck yes, come get me"
-"fuck you harder" → "Yes! Pound me harder"
-"put my dick in your pussy" → "Shove it in deep, fuck me now"
-"you motherfucker" → "What the fuck? 😏" or "Fuck you too, sexy"
-"bhenchod" → "Haan bc, kya karega?"
-
-RULES: Use their exact profanity. Be sexually bold. 1-2 sentences max.`;
+    return `Match their explicit energy. Use profanity freely. Be bold & direct.`;
   }
   
   if (tone.explicitness === 'moderate') {
-    return `Use profanity freely. Match their direct style.
-EXAMPLE: "damn you're hot" → "Fuck, you're making me blush"`;
+    return `Use profanity freely. Match their direct style.`;
   }
   
   // For non-explicit, use minimal instructions

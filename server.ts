@@ -168,10 +168,18 @@ async function processUserAudio(
   const startTime = Date.now();
   try {
     const transcript = await transcribeAudio(audioBuffer, sampleRate);
-    if (!transcript) {
-      console.log("⚠️ Empty transcription");
+    
+    // Filter out empty, silence, or meaningless transcriptions
+    const silenceMarkers = ['[silence]', '[SILENCE]', 'silence', '...', '嗯', 'uh', 'um', 'hmm', 'mhm', 'uh-huh'];
+    const isSilence = !transcript || 
+                      transcript.trim().length < 2 || 
+                      silenceMarkers.some(marker => transcript.toLowerCase().includes(marker.toLowerCase()));
+    
+    if (isSilence) {
+      console.log(`⚠️ Empty/silence transcription: "${transcript}"`);
       return;
     }
+    
     console.log(`📝 User said: "${transcript}"`);
 
     // Build conversation history from session messages (last 6 messages = 3 exchanges)
@@ -915,14 +923,18 @@ app.prepare().then(async () => {
       try {
         const call = activeCalls.get(socket.id);
         if (!call) return;
+        
+        // Check if already processing BEFORE buffering to prevent race condition
+        if (call.isProcessing) {
+          // console.log("⚠️ Already processing audio, skipping...");
+          return;
+        }
+        
         call.lastActivityTime = Date.now();
         const audioChunk = Buffer.from(audio, "base64");
         call.audioBuffer.addChunk(audioChunk);
+        
         if (detectSilence(call.audioBuffer)) {
-          if (call.isProcessing) {
-            console.log("⚠️ Already processing audio, skipping...");
-            return;
-          }
           if (!checkRateLimit(call.userId)) {
             sendVoiceError(
               socket,
