@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IDYLL - AI Girlfriends",
+  title: "Lily - AI Girlfriends",
   description:
     "AI Girlfriends starting at just $1.99/month - Affordable AI companionship",
 };

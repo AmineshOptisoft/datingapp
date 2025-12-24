@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { SiX, SiYoutube, SiInstagram, SiLinkedin, SiFacebook, SiDiscord } from 'react-icons/si';
 
 export default function Footer() {
@@ -35,7 +37,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* About Idyll */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">About Idyll</h3>
+            <Link href="/" className="inline-block mb-4">
+              <Image
+                src="/lily-logo.svg"
+                alt="Idyll Logo"
+                width={48}
+                height={48}
+                className="w-25 h-auto"
+              />
+            </Link>
+            <h3 className="text-white font-bold text-lg mb-4">About Lily</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">
               Experience meaningful connections with AI companions. Your perfect virtual girlfriend or boyfriend awaits.
             </p>

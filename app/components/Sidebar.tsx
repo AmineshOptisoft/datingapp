@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   FaMars,
@@ -83,14 +84,18 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       `}
       >
         {/* Logo and Close Button */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                <span className="text-black font-bold text-sm">🖼️</span>
-              </div>
-              <span className="text-white font-bold text-xl">IDYLL</span>
-            </div>
+        <div className="px-4 py-3 border-b border-white/10">
+          <div className="flex items-center md:justify-center justify-between">
+            <Link href="/" className="">
+              <Image
+                src="/lily-logo.svg"
+                alt="Idyll Logo"
+                width={40}
+                height={40}
+                className="w-25 h-auto"
+                // className="w-10 h-10"
+              />
+            </Link>
             <button
               onClick={onClose}
               className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
