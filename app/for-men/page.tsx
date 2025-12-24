@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import FAQSection, { type FAQItem } from '../components/FAQSection';
 import { useProfiles } from '@/hooks/useProfiles';
 import type { AIProfileOverview } from '@/types/ai-profile';
+import ProfileCardSkeleton from '@/components/features/profile/ProfileCardSkeleton';
 
 function shuffleArray<T>(array: T[], seed: number = 0): T[] {
   const shuffled = [...array];
@@ -116,7 +117,11 @@ export default function ForMenPage() {
       </section>
 
       {loading && (
-        <div className="text-white text-center py-12">Loading profiles...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <ProfileCardSkeleton key={index} />
+          ))}
+        </div>
       )}
 
       {error && !loading && (

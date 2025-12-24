@@ -4,6 +4,7 @@ import { girlProfiles } from "@/lib/data/girls";
 import { boyProfiles } from "@/lib/data/boys";
 import { lgbtqProfiles } from "@/lib/data/lgbtq";
 import type { AudienceSegment } from "@/types/ai-profile";
+import { applyVoiceSettings } from "@/lib/voice-settings";
 
 export const aiProfilesData: AIProfileSeed[] = [
   ...girlProfiles,
@@ -26,11 +27,18 @@ export async function seedAIProfiles() {
     await AIProfile.deleteMany({ profileType: "ai" });
     console.log("🗑️ Cleared existing AI profiles");
     
-    const createdProfiles = await AIProfile.insertMany(aiProfilesData);
+    // Apply voice settings to each profile based on personality type
+    const profilesWithVoiceSettings = aiProfilesData.map(profile => 
+      applyVoiceSettings(profile)
+    );
+    
+    console.log("🎤 Applied personality-based voice settings to all profiles");
+    
+    const createdProfiles = await AIProfile.insertMany(profilesWithVoiceSettings);
     console.log(`✅ Created ${createdProfiles.length} AI profiles successfully!`);
     
     createdProfiles.forEach((profile) => {
-      console.log(`   - ${profile.name} (${profile.profileId})`);
+      console.log(`   - ${profile.name} (${profile.profileId}) - Stability: ${profile.voiceStability}, Style: ${profile.voiceStyle}`);
     });
     
     return createdProfiles;
@@ -63,7 +71,8 @@ export async function getActiveAIProfiles(filters: GetProfilesFilters = {}) {
 
     return AIProfile.find(query)
       .select(selectFields)
-      .sort({ legacyId: 1 });
+      .sort({ legacyId: 1 })
+      .lean();
   } catch (error) {
     console.error("❌ Error while fetching AI profiles:", error);
     return [];

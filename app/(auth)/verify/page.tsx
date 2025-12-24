@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function VerifyPage() {
+function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -222,3 +222,16 @@ export default function VerifyPage() {
     </main>
   );
 }
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </main>
+    }>
+      <VerifyContent />
+    </Suspense>
+  );
+}
+

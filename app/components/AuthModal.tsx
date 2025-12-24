@@ -7,11 +7,11 @@ import { useAuth } from '@/app/contexts/AuthContext';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMode?: 'login' | 'signup' | 'forgot';
+  initialMode?: 'login' | 'signup' | 'forgot' | 'verify';
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(initialMode);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'verify'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -19,6 +19,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [otp, setOtp] = useState('');
+  const [userId, setUserId] = useState('');
+  const [verified, setVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -97,15 +101,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           setSuccess(data.message || 'Account created successfully! Please verify your account.');
           setIsLoading(false);
 
-          const userId = data.data?.userId;
-          const query = new URLSearchParams({
-            email,
-            phone: phoneNumber,
-            ...(userId ? { userId } : {}),
-          }).toString();
-
-          router.push(`/verify?${query}`);
-          onClose();
+          // Store userId and switch to verify mode
+          if (data.data?.userId) {
+            setUserId(data.data.userId);
+            setTimeout(() => {
+              setSuccess('');
+              setMode('verify');
+            }, 1500);
+          }
         } else {
           setError(data.message || 'Registration failed');
           setIsLoading(false);
@@ -130,6 +133,69 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     }
   };
 
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      setError('Please enter a 6-digit OTP');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, otp }),
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setVerified(true);
+        setSuccess('Account verified successfully! Redirecting to login...');
+        setTimeout(() => {
+          setMode('login');
+          setVerified(false);
+          setOtp('');
+          setUserId('');
+          setSuccess('');
+        }, 2000);
+      } else {
+        setError(data.message || 'Verification failed');
+      }
+    } catch {
+      setError('Verification failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError('');
+    setSuccess('');
+    setResendLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/resendotp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('New OTP sent to your email and phone!');
+      } else {
+        setError(data.message || 'Failed to resend OTP');
+      }
+    } catch {
+      setError('Network error while resending OTP');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setEmail('');
     setPassword('');
@@ -137,9 +203,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     setPhoneNumber('');
     setError('');
     setSuccess('');
+    setOtp('');
+    setUserId('');
+    setVerified(false);
   };
 
-  const switchMode = (newMode: 'login' | 'signup' | 'forgot') => {
+  const switchMode = (newMode: 'login' | 'signup' | 'forgot' | 'verify') => {
     resetForm();
     setMode(newMode);
   };
@@ -172,11 +241,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             {mode === 'login' && 'Welcome Back'}
             {mode === 'signup' && 'Create Account'}
             {mode === 'forgot' && 'Reset Password'}
+            {mode === 'verify' && 'Verify Your Account'}
           </h2>
           <p className="text-zinc-400 text-center mb-6">
             {mode === 'login' && 'Login to access your AI companions'}
             {mode === 'signup' && 'Join thousands of satisfied users'}
             {mode === 'forgot' && 'Enter your email to reset password'}
+            {mode === 'verify' && 'Enter the OTP sent to your email or phone.'}
           </p>
 
           {/* Error Message */}
@@ -194,6 +265,124 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           )}
 
           {/* Form */}
+          {mode === 'verify' ? (
+            // OTP Verification UI
+            !verified ? (
+              <div className="space-y-4">
+                {/* Email and Phone Display */}
+                <div className="bg-zinc-800/80 rounded-xl p-4 space-y-2 border border-zinc-700">
+                  <div className="flex items-center gap-2 text-sm text-zinc-300">
+                    <span className="text-purple-400">📧</span>
+                    <span>{email}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-zinc-300">
+                    <span className="text-purple-400">📱</span>
+                    <span>{phoneNumber}</span>
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-zinc-800/80 border border-purple-500/40 rounded-lg p-4">
+                  <p className="text-sm text-zinc-200 flex items-start gap-2">
+                    <span className="text-xl">💡</span>
+                    <span>
+                      <strong>Use either channel:</strong> The same OTP has been sent to both your email and phone. You can use the code from either source to verify your account.
+                    </span>
+                  </p>
+                </div>
+
+                {/* OTP Input */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Enter 6-Digit OTP
+                  </label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && otp.length === 6) {
+                        handleVerify();
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center text-2xl font-mono tracking-widest text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    placeholder="000000"
+                    maxLength={6}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Verify Button */}
+                <button
+                  onClick={handleVerify}
+                  disabled={isLoading || otp.length !== 6}
+                  className="w-full py-3 bg-pink-600 hover:bg-pink-700 disabled:bg-pink-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify Account'
+                  )}
+                </button>
+
+                {/* Resend OTP */}
+                <div className="text-center">
+                  <button
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    className="text-pink-400 hover:text-pink-300 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {resendLoading ? "Resending..." : "Didn't receive the code? Resend OTP"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Success State
+              <div className="text-center py-4">
+                <div className="w-20 h-20 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-10 h-10 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Account Verified! ✅
+                </h3>
+                <p className="text-zinc-300 mb-4">
+                  Both your email and phone have been verified successfully.
+                </p>
+                <p className="text-sm text-zinc-500">Redirecting to login...</p>
+              </div>
+            )
+          ) : (
+            // Existing Login/Signup/Forgot Form
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Field (Signup only) */}
             {mode === 'signup' && (
@@ -314,8 +503,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               )}
             </button>
           </form>
+          )}
 
           {/* Switch Mode Links */}
+          {mode !== 'verify' && (
           <div className="mt-6 text-center">
             {mode === 'login' && (
               <p className="text-zinc-400 text-sm">
@@ -354,6 +545,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               </p>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

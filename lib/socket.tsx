@@ -16,17 +16,21 @@ interface Message {
   sender: string;
   receiver: string;
   message: string;
+  createdAt?: Date | string;
 }
 
 interface SocketContextType {
   socket: Socket | null;
   messages: Message[];
-  sendMessage: (msg: string) => void;
+  sendMessage: (msg: string, profileId?: string) => void;
   userId: string;
   isConnected: boolean;
-  fetchConversation: () => void;
+  selectedProfileId: string;
+  setSelectedProfileId: (profileId: string) => void;
+  fetchConversation: (profileId: string) => void;
   disconnectSocket: () => void;
   setUserId: (id: string) => void;
+  isAITyping: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -36,6 +40,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const [userId, setUserId] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [isAITyping, setIsAITyping] = useState(false);
   const { user } = useAuth();
 
   // Keep socket userId in sync with authenticated user
@@ -65,11 +71,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setMessages([]);
     }
 
-    const socket = io("http://localhost:4000", { auth: { userId } });
+    const socket = io("http://localhost:3000", { auth: { userId } });
 
     socket.on("connect", () => {
       setIsConnected(true);
-      socket.emit("get_conversation", "ai_bot");
+      if (selectedProfileId) {
+        socket.emit("get_conversation", selectedProfileId);
+      }
     });
 
     socket.on("disconnect", () => setIsConnected(false));
@@ -82,23 +90,43 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setMessages(msgs);
     });
 
+    // Listen for AI typing events
+    socket.on("ai_typing_start", () => {
+      setIsAITyping(true);
+    });
+
+    socket.on("ai_typing_stop", () => {
+      setIsAITyping(false);
+    });
+
+    // Listen for rate limit errors
+    socket.on("rate_limit_exceeded", (data: { message: string; retryAfter?: number }) => {
+      console.warn("⚠️ Rate limit exceeded:", data.message);
+      // Show error notification to user
+      if (typeof window !== 'undefined') {
+        alert(data.message); // Simple alert for now, can be replaced with toast notification
+      }
+    });
+
     socketRef.current = socket;
 
     return () => {
       socket.disconnect();
       setIsConnected(false);
       setMessages([]);
+      setIsAITyping(false);
     };
   }, [userId]);
 
-  const sendMessage = (msg: string) => {
+  const sendMessage = (msg: string, profileId?: string) => {
     if (!socketRef.current) return;
-    socketRef.current.emit("send_message", { message: msg });
+    const targetProfileId = profileId || selectedProfileId;
+    socketRef.current.emit("send_message", { message: msg, profileId: targetProfileId });
   };
 
-  const fetchConversation = () => {
+  const fetchConversation = (profileId: string) => {
     if (!socketRef.current) return;
-    socketRef.current.emit("get_conversation", "ai_bot");
+    socketRef.current.emit("get_conversation", profileId);
   };
 
   const disconnectSocket = () => {
@@ -119,9 +147,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         sendMessage,
         userId,
         isConnected,
+        selectedProfileId,
+        setSelectedProfileId,
         fetchConversation,
         disconnectSocket,
         setUserId,
+        isAITyping,
       }}
     >
       {children}

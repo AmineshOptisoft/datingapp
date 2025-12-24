@@ -13,6 +13,7 @@ export interface IUser extends Document {
   profileComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
+  stripeCustomerId: string;
 }
 
 export interface UserRegistrationData {

@@ -23,9 +23,9 @@ interface AIProfileSelectorProps {
   selectedProfileId?: string;
 }
 
-export default function AIProfileSelector({ 
-  onProfileSelect, 
-  selectedProfileId 
+export default function AIProfileSelector({
+  onProfileSelect,
+  selectedProfileId
 }: AIProfileSelectorProps) {
   const router = useRouter();
   const [profiles, setProfiles] = useState<AIProfile[]>([]);
@@ -93,13 +93,12 @@ export default function AIProfileSelector({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {profiles.map((profile) => (
-          <Card 
-            key={profile.id} 
-            className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-              selectedProfileId === profile.id 
-                ? 'ring-2 ring-pink-500 shadow-lg' 
+          <Card
+            key={profile.id}
+            className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${selectedProfileId === profile.id
+                ? 'ring-2 ring-pink-500 shadow-lg'
                 : 'hover:shadow-md'
-            }`}
+              }`}
             onClick={() => {
               handleProfileSelect(profile.id);
               router.push(`/ai-profile/${profile.id}`);
@@ -109,15 +108,15 @@ export default function AIProfileSelector({
               {/* Profile Image */}
               <div className="aspect-square rounded-t-lg overflow-hidden bg-gray-200">
                 <img
-                  src={profile.avatar || '/default-avatar.jpg'}
+                  src={profile.avatar || 'https://img.freepik.com/premium-psd/avatar-portraits-with-digital-enhancements_1297808-1612.jpg?w=1380'}
                   alt={profile.name}
                   className="w-full h-full object-cover"
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                    (e.target as HTMLImageElement).src = '/default-avatar.jpg';
+                    (e.target as HTMLImageElement).src = 'https://img.freepik.com/premium-psd/avatar-portraits-with-digital-enhancements_1297808-1612.jpg?w=1380';
                   }}
                 />
               </div>
-              
+
               {/* Online Status Indicator */}
               <div className="absolute top-3 right-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -170,11 +169,10 @@ export default function AIProfileSelector({
 
               {/* Select Button */}
               <Button
-                className={`w-full transition-colors duration-200 ${
-                  selectedProfileId === profile.id
+                className={`w-full transition-colors duration-200 ${selectedProfileId === profile.id
                     ? 'bg-pink-600 hover:bg-pink-700 text-white'
                     : 'bg-pink-500 hover:bg-pink-600 text-white'
-                }`}
+                  }`}
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   handleProfileSelect(profile.id);
@@ -190,8 +188,8 @@ export default function AIProfileSelector({
       {profiles.length === 0 && !loading && (
         <div className="text-center p-8">
           <p className="text-gray-500">No profiles available at the moment.</p>
-          <Button 
-            onClick={fetchAIProfiles} 
+          <Button
+            onClick={fetchAIProfiles}
             className="mt-4 bg-pink-500 hover:bg-pink-600"
           >
             Refresh

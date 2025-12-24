@@ -14,7 +14,7 @@ export interface IAIProfile {
   monthlyPrice: number;
   badgeHot: boolean;
   badgePro: boolean;
-  
+
   // BASIC INFO
   name: string;
   age: number;
@@ -25,13 +25,13 @@ export interface IAIProfile {
   bodyType: string;
   ethnicity: string;
   languages: string[];
-  
+
   // PHYSICAL ATTRIBUTES
   avatar: string;
   photos: string[];
   eyeColor: string;
   hairColor: string;
-  
+
   // LIFESTYLE
   smokingHabits: string;
   drinkingHabits: string;
@@ -48,7 +48,7 @@ export interface IAIProfile {
   outdoorActivities: string;
   indoorActivities: string;
   weekendStyle: string;
-  
+
   // PERSONALITY & INTERESTS
   personalityType: string;
   hobbies: string[];
@@ -65,7 +65,7 @@ export interface IAIProfile {
   conflictResolution: string;
   socialCircle: string;
   creativityLevel: string;
-  
+
   // DATING PREFERENCES
   relationshipGoals: string;
   datingStyle: string;
@@ -77,7 +77,7 @@ export interface IAIProfile {
   religionImportance: string;
   familyPlans: string;
   commitmentLevel: string;
-  
+
   // AI-SPECIFIC CONVERSATION
   conversationStyle: string;
   responsePatterns: string[];
@@ -100,18 +100,29 @@ export interface IAIProfile {
   voiceSimilarity?: number;
   voiceStyle?: number;
   voiceDescription?: string;
-  
+
   // PROFILE METADATA
   bio: string;
   tagline: string;
   interests: string[];
   lookingFor: string;
-  
+
   // ACTIVITY SIMULATION
   lastSeen: Date;
   onlineStatus: 'online' | 'offline' | 'recently_active';
   responseDelay: number; // in seconds
-  
+
+  // PRICING
+  pricing?: {
+    monthlyPrice: number,
+    annualPrice: number,
+    lifetimePrice: number,
+    monthlyPriceId: string,
+    annualPriceId: string,
+    lifetimePriceId: string,
+  }
+
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -169,7 +180,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
       type: Boolean,
       default: false,
     },
-    
+
     // BASIC INFO
     name: {
       type: String,
@@ -209,7 +220,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     languages: [{
       type: String,
     }],
-    
+
     // PHYSICAL ATTRIBUTES
     avatar: {
       type: String,
@@ -226,7 +237,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
       type: String,
       default: 'Black',
     },
-    
+
     // LIFESTYLE
     smokingHabits: String,
     drinkingHabits: String,
@@ -243,7 +254,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     outdoorActivities: String,
     indoorActivities: String,
     weekendStyle: String,
-    
+
     // PERSONALITY & INTERESTS
     personalityType: String,
     hobbies: [String],
@@ -260,7 +271,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     conflictResolution: String,
     socialCircle: String,
     creativityLevel: String,
-    
+
     // DATING PREFERENCES
     relationshipGoals: String,
     datingStyle: String,
@@ -272,7 +283,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     religionImportance: String,
     familyPlans: String,
     commitmentLevel: String,
-    
+
     // AI-SPECIFIC
     conversationStyle: String,
     responsePatterns: [String],
@@ -300,7 +311,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     },
     voiceModelId: {
       type: String,
-      default: "eleven_monolingual_v1",
+      default: "eleven_flash_v2_5",  // Updated to Flash v2.5 for low latency
     },
     voiceAgentId: {
       type: String,
@@ -322,7 +333,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
       type: String,
       default: null,
     },
-    
+
     // PROFILE METADATA
     bio: {
       type: String,
@@ -334,7 +345,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
     },
     interests: [String],
     lookingFor: String,
-    
+
     // ACTIVITY SIMULATION
     lastSeen: {
       type: Date,
@@ -351,6 +362,10 @@ const AIProfileSchema = new Schema<IAIProfile>(
       min: 1,
       max: 30,
     },
+    pricing: {
+      type: Object,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -358,7 +373,7 @@ const AIProfileSchema = new Schema<IAIProfile>(
 );
 
 // Indexes for better performance
-AIProfileSchema.index({ profileId: 1 });
+// Note: profileId index is auto-created by unique: true constraint
 AIProfileSchema.index({ isActive: 1 });
 AIProfileSchema.index({ age: 1, location: 1 });
 AIProfileSchema.index({ interests: 1 });

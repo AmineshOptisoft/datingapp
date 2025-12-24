@@ -7,6 +7,10 @@ interface UseProfileDetailResult {
   error: string | null;
 }
 
+// In-memory cache for profile data
+const profileCache = new Map<string, { data: AIProfileDetail; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useProfileDetail(
   routePrefix: RoutePrefix,
   legacyId: string | number | undefined
@@ -26,6 +30,16 @@ export function useProfileDetail(
     const controller = new AbortController();
 
     async function fetchProfile() {
+      const profileId = `${routePrefix}-${legacyId}`;
+      
+      // Check cache first
+      const cached = profileCache.get(profileId);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setProfile(cached.data);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -33,9 +47,7 @@ export function useProfileDetail(
         const response = await fetch("/api/ai-profiles/public", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profileId: `${routePrefix}-${legacyId}`,
-          }),
+          body: JSON.stringify({ profileId }),
           signal: controller.signal,
         });
 
@@ -46,9 +58,14 @@ export function useProfileDetail(
         const payload = await response.json();
         if (!cancelled) {
           setProfile(payload.data);
+          // Cache the result
+          profileCache.set(profileId, {
+            data: payload.data,
+            timestamp: Date.now(),
+          });
         }
       } catch (err: any) {
-        if (!cancelled) {
+        if (!cancelled && err.name !== 'AbortError') {
           setError(err?.message ?? "Unable to fetch profile");
         }
       } finally {
