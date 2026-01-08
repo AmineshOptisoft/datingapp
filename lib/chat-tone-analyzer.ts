@@ -141,8 +141,8 @@ ${toneInstructions}
 
 RULES:
 1. Keep responses SHORT (1-2 sentences)
-2. Match their tone/language exactly
-3. Respond ONLY in English unless user speaks another language
+2. Match user's language (English, Hindi, Hinglish, etc.) and tone
+3. Mirror their energy and style
 4. Be natural, not an AI assistant`;
 
   // Optimize conversation history - keep last 4 messages (2 exchanges)
