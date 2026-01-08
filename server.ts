@@ -169,18 +169,95 @@ async function processUserAudio(
   try {
     const transcript = await transcribeAudio(audioBuffer, sampleRate);
     
-    // Filter out empty, silence, or meaningless transcriptions
-    const silenceMarkers = ['[silence]', '[SILENCE]', 'silence', '...', '嗯', 'uh', 'um', 'hmm', 'mhm', 'uh-huh'];
-    const isSilence = !transcript || 
-                      transcript.trim().length < 2 || 
-                      silenceMarkers.some(marker => transcript.toLowerCase().includes(marker.toLowerCase()));
+    // ═══════════════════════════════════════════════════════════════
+    // SMART PRODUCTION-READY FILTERING
+    // Blocks noise while allowing meaningful greetings and conversation
+    // ═══════════════════════════════════════════════════════════════
     
-    if (isSilence) {
-      console.log(`⚠️ Empty/silence transcription: "${transcript}"`);
+    const trimmedTranscript = transcript?.trim() || '';
+    
+    // ────────── FILTER 1: Empty or Too Short ──────────
+    if (trimmedTranscript.length < 2) {
+      console.log(`⚠️ Too short/empty: "${transcript}"`);
       return;
     }
     
+    // ────────── FILTER 2: Bracketed Content (Artifacts) ──────────
+    // Block ANY brackets - these are always transcription artifacts
+    if (/\[.*\]/i.test(trimmedTranscript)) {
+      console.log(`⚠️ Bracketed artifact: "${transcript}"`);
+      return;
+    }
+    
+    // ────────── FILTER 3: Known Noise Patterns ──────────
+    const noisePatterns = [
+      // English filler words
+      'silence', 'mute', 'muted', 'music', 'click', 'noise', 'background',
+      'uh', 'um', 'hmm', 'mhm', 'ah', 'oh', 'eh', 'huh', 'oof',
+      'yeah', 'yep', 'yup', 'nah', 'nope',
+      
+      // Chinese noise
+      '嗯', '啊', '哦', '呃', '笑', '对', '好', '静音', '靜音', '音乐', '背景音乐', '老师',
+      
+      // Hindi/Marathi/Tamil noise
+      'असं', 'जे', 'म्हणून', 'ஆமா',
+      
+      // Spanish/Portuguese noise
+      'música', 'musica',
+      
+      // Punctuation only
+      '。', '，', '...', '..'
+    ];
+    
+    const lowerTranscript = trimmedTranscript.toLowerCase();
+    for (const pattern of noisePatterns) {
+      if (lowerTranscript === pattern.toLowerCase() || trimmedTranscript === pattern) {
+        console.log(`⚠️ Noise pattern: "${transcript}"`);
+        return;
+      }
+    }
+    
+    // ────────── SMART WORD COUNT CHECK ──────────
+    const wordCount = trimmedTranscript.split(/\s+/).filter(w => w.length > 0).length;
+    
+    // Whitelist: Allow meaningful single-word greetings and questions
+    const allowedSingleWords = [
+      // English greetings
+      'hi', 'hello', 'hey', 'sup', 'yo',
+      // Questions
+      'what', 'why', 'how', 'when', 'where', 'who',
+      // Hindi/Hinglish greetings
+      'namaste', 'namaskar', 'ram', 'jai', 'kaise', 'kya', 'kaisa',
+      // Common languages
+      'hola', 'bonjour', 'ciao', 'hallo',
+      // Names (single word is ok if it's a name-like question)
+      'name', 'naam'
+    ];
+    
+    if (wordCount === 1) {
+      const word = trimmedTranscript.toLowerCase().replace(/[^\w]/g, '');
+      const isAllowed = allowedSingleWords.includes(word);
+      
+      if (!isAllowed) {
+        console.log(`⚠️ Single word not allowed: "${transcript}"`);
+        return;
+      }
+    }
+    
+    
+    // ✅ PASSED ALL FILTERS - Process as meaningful speech
     console.log(`📝 User said: "${transcript}"`);
+    
+    // ────────── RATE LIMIT CHECK (After Filtering) ──────────
+    // Only count meaningful speech toward rate limit, not filtered noise
+    if (!checkRateLimit(call.userId)) {
+      socket.emit("voice:error", {
+        type: ErrorType.RATE_LIMIT_EXCEEDED,
+        message: "Too many messages. Please slow down a bit."
+      });
+      console.log(`⚠️ Rate limit hit for user ${call.userId}`);
+      return;
+    }
 
     // Build conversation history from session messages (last 6 messages = 3 exchanges)
     const conversationHistory: LLMMessage[] = call.session.messages
@@ -934,16 +1011,8 @@ app.prepare().then(async () => {
         const audioChunk = Buffer.from(audio, "base64");
         call.audioBuffer.addChunk(audioChunk);
         
+        
         if (detectSilence(call.audioBuffer)) {
-          if (!checkRateLimit(call.userId)) {
-            sendVoiceError(
-              socket,
-              ErrorType.RATE_LIMIT_EXCEEDED,
-              "Too many requests. Please slow down."
-            );
-            call.audioBuffer.clear();
-            return;
-          }
           console.log("🔇 Silence detected, processing audio...");
           call.isProcessing = true;
           const completeAudio = call.audioBuffer.getAudio();
