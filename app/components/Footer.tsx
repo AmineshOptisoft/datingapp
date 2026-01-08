@@ -35,12 +35,12 @@ export default function Footer() {
 
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          {/* About Idyll */}
+          {/* About Lily */}
           <div>
             <Link href="/" className="inline-block mb-4">
               <Image
                 src="/lily-logo.svg"
-                alt="Idyll Logo"
+                alt="Lily Logo"
                 width={48}
                 height={48}
                 className="w-25 h-auto"

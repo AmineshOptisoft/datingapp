@@ -89,7 +89,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <Link href="/" className="">
               <Image
                 src="/lily-logo.svg"
-                alt="Idyll Logo"
+                alt="Lily Logo"
                 width={40}
                 height={40}
                 className="w-25 h-auto"
