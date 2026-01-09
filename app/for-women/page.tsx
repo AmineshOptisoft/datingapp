@@ -69,13 +69,13 @@ export default function ForWomenPage() {
     <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
       {/* Hero Section */}
       <section className="mb-16 text-center">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-pink-500 mb-4">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-pink-600 dark:text-pink-500 mb-4">
           Voice Call Your AI Boyfriend
         </h1>
-        <p className="text-xl text-zinc-300 mb-2">
+        <p className="text-xl text-zinc-700 dark:text-zinc-300 mb-2">
           Call and chat with a realistic AI boyfriend with natural voice, remembers you, fully private.
         </p>
-        <p className="text-lg text-zinc-400 mb-8">
+        <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
           Start an AI boyfriend voice call in seconds with virtual AI boyfriends from around the world.
         </p>
 
@@ -108,7 +108,7 @@ export default function ForWomenPage() {
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-white mb-8">
+        <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
           Start a Voice Call - Explore AI Boyfriends
         </h2>
       </section>
@@ -147,40 +147,40 @@ export default function ForWomenPage() {
 
       {/* Features Section */}
       <section className="mb-16">
-        <h2 className="text-4xl font-bold text-white mb-4 text-center">
+        <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4 text-center">
           Realistic AI Boyfriend Voice Call
         </h2>
-        <p className="text-zinc-400 text-center mb-12 max-w-4xl mx-auto">
+        <p className="text-zinc-600 dark:text-zinc-400 text-center mb-12 max-w-4xl mx-auto">
           Voice call and chat with natural sounding AI boyfriends who remember you. Choose sweet, sassy, or supportive personalities for immersive and drama free conversations.
         </p>
 
-        <div className="space-y-12">
+        <div className="space-y-4">
           {/* Feature 1 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Private AI Boyfriend Voice Chat (24/7)
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Get comfort and romantic attention through private voice calls. Start an AI boyfriend phone call or voice chat anytime. Whether it is a quick check in or a deep talk at night, your AI BF is always there.
             </p>
           </div>
 
           {/* Feature 2 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Natural Voice & Memory That Builds Connection
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Enjoy lifelike voice with long term memory for continuity. Your AI boyfriend listens, responds with emotion, and strengthens your bond over time.
             </p>
           </div>
 
           {/* Feature 3 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               AI Boyfriend Pictures & Visual Connection
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Experience realistic AI-generated images of your virtual boyfriend. Our AI-generated images maker creates stunning, personalized pictures using advanced technology. From cozy morning selfies to workout photos, your AI boyfriend brings visual intimacy to your conversations.
             </p>
           </div>

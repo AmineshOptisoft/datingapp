@@ -68,10 +68,10 @@ export default function ForLGBTQPage() {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-linear-to-r from-red-500 from-10% via-orange-500 via-25% via-yellow-500 via-40% via-green-500 via-55% via-blue-500 via-75% to-purple-600 bg-clip-text text-transparent mb-4">
           Voice Call Your AI Companion
         </h1>
-        <p className="text-xl text-zinc-300 mb-2">
+        <p className="text-xl text-zinc-700 dark:text-zinc-300 mb-2">
           Call and chat with inclusive AI companions with natural voice, remembers you, fully private.
         </p>
-        <p className="text-lg text-zinc-400 mb-8">
+        <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
           Start an AI companion voice call in seconds with diverse AI companions from around the world.
         </p>
 
@@ -104,7 +104,7 @@ export default function ForLGBTQPage() {
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-white mb-8">
+        <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
           Start a Voice Call - Explore AI Companions
         </h2>
       </section>
@@ -143,40 +143,40 @@ export default function ForLGBTQPage() {
 
       {/* Features Section */}
       <section className="mb-16">
-        <h2 className="text-4xl font-bold text-white mb-4 text-center">
+        <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4 text-center">
           Realistic AI Companion Voice Call
         </h2>
-        <p className="text-zinc-400 text-center mb-12 max-w-4xl mx-auto">
+        <p className="text-zinc-600 dark:text-zinc-400 text-center mb-12 max-w-4xl mx-auto">
           Voice call and chat with natural sounding AI companions who remember you. Choose sweet, sassy, or supportive personalities for immersive and drama free conversations.
         </p>
 
-        <div className="space-y-12">
+        <div className="space-y-4">
           {/* Feature 1 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Private AI Companion Voice Chat (24/7)
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Get comfort and romantic attention through private voice calls. Start an AI companion phone call or voice chat anytime. Whether it is a quick check in or a deep talk at night, your AI companion is always there.
             </p>
           </div>
 
           {/* Feature 2 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Natural Voice & Memory That Builds Connection
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Enjoy lifelike voice with long term memory for continuity. Your AI companion listens, responds with emotion, and strengthens your bond over time.
             </p>
           </div>
 
           {/* Feature 3 */}
-          <div className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               AI Companion Pictures & Visual Connection
             </h3>
-            <p className="text-zinc-300 leading-relaxed">
+            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
               Experience realistic AI-generated images of your virtual companion. Our AI-generated images maker creates stunning, personalized pictures using advanced technology. From cozy morning selfies to workout photos, your AI companion brings visual intimacy to your conversations.
             </p>
           </div>

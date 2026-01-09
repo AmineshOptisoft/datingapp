@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useTheme } from '@/app/contexts/ThemeContext';
 import {
   FaMars,
   FaVenus,
@@ -34,6 +35,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category');
+  const { theme } = useTheme();
 
   const navigationItems = [
     { icon: FaMars, label: 'For Male', id: 'male', href: '/for-men' },
@@ -66,7 +68,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 dark:bg-black/50 z-40 md:hidden"
           onClick={onClose}
         />
       )}
@@ -76,15 +78,15 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         className={`
         fixed md:static
         w-[280px] md:w-[200px]
-        bg-transparent backdrop-blur-2xl border-r border-white/10
-        flex flex-col h-screen md:shrink-0 shadow-2xl
+        bg-transparent backdrop-blur-2xl border-r border-white/20 dark:border-white/10
+        flex flex-col h-screen md:shrink-0 shadow-sm!
         z-50
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}
       >
         {/* Logo and Close Button */}
-        <div className="px-4 py-3 border-b border-white/10">
+        <div className="px-4 py-3">
           <div className="flex items-center md:justify-center justify-between">
             <Link href="/" className="">
               <Image
@@ -98,7 +100,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             </Link>
             <button
               onClick={onClose}
-              className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="md:hidden p-2 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-white/10 rounded-lg transition-colors"
               aria-label="Close menu"
             >
               <FaTimes className="w-5 h-5" />
@@ -109,15 +111,15 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
-            <h3 className="text-zinc-500 text-xs font-semibold mb-3 uppercase">Navigation</h3>
+            <h3 className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold mb-3 uppercase">Navigation</h3>
             <nav className="space-y-1">
               {navigationItems.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === item.href
-                    ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
-                    : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
+                    ? 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-white backdrop-blur-sm shadow-lg'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white hover:backdrop-blur-sm'
                     }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -143,8 +145,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </div>
 
           {/* Premium Categories */}
-          <div className="p-4 border-t border-white/10">
-            <h3 className="text-zinc-500 text-xs font-semibold mb-3 uppercase">
+          <div className="p-4 border-t border-white/20 dark:border-white/10">
+            <h3 className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold mb-3 uppercase">
               Premium Categories
             </h3>
             <nav className="space-y-1">
@@ -156,8 +158,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     query: { category: item.label },
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === '/' && currentCategory === item.label
-                    ? 'bg-white/10 text-white backdrop-blur-sm shadow-lg'
-                    : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:backdrop-blur-sm'
+                    ? 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-white backdrop-blur-sm shadow-lg'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white hover:backdrop-blur-sm'
                     }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -186,7 +188,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Social Icons */}
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/20 dark:border-white/10">
           <div className="flex flex-wrap gap-2 justify-center">
             {socialIcons.map((social, index) => (
               <button

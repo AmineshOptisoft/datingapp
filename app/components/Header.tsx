@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import AuthModal from './AuthModal';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { FaBars } from 'react-icons/fa';
+import { useTheme } from '@/app/contexts/ThemeContext';
+import { FaBars, FaSun, FaMoon, FaMars, FaVenus } from 'react-icons/fa';
+import { MdAddCircle } from 'react-icons/md';
+import { Transgender } from 'lucide-react';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -14,6 +19,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {
     setAuthMode(mode);
@@ -26,51 +32,60 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <>
-      <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/10 shadow-lg">
-        <div className="flex items-center justify-between px-4 md:px-8 py-4">
-          {/* Left side - Hamburger Menu for Mobile */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onMenuToggle}
-              className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-              aria-label="Toggle menu"
+      <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-sm!">
+        <div className="flex items-center px-4 md:px-8 py-3">
+          {/* Left side - Logo */}
+          <div className="flex-1 flex items-center gap-4">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/lily-logo.svg"
+                alt="Lily Logo"
+                width={40}
+                height={40}
+                className="w-20 h-auto"
+              />
+            </Link>
+          </div>
+
+          {/* Center - Category Links (Desktop Only) */}
+          <div className="hidden md:flex items-center gap-4 md:gap-8">
+            <Link 
+              href="/for-men" 
+              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
             >
-              <FaBars className="w-6 h-6" />
-            </button>
-            <div className="flex-1" />
+              <FaMars className="w-5 h-5 md:w-6 md:h-6 text-blue-500 dark:text-blue-400" />
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
+            </Link>
+            <Link 
+              href="/for-women" 
+              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
+            >
+              <FaVenus className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
+            </Link>
+            <Link 
+              href="/for-lgbtq" 
+              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
+            >
+              <Transgender className="w-5 h-5 md:w-6 md:h-6 text-purple-500 dark:text-purple-400" />
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
+            </Link>
           </div>
 
-          {/* Center - Buttons */}
-          <div className="flex items-center gap-2 md:gap-4">
-            <button className="hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full text-xs md:text-sm font-medium transition-colors">
-              <svg className="w-3 md:w-4 h-3 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
-              </svg>
-              <span className="hidden lg:inline">Memory Live!</span>
-            </button>
-
-            <button className="hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-full text-xs md:text-sm font-medium transition-colors">
-              <svg className="w-3 md:w-4 h-3 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-              </svg>
-              <span className="hidden lg:inline">Collections</span>
-            </button>
-
-            <button className="flex items-center gap-2 px-3 md:px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-full text-xs md:text-sm font-medium transition-colors">
-              <svg className="w-3 md:w-4 h-3 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
-              </svg>
-              <span className="hidden lg:inline">Try FREE Demo</span>
-              <span className="sm:hidden">Demo</span>
-            </button>
-          </div>
-
-          {/* Right side - Language and Auth */}
+          {/* Right side - Theme Toggle, Language and Auth */}
           <div className="flex-1 flex items-center justify-end gap-2 md:gap-4">
-            <div className="hidden md:flex items-center gap-2 text-zinc-400 text-sm">
-              <span>US</span>
-              <span>EN</span>
-            </div>
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-zinc-800/30 dark:hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? (
+                <FaMoon className="w-5 h-5 text-zinc-900" />
+              ) : (
+                <FaSun className="w-5 h-5 text-white" />
+              )}
+            </button>
 
             {isAuthenticated && user ? (
               <UserMenu user={user} onLogout={handleLogout} />
@@ -93,6 +108,33 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           </div>
         </div>
       </header>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 shadow-lg">
+        <div className="flex items-center justify-around px-4 py-3">
+          <Link 
+            href="/for-men" 
+            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+          >
+            <FaMars className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
+          </Link>
+          <Link 
+            href="/for-women" 
+            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+          >
+            <FaVenus className="w-6 h-6 text-pink-500 dark:text-pink-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
+          </Link>
+          <Link 
+            href="/for-lgbtq" 
+            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+          >
+            <Transgender className="w-6 h-6 text-purple-500 dark:text-purple-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* Auth Modal */}
       <AuthModal
