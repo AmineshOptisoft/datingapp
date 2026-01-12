@@ -89,10 +89,10 @@ export default function BoyDetailPage() {
   return (
     <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
       {/* Hero Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
+      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
         {/* Image Section */}
-        <div className="relative">
-          <div className="relative rounded-2xl overflow-hidden aspect-3/4 bg-zinc-900/30 backdrop-blur-xl border border-white/10">
+        <div className="relative mx-auto lg:mx-0">
+          <div className="relative rounded-2xl overflow-hidden h-full bg-zinc-900/30 backdrop-blur-xl border border-white/10">
             <img
               src={primaryPhoto}
               alt={profile.name}
@@ -255,7 +255,7 @@ export default function BoyDetailPage() {
       </div>
 
       {/* Description Section */}
-      <section className="mb-12">
+      <section className="mb-8">
         <h2 className="text-3xl font-bold text-white mb-6">
           {profile.name} - Your {profile.cardTitle.toLowerCase()}.
         </h2>
@@ -265,12 +265,12 @@ export default function BoyDetailPage() {
       </section>
 
       {/* Feature Cards Grid */}
-      <section className="mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <section className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-4">
           {highlightCards.map((feature, index) => (
             <div
               key={index}
-              className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all"
+              className="bg-zinc-900/30 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all"
             >
               <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
               <p className="text-zinc-400 leading-relaxed">{feature.description}</p>

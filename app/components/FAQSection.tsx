@@ -16,8 +16,8 @@ export default function FAQSection({ faqs, title = 'Frequently Asked Questions' 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   return (
-    <section className="mb-16">
-      <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-12 text-center">
+    <section className="mb-8">
+      <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-8 text-center">
         {title}
       </h2>
       <div className="space-y-4">
@@ -28,7 +28,7 @@ export default function FAQSection({ faqs, title = 'Frequently Asked Questions' 
           >
             <button
               onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-              className="w-full flex items-center justify-between p-6 text-left hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
             >
               <span className="text-lg font-semibold text-zinc-900 dark:text-white pr-4">
                 {index + 1}. {faq.question}

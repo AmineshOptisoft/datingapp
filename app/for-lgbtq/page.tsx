@@ -142,7 +142,7 @@ export default function ForLGBTQPage() {
       )}
 
       {/* Features Section */}
-      <section className="mb-16">
+      <section className="mb-12">
         <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4 text-center">
           Realistic AI Companion Voice Call
         </h2>
@@ -152,7 +152,7 @@ export default function ForLGBTQPage() {
 
         <div className="space-y-4">
           {/* Feature 1 */}
-          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl p-4">
             <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Private AI Companion Voice Chat (24/7)
             </h3>

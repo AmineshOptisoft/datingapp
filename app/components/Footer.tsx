@@ -6,7 +6,7 @@ import { SiX, SiYoutube, SiInstagram, SiLinkedin, SiFacebook, SiDiscord } from '
 
 export default function Footer() {
   return (
-    <footer className="bg-white/30 dark:bg-zinc-900/50 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 mt-20 rounded-2xl">
+    <footer className="bg-white/30 dark:bg-zinc-900/50 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 mt-8 rounded-2xl">
       <div className="px-8 py-12">
         {/* Listed On Section */}
         <div className="mb-12">
@@ -34,7 +34,7 @@ export default function Footer() {
         </div>
 
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
           {/* About Lily */}
           <div>
             <Link href="/" className="inline-block mb-4">
@@ -156,7 +156,7 @@ export default function Footer() {
         </div>
 
         {/* Volume Discount Banner */}
-        <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-600/30 rounded-2xl p-6 mb-12">
+        <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-600/30 rounded-xl p-4 mb-8">
           <h3 className="text-yellow-700 dark:text-yellow-500 font-bold text-xl mb-2">
             Volume Discount: Save 25% on Bulk Purchases
           </h3>
@@ -180,7 +180,7 @@ export default function Footer() {
         </div>
 
         {/* Important Notice */}
-        <div className="bg-zinc-100 dark:bg-zinc-800/30 border border-zinc-300 dark:border-zinc-700/50 rounded-xl p-6 mb-8">
+        <div className="bg-zinc-100 dark:bg-zinc-800/30 border border-zinc-300 dark:border-zinc-700/50 rounded-xl p-4 mb-8">
           <h3 className="text-zinc-900 dark:text-white font-bold text-lg mb-3">Important Notice</h3>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
             Idyll is a platform for meaningful AI companionship and emotional support. We do not promote or allow explicit

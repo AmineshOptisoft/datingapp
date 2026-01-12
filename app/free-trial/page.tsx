@@ -14,9 +14,9 @@ export default function FreeTrialPage() {
       {/* Main Grid - Steps on left, Cards on right */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column - Steps */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Step 1 */}
-          <div className="bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
+          <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="flex gap-4">
               <div className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-linear-to-br from-pink-500 to-purple-600">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ export default function FreeTrialPage() {
           </div>
 
           {/* Step 2 */}
-          <div className="bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
+          <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="flex gap-4">
               <div className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-linear-to-br from-purple-500 to-indigo-600">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@ export default function FreeTrialPage() {
           </div>
 
           {/* Step 3 */}
-          <div className="bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
+          <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="flex gap-4">
               <div className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-linear-to-br from-indigo-500 to-blue-600">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

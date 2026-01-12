@@ -93,7 +93,7 @@ export default function CompanionDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
         {/* Image Section */}
         <div className="relative mx-auto lg:mx-0">
-          <div className="relative rounded-2xl overflow-hidden aspect-3/4 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10">
+          <div className="relative rounded-2xl overflow-hidden h-full bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10">
             <img
               src={primaryPhoto}
               alt={profile.name}
@@ -160,7 +160,7 @@ export default function CompanionDetailPage() {
           </div>
 
           {/* Character Profile Section */}
-          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl p-6 mb-6">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl p-4 mb-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Character Profile</h2>
               <span className="text-purple-600 dark:text-purple-400 text-sm font-semibold">• Evolving Character</span>
@@ -267,7 +267,7 @@ export default function CompanionDetailPage() {
       )}
 
       {/* Description Section */}
-      <section className="mb-12">
+      <section className="mb-6">
         <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-6">
           {profile.name} - Your {profile.cardTitle.toLowerCase()}.
         </h2>
@@ -277,12 +277,12 @@ export default function CompanionDetailPage() {
       </section>
 
       {/* Feature Cards Grid */}
-      <section className="mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <section className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-4">
           {highlightCards.map((feature, index) => (
             <div
               key={index}
-              className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl p-6 hover:border-zinc-300 dark:hover:border-white/20 transition-all"
+              className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl p-4 hover:border-zinc-300 dark:hover:border-white/20 transition-all"
             >
               <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">{feature.title}</h3>
               <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{feature.description}</p>

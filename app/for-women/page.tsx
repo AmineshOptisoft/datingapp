@@ -146,7 +146,7 @@ export default function ForWomenPage() {
       )}
 
       {/* Features Section */}
-      <section className="mb-16">
+      <section className="mb-8">
         <h2 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4 text-center">
           Realistic AI Boyfriend Voice Call
         </h2>
@@ -156,7 +156,7 @@ export default function ForWomenPage() {
 
         <div className="space-y-4">
           {/* Feature 1 */}
-          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl p-4">
             <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Private AI Boyfriend Voice Chat (24/7)
             </h3>
@@ -166,7 +166,7 @@ export default function ForWomenPage() {
           </div>
 
           {/* Feature 2 */}
-          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl p-4">
             <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               Natural Voice & Memory That Builds Connection
             </h3>
@@ -176,7 +176,7 @@ export default function ForWomenPage() {
           </div>
 
           {/* Feature 3 */}
-          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl px-5 py-4">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl p-4">
             <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
               AI Boyfriend Pictures & Visual Connection
             </h3>

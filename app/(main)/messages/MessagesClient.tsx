@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile } from 'react-icons/fa';
+import { Phone } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import { useSocket } from '@/lib/socket';
@@ -215,13 +216,13 @@ export default function MessagesClient() {
   return (
     <div className="h-[calc(100vh-80px)] flex">
       {/* Left Sidebar - Conversations List */}
-      <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-white/10 flex flex-col bg-zinc-900/20 ${selectedConversation && 'hidden md:flex'
+      <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-zinc-200 dark:border-white/10 flex flex-col bg-zinc-100/50 dark:bg-zinc-900/20 ${selectedConversation && 'hidden md:flex'
         }`}>
         {/* Header */}
-        <div className="p-4 border-b border-white/10">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/10">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">Messages</h1>
-            <button className="text-zinc-400 hover:text-white transition-colors">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Messages</h1>
+            <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -230,13 +231,13 @@ export default function MessagesClient() {
 
           {/* Search Bar */}
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500" />
             <input
               type="text"
               placeholder="Search messages..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-800/50 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
         </div>
@@ -260,8 +261,8 @@ export default function MessagesClient() {
                 </div>
               </div>
               <div className="text-center space-y-2">
-                <p className="text-white font-semibold text-lg">Loading Conversations</p>
-                <p className="text-zinc-400 text-sm">Finding your connections...</p>
+                <p className="text-zinc-900 dark:text-white font-semibold text-lg">Loading Conversations</p>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm">Finding your connections...</p>
               </div>
               {/* Animated dots */}
               <div className="flex gap-2 mt-4">
@@ -277,8 +278,8 @@ export default function MessagesClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p className="text-white font-semibold text-lg mb-2">No Conversations Yet</p>
-              <p className="text-zinc-400 text-sm text-center">Start chatting with AI companions from their profiles</p>
+              <p className="text-zinc-900 dark:text-white font-semibold text-lg mb-2">No Conversations Yet</p>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm text-center">Start chatting with AI companions from their profiles</p>
             </div>
           ) : (
             filteredConversations.map((conv) => (
@@ -294,8 +295,8 @@ export default function MessagesClient() {
                     setTimeout(() => setIsLoadingMessages(false), 800);
                   }
                 }}
-                className={`w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-all duration-300 border-b border-white/5 ${
-                  selectedConversation === conv.id ? 'bg-white/10' : ''
+                className={`w-full p-4 flex items-center gap-3 hover:bg-zinc-200 dark:hover:bg-white/5 transition-all duration-300 border-b border-zinc-200 dark:border-white/5 ${
+                  selectedConversation === conv.id ? 'bg-zinc-200 dark:bg-white/10' : ''
                   }`}
               >
                 {/* Avatar */}
@@ -306,17 +307,17 @@ export default function MessagesClient() {
                     className="w-14 h-14 rounded-full object-cover transition-transform duration-300 hover:scale-105"
                   />
                   {conv.online && (
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse" />
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse" />
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-white truncate">{conv.name}</h3>
-                    <span className="text-xs text-zinc-500 shrink-0">{conv.timestamp}</span>
+                    <h3 className="font-semibold text-zinc-900 dark:text-white truncate">{conv.name}</h3>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-500 shrink-0">{conv.timestamp}</span>
                   </div>
-                  <p className={`text-sm truncate ${conv.unread ? 'text-white font-medium' : 'text-zinc-400'}`}>
+                  <p className={`text-sm truncate ${conv.unread ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-600 dark:text-zinc-400'}`}>
                     {conv.lastMessage}
                   </p>
                 </div>
@@ -333,14 +334,14 @@ export default function MessagesClient() {
 
       {/* Right Side - Chat Area */}
       {selectedConv ? (
-        <div className="flex flex-1 flex-col bg-zinc-900/10">
+        <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10">
           {/* Chat Header */}
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Back Button for Mobile */}
               <button
                 onClick={() => setSelectedConversation(null)}
-                className="md:hidden text-zinc-400 hover:text-white transition-colors mr-3"
+                className="md:hidden text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors mr-3"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -354,12 +355,12 @@ export default function MessagesClient() {
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   {selectedConv.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900" />
                   )}
                 </div>
                 <div>
-                  <h2 className="font-semibold text-white">{selectedConv.name}</h2>
-                  <p className="text-xs text-zinc-400">Active now</p>
+                  <h2 className="font-semibold text-zinc-900 dark:text-white">{selectedConv.name}</h2>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Active now</p>
                 </div>
               </div>
             </div>
@@ -369,16 +370,15 @@ export default function MessagesClient() {
               {/* Voice Call Button (Yellow Circle) */}
               <button
                 onClick={() => setShowVoiceCall(true)}
-                className="relative w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 flex items-center justify-center transition-all shadow-lg hover:shadow-yellow-500/50"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 title="Start Voice Call"
               >
-                <FaPhone className="w-5 h-5 text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse" />
+                <Phone className="w-5 h-5" />
               </button>
-              <button className="text-zinc-400 hover:text-white transition-colors">
+              <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <FaVideo className="w-5 h-5" />
               </button>
-              <button className="text-zinc-400 hover:text-white transition-colors">
+              <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <FaInfoCircle className="w-5 h-5" />
               </button>
             </div>
@@ -403,8 +403,8 @@ export default function MessagesClient() {
                   </div>
                 </div>
                 <div className="text-center space-y-2">
-                  <p className="text-white font-semibold text-lg">Loading Messages</p>
-                  <p className="text-zinc-400 text-sm">Preparing your conversation...</p>
+                  <p className="text-zinc-900 dark:text-white font-semibold text-lg">Loading Messages</p>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm">Preparing your conversation...</p>
                 </div>
                 {/* Shimmer effect */}
                 <div className="flex gap-2 mt-6">
@@ -436,13 +436,13 @@ export default function MessagesClient() {
                           className={`rounded-2xl px-4 py-2 transition-all duration-300 hover:scale-[1.02] ${
                             isOwn
                               ? 'bg-purple-600 text-white'
-                              : 'bg-zinc-800/50 text-white'
+                              : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
                           }`}
                         >
                           <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.message}</p>
                         </div>
 
-                        <span className="text-xs text-zinc-500 mt-1">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
                           {(() => {
                             const timestamp = message.createdAt;
                             return timestamp 
@@ -517,13 +517,13 @@ export default function MessagesClient() {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-zinc-200 dark:border-white/10">
             <div className="flex items-center gap-3">
               {/* Emoji Picker */}
               <div className="relative">
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="text-zinc-400 hover:text-white transition-colors"
+                  className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                   title="Add emoji"
                 >
                   <FaSmile className="w-5 h-5 mt-2" />
@@ -549,7 +549,7 @@ export default function MessagesClient() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  className="w-full bg-zinc-800/50 border border-white/10 rounded-full px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-full px-4 py-2 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
@@ -565,13 +565,13 @@ export default function MessagesClient() {
           </div>
         </div>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center bg-zinc-900/10">
+        <div className="hidden md:flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-900/10">
           <div className="text-center">
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-purple-600/20 flex items-center justify-center">
               <FaPaperPlane className="w-10 h-10 text-purple-500" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Your Messages</h2>
-            <p className="text-zinc-400">Select a conversation to start chatting</p>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Your Messages</h2>
+            <p className="text-zinc-600 dark:text-zinc-400">Select a conversation to start chatting</p>
           </div>
         </div>
       )}
