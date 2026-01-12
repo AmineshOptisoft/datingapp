@@ -215,11 +215,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800">
+      <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -230,20 +230,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         <div className="p-8">
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-white rounded flex items-center justify-center">
-              <span className="text-black font-bold text-lg">🖼️</span>
+            <div className="w-10 h-10 bg-zinc-900 dark:bg-white rounded flex items-center justify-center">
+              <span className="text-white dark:text-black font-bold text-lg">🖼️</span>
             </div>
-            <span className="text-white font-bold text-2xl">IDYLL</span>
+            <span className="text-zinc-900 dark:text-white font-bold text-2xl">IDYLL</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl font-bold text-white text-center mb-2">
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white text-center mb-2">
             {mode === 'login' && 'Welcome Back'}
             {mode === 'signup' && 'Create Account'}
             {mode === 'forgot' && 'Reset Password'}
             {mode === 'verify' && 'Verify Your Account'}
           </h2>
-          <p className="text-zinc-400 text-center mb-6">
+          <p className="text-zinc-600 dark:text-zinc-400 text-center mb-6">
             {mode === 'login' && 'Login to access your AI companions'}
             {mode === 'signup' && 'Join thousands of satisfied users'}
             {mode === 'forgot' && 'Enter your email to reset password'}
@@ -270,20 +270,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             !verified ? (
               <div className="space-y-4">
                 {/* Email and Phone Display */}
-                <div className="bg-zinc-800/80 rounded-xl p-4 space-y-2 border border-zinc-700">
-                  <div className="flex items-center gap-2 text-sm text-zinc-300">
-                    <span className="text-purple-400">📧</span>
+                <div className="bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-4 space-y-2 border border-zinc-300 dark:border-zinc-700">
+                  <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                    <span className="text-purple-600 dark:text-purple-400">📧</span>
                     <span>{email}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-300">
-                    <span className="text-purple-400">📱</span>
+                  <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                    <span className="text-purple-600 dark:text-purple-400">📱</span>
                     <span>{phoneNumber}</span>
                   </div>
                 </div>
 
                 {/* Info Box */}
-                <div className="bg-zinc-800/80 border border-purple-500/40 rounded-lg p-4">
-                  <p className="text-sm text-zinc-200 flex items-start gap-2">
+                <div className="bg-zinc-100 dark:bg-zinc-800/80 border border-purple-400 dark:border-purple-500/40 rounded-lg p-4">
+                  <p className="text-sm text-zinc-700 dark:text-zinc-200 flex items-start gap-2">
                     <span className="text-xl">💡</span>
                     <span>
                       <strong>Use either channel:</strong> The same OTP has been sent to both your email and phone. You can use the code from either source to verify your account.
@@ -293,7 +293,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
                 {/* OTP Input */}
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                     Enter 6-Digit OTP
                   </label>
                   <input
@@ -305,7 +305,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                         handleVerify();
                       }
                     }}
-                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center text-2xl font-mono tracking-widest text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-center text-2xl font-mono tracking-widest text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                     placeholder="000000"
                     maxLength={6}
                     disabled={isLoading}
@@ -372,13 +372,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                     />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
                   Account Verified! ✅
                 </h3>
-                <p className="text-zinc-300 mb-4">
+                <p className="text-zinc-700 dark:text-zinc-300 mb-4">
                   Both your email and phone have been verified successfully.
                 </p>
-                <p className="text-sm text-zinc-500">Redirecting to login...</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-500">Redirecting to login...</p>
               </div>
             )
           ) : (
@@ -387,7 +387,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             {/* Name Field (Signup only) */}
             {mode === 'signup' && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-zinc-300 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Full Name
                 </label>
                 <input
@@ -395,7 +395,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   placeholder="John Doe"
                   disabled={isLoading}
                 />
@@ -404,7 +404,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Email Address
               </label>
               <input
@@ -412,7 +412,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                 placeholder="you@example.com"
                 disabled={isLoading}
               />
@@ -421,7 +421,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             {/* Phone Number Field (Signup only) */}
             {mode === 'signup' && (
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-zinc-300 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -429,18 +429,18 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                   id="phone"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   placeholder="+1234567890"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-zinc-500 mt-1">Include country code (e.g., +1 for US)</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">Include country code (e.g., +1 for US)</p>
               </div>
             )}
 
             {/* Password Field (Login & Signup) */}
             {mode !== 'forgot' && (
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Password
                 </label>
                 <input
@@ -448,7 +448,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                   disabled={isLoading}
                 />
@@ -509,36 +509,36 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {mode !== 'verify' && (
           <div className="mt-6 text-center">
             {mode === 'login' && (
-              <p className="text-zinc-400 text-sm">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
                 Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => switchMode('signup')}
-                  className="text-pink-400 hover:text-pink-300 font-medium transition-colors"
+                  className="text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium transition-colors"
                 >
                   Sign up
                 </button>
               </p>
             )}
             {mode === 'signup' && (
-              <p className="text-zinc-400 text-sm">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
                 Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-pink-400 hover:text-pink-300 font-medium transition-colors"
+                  className="text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium transition-colors"
                 >
                   Login
                 </button>
               </p>
             )}
             {mode === 'forgot' && (
-              <p className="text-zinc-400 text-sm">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
                 Remember your password?{' '}
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-pink-400 hover:text-pink-300 font-medium transition-colors"
+                  className="text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium transition-colors"
                 >
                   Back to login
                 </button>
