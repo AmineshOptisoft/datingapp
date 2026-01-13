@@ -28,7 +28,7 @@
     "lucide-react": "^0.554.0",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
-    "next": "16.0.2",
+    "next": "16.0.10",
     "next-connect": "^1.0.0",
     "nodemailer": "^7.0.10",
     "openai": "^6.8.1",
