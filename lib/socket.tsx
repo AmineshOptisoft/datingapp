@@ -71,7 +71,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setMessages([]);
     }
 
-    const socket = io("http://localhost:3000", { auth: { userId } });
+    const socket = io("https://datingapp-uplv.vercel.app", { auth: { userId } });
 
     socket.on("connect", () => {
       setIsConnected(true);
