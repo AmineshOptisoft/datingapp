@@ -64,7 +64,7 @@ export function useVoiceCall(profileId: string) {
                 throw new Error('You must be logged in to make voice calls')
             }
 
-            const socket = io('http://localhost:3000', {
+            const socket = io(process.env.NEXT_PUBLIC_APP_URL, {
                 auth: {
                     userId: user.id,
                 },

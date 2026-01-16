@@ -524,7 +524,7 @@ async function callGrok(
       model: "grok-3",
       temperature,
       stream: false,
-      max_tokens: 50, // Reduced for shorter, more natural responses
+      max_tokens: 30, // Enforces casual, brief responses like real dating app chats
       messages,
     }),
   });
@@ -570,7 +570,7 @@ async function* callGrokStreaming(
       model: "grok-3",
       temperature: 0.95,
       stream: true, // Enable streaming
-      max_tokens: 50,
+      max_tokens: 30, // Enforces casual, brief responses
       messages,
     }),
   });
@@ -758,7 +758,7 @@ app.prepare().then(async () => {
 
   const io = new SocketIOServer(server, {
     cors: {
-      origin: `http://localhost:${PORT}`,
+      origin: process.env.NEXT_PUBLIC_APP_URL,
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -824,7 +824,7 @@ app.prepare().then(async () => {
             ],
           })
             .sort({ createdAt: -1 })
-            .limit(10)
+            .limit(6)
             .lean();
 
           console.log(`📚 Fetched ${recentMessages.length} messages from DB`);

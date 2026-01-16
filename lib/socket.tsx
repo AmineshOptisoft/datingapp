@@ -71,7 +71,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setMessages([]);
     }
 
-    const socket = io("http://localhost:3000", { auth: { userId } });
+    const socket = io(process.env.NEXT_PUBLIC_APP_URL, { auth: { userId } });
 
     socket.on("connect", () => {
       setIsConnected(true);
