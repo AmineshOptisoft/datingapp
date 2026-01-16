@@ -1,12 +1,25 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-
-// Force dynamic rendering to prevent prerender errors
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
 
 export default function CheckoutCancelPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+        <div className="text-center max-w-md px-6">
+          <p className="text-zinc-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950">

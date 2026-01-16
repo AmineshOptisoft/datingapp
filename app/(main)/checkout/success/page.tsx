@@ -1,16 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { getProfileRoute } from "@/lib/url-helpers";
 
-// Force dynamic rendering to prevent prerender errors
-export const dynamic = 'force-dynamic';
-
 export default function CheckoutSuccessPage() {
-    const [redirecting, setRedirecting] = React.useState(true);
-    const [profileRoute, setProfileRoute] = React.useState<string | null>(null);
+    const [redirecting, setRedirecting] = useState(true);
+    const [profileRoute, setProfileRoute] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+
         const handleRedirect = async () => {
             // Get session_id and profileId from URL params
             const params = new URLSearchParams(window.location.search);
@@ -65,18 +69,46 @@ export default function CheckoutSuccessPage() {
         };
 
         handleRedirect();
-    }, []);
+    }, [mounted]);
 
     // Redirect after route is determined
-    React.useEffect(() => {
-        if (profileRoute) {
+    useEffect(() => {
+        if (profileRoute && mounted) {
             const timer = setTimeout(() => {
                 window.location.href = profileRoute;
             }, 3000);
 
             return () => clearTimeout(timer);
         }
-    }, [profileRoute]);
+    }, [profileRoute, mounted]);
+
+    if (!mounted) {
+        return (
+            <div className="success-container">
+                <div className="success-card">
+                    <p>Loading...</p>
+                </div>
+                <style jsx>{`
+                    .success-container {
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 2rem;
+                    }
+                    .success-card {
+                        background: white;
+                        border-radius: 20px;
+                        padding: 3rem 2rem;
+                        text-align: center;
+                        max-width: 500px;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    }
+                `}</style>
+            </div>
+        );
+    }
 
     return (
         <div className="success-container">
