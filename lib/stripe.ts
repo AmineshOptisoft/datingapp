@@ -6,6 +6,6 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     // Keep in sync with the Stripe SDK's supported API version union.
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
     typescript: true,
 });
