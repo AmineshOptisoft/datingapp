@@ -18,10 +18,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     // Check for saved theme preference or default to 'dark'
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    let savedTheme: Theme | null = null;
+    if (typeof window !== 'undefined') {
+      savedTheme = localStorage.getItem('theme') as Theme | null;
+    }
+
     if (savedTheme) {
       setTheme(savedTheme);
-    } else {
+    } else if (typeof window !== 'undefined') {
       // Check system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(prefersDark ? 'dark' : 'light');
@@ -32,14 +36,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
 
     const root = document.documentElement;
-    
+
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    
-    localStorage.setItem('theme', theme);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme);
+    }
   }, [theme, mounted]);
 
   const toggleTheme = () => {
