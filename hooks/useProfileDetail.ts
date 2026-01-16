@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { AIProfileDetail, RoutePrefix } from "@/types/ai-profile";
 
