@@ -4,6 +4,9 @@ import Message from "@/models/Message";
 import User from "@/models/User";
 import { verifyToken } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get("token")?.value;
