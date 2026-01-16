@@ -181,8 +181,8 @@ export async function createCheckoutSession(
                     quantity: 1,
                 },
             ],
-            success_url: `https://datingapp-nl85.onrender.com/checkout/success?session_id={CHECKOUT_SESSION_ID}&profileId=${aiProfileId}`,
-            cancel_url: `https://datingapp-nl85.onrender.com/checkout/cancel?profileId=${aiProfileId}`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}&profileId=${aiProfileId}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel?profileId=${aiProfileId}`,  
             metadata,
         };
 

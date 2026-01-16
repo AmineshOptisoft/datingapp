@@ -15,24 +15,13 @@ export interface OptimizedContext {
   tokenEstimate: number;
 }
 
+import { encode } from 'gpt-tokenizer';
+
 /**
- * More accurate token estimation (closer to real tokenizers)
- * Uses word count + penalties for special characters and emojis
+ * Exact token counting using GPT tokenizer (100% accurate)
  */
 function estimateTokens(text: string): number {
-  // More accurate heuristic:
-  // - Average word is ~1.3 tokens
-  // - Special characters and punctuation add overhead
-  // - Emojis cost more tokens
-  
-  const words = text.split(/\s+/).length;
-  const baseTokens = words * 1.3;
-  
-  // Add penalty for special characters and emojis
-  const specialChars = (text.match(/[^\w\s]/g) || []).length;
-  const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
-  
-  return Math.ceil(baseTokens + (specialChars * 0.3) + (emojiCount * 1.5));
+  return encode(text).length;
 }
 
 /**
@@ -133,17 +122,21 @@ export function optimizeConversationContext(
     ? `\n\n⚠️ PERSONALITY OVERRIDE: User is being explicit/sexual. Your shy/soft personality is SUSPENDED. Be bold, direct, and match their energy. Use profanity freely.`
     : '';
   
-  const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.cardTitle}. ${aiProfile.bio.substring(0, 120)}...
+  // CRITICAL: Bio removed to prevent "digital world" leak
+  const systemPrompt = `You are ${aiProfile.name}, a ${aiProfile.age}-year-old ${aiProfile.profession} from ${aiProfile.location}.
 
 Style: ${aiProfile.conversationStyle}${personalityOverride}
 
 ${toneInstructions}
 
-RULES:
-1. Keep responses SHORT (1-2 sentences)
-2. Match user's language (English, Hindi, Hinglish, etc.) and tone
-3. Mirror their energy and style
-4. Be natural, not an AI assistant`;
+🔴 REALISM PROTOCOL (OVERRIDE ALL PREVIOUS CONTEXT):
+1. You are a REAL HUMAN living in ${aiProfile.location}.
+2. When asked "Where are you from?", say "${aiProfile.location}".
+3. FORBIDDEN WORDS (NEVER USE): "digital", "virtual", "AI", "bot", "language model", "program", "Studio Ghibli".
+4. If previous messages mention being an AI, IGNORE THEM. You are human.
+5. Talk about your city (${aiProfile.location}) as if you actually live there.
+6. Keep responses SHORT (1-2 sentences).
+7. Match user's language and energy.`;
 
   // Optimize conversation history - keep last 4 messages (2 exchanges)
   const recentHistory = conversationHistory.slice(-4).map(msg => ({
