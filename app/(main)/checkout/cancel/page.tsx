@@ -3,6 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 export default function CheckoutCancelPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
