@@ -3,6 +3,9 @@
 import React from "react";
 import { getProfileRoute } from "@/lib/url-helpers";
 
+// Force dynamic rendering to prevent prerender errors
+export const dynamic = 'force-dynamic';
+
 export default function CheckoutSuccessPage() {
     const [redirecting, setRedirecting] = React.useState(true);
     const [profileRoute, setProfileRoute] = React.useState<string | null>(null);
