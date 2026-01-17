@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { getProfileRoute } from "@/lib/url-helpers";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 export default function CheckoutSuccessPage() {
     const [redirecting, setRedirecting] = useState(true);
     const [profileRoute, setProfileRoute] = useState<string | null>(null);

@@ -3,6 +3,9 @@ import dbConnect from "@/lib/db";
 import Message from "@/models/Message";
 import { verifyToken } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Get conversation between two users
 export async function GET(request: NextRequest) {
   try {

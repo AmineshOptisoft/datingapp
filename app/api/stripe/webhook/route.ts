@@ -16,15 +16,21 @@ import Stripe from "stripe";
 // 2. Uncommenting the signature verification code below
 
 export async function POST(request: NextRequest) {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🔔 WEBHOOK RECEIVED!");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
     try {
         await dbConnect();
 
         const body = await request.text();
+        console.log("📦 Webhook body received, length:", body.length);
 
         // Parse the event directly without signature verification
         let event: Stripe.Event;
         try {
             event = JSON.parse(body) as Stripe.Event;
+            console.log("✅ Event parsed successfully, type:", event.type);
         } catch (err: any) {
             console.error("❌ Failed to parse webhook body:", err.message);
             return NextResponse.json(

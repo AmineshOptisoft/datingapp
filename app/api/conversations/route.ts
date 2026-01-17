@@ -3,6 +3,9 @@ import mongoose from 'mongoose';
 import Message from '@/models/Message';
 import AIProfile from '@/models/AIProfile';
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://nihal:nihal@cluster0.oz0lft4.mongodb.net/dating-app';
 
 async function connectDB() {

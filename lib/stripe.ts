@@ -5,6 +5,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
+    // Allow newer API versions even if the installed Stripe SDK's type union
+    // lags behind; runtime supports it as long as Stripe accepts the version.
+    apiVersion: '2025-12-15.clover' as Stripe.LatestApiVersion,
     typescript: true,
 });
