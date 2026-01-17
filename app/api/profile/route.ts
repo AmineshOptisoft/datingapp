@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    const updateData: any = { name, bio, email, phoneNumber: phone };
+    // Email cannot be changed - only update name, bio, phone, and avatar
+    const updateData: any = { name, bio, phoneNumber: phone };
 
     if (avatarBase64) {
       // Here you need to save base64 image to storage or DB. For this example, save directly for demo:
