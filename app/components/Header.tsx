@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import AuthModal from './AuthModal';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -20,6 +21,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {
     setAuthMode(mode);
@@ -51,21 +53,33 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           <div className="hidden md:flex items-center gap-4 md:gap-8">
             <Link 
               href="/for-men" 
-              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
+                pathname === '/for-men' 
+                  ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50' 
+                  : ''
+              }`}
             >
               <FaMars className="w-5 h-5 md:w-6 md:h-6 text-blue-500 dark:text-blue-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
             </Link>
             <Link 
               href="/for-women" 
-              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
+                pathname === '/for-women' 
+                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50' 
+                  : ''
+              }`}
             >
               <FaVenus className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
             </Link>
             <Link 
               href="/for-lgbtq" 
-              className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
+                pathname === '/for-lgbtq' 
+                  ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50' 
+                  : ''
+              }`}
             >
               <Transgender className="w-5 h-5 md:w-6 md:h-6 text-purple-500 dark:text-purple-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
@@ -114,21 +128,33 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         <div className="flex items-center justify-around px-4 py-3">
           <Link 
             href="/for-men" 
-            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
+              pathname === '/for-men' 
+                ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50' 
+                : ''
+            }`}
           >
             <FaMars className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
           </Link>
           <Link 
             href="/for-women" 
-            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
+              pathname === '/for-women' 
+                ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50' 
+                : ''
+            }`}
           >
             <FaVenus className="w-6 h-6 text-pink-500 dark:text-pink-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
           </Link>
           <Link 
             href="/for-lgbtq" 
-            className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity active:scale-95"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
+              pathname === '/for-lgbtq' 
+                ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50' 
+                : ''
+            }`}
           >
             <Transgender className="w-6 h-6 text-purple-500 dark:text-purple-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
