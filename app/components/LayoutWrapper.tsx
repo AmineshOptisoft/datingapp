@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useTheme } from '@/app/contexts/ThemeContext';
@@ -16,6 +17,8 @@ function SidebarWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme } = useTheme();
+  const pathname = usePathname();
+  const isMessagesPage = pathname === '/messages';
 
   return (
     <div className="flex h-screen overflow-hidden relative">
@@ -48,7 +51,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <Header />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className={`flex-1 overflow-y-auto ${isMessagesPage ? 'pb-0' : 'pb-20 md:pb-0'}`}>
           {children}
         </main>
       </div>

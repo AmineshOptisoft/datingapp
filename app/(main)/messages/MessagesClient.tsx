@@ -334,9 +334,9 @@ export default function MessagesClient() {
 
       {/* Right Side - Chat Area */}
       {selectedConv ? (
-        <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10">
+        <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 h-full">
           {/* Chat Header */}
-          <div className="p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
+          <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-sm p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Back Button for Mobile */}
               <button
@@ -517,7 +517,7 @@ export default function MessagesClient() {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-zinc-200 dark:border-white/10">
+          <div className="sticky bottom-0 z-10 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-sm p-4 border-t border-zinc-200 dark:border-white/10">
             <div className="flex items-center gap-3">
               {/* Emoji Picker */}
               <div className="relative">

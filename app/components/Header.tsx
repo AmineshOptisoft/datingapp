@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import AuthModal from './AuthModal';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -20,6 +21,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {
     setAuthMode(mode);
@@ -110,7 +112,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 shadow-lg">
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 shadow-lg ${pathname === '/messages' ? 'hidden' : ''}`}>
         <div className="flex items-center justify-around px-4 py-3">
           <Link 
             href="/for-men" 
