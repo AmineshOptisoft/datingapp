@@ -12,6 +12,7 @@ import {
   analyzeUserTone,
   optimizeConversationContext,
   extractUserMessages,
+  estimateTokens,
 } from "./lib/chat-tone-analyzer";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
 
@@ -167,7 +168,11 @@ async function processUserAudio(
 ) {
   const startTime = Date.now();
   try {
+    // Calculate audio duration for STT cost tracking
+    const audioDurationSeconds = (audioBuffer.length / (sampleRate * 2)).toFixed(2); // 16-bit audio = 2 bytes per sample
+    
     const transcript = await transcribeAudio(audioBuffer, sampleRate);
+    console.log(`🎤 STT processed: ${audioDurationSeconds}s of audio`);
     
     // ═══════════════════════════════════════════════════════════════
     // SMART PRODUCTION-READY FILTERING
@@ -281,7 +286,7 @@ async function processUserAudio(
 
     // Print token estimate to terminal for voice calls
     console.log(
-      `🎙️ Voice Call Token Estimate: ${optimized.tokenEstimate} tokens | User Tone: ${userTone.style} | Energy: ${userTone.energy}`
+      `💡 Grok tokens (input): ${optimized.tokenEstimate} | User tone: ${userTone.style} | Energy: ${userTone.energy}`
     );
 
     // Build optimized LLM messages
@@ -362,9 +367,18 @@ async function processUserAudio(
       socket.emit("voice:ai-audio-chunk", { chunk: "", isLast: true });
 
       const totalTime = Date.now() - startTime;
+      
+      // Calculate complete cost metrics
+      const outputTokens = estimateTokens(fullResponse);
+      const totalTokens = optimized.tokenEstimate + outputTokens;
+      const ttsChars = fullResponse.length;
+      
       console.log(`💬 AI response: "${fullResponse}"`);
       console.log(
-        `🎵 Sent ${chunkCount} audio chunks | Total time: ${totalTime}ms`
+        `📊 Grok: ${optimized.tokenEstimate} in + ${outputTokens} out = ${totalTokens} total`
+      );
+      console.log(
+        `🎵 ElevenLabs TTS: ${ttsChars} chars | Sent ${chunkCount} audio chunks in ${totalTime}ms`
       );
     } catch (streamError) {
       console.error(
@@ -853,6 +867,7 @@ app.prepare().then(async () => {
           // Optimize context for token efficiency
           let systemPrompt: string;
           let optimizedHistory: LLMMessage[];
+          let inputTokens: number = 0;
 
           if (profile) {
             const optimized = optimizeConversationContext(
@@ -863,13 +878,16 @@ app.prepare().then(async () => {
             );
             systemPrompt = optimized.systemPrompt;
             optimizedHistory = optimized.conversationHistory as LLMMessage[];
+            inputTokens = optimized.tokenEstimate;
             console.log(
-              `💡 Token estimate: ${optimized.tokenEstimate} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`
+              `💡 Grok tokens (input): ${inputTokens} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`
             );
           } else {
             systemPrompt =
               "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
             optimizedHistory = conversationHistory.slice(-6) as LLMMessage[];
+            inputTokens = estimateTokens(systemPrompt) + 
+              optimizedHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
           }
 
           // Build Grok API messages
@@ -884,6 +902,19 @@ app.prepare().then(async () => {
           console.log("messages", llmMessages);
 
           const aiReply = await callGrok(llmMessages, userTone);
+          
+          // Calculate output tokens and total cost
+          const outputTokens = estimateTokens(aiReply);
+          const totalTokens = inputTokens + outputTokens;
+          const elevenLabsChars = aiReply.length;
+          
+          console.log(
+            `💬 AI response: "${aiReply}"`
+          );
+          console.log(
+            `📊 Grok: ${inputTokens} in + ${outputTokens} out = ${totalTokens} total | ElevenLabs: ${elevenLabsChars} chars`
+          );
+          
           await Message.create({
             sender: aiBotId,
             receiver: userId,
