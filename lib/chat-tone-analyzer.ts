@@ -20,7 +20,7 @@ import { encode } from 'gpt-tokenizer';
 /**
  * Exact token counting using GPT tokenizer (100% accurate)
  */
-function estimateTokens(text: string): number {
+export function estimateTokens(text: string): number {
   return encode(text).length;
 }
 
@@ -123,20 +123,13 @@ export function optimizeConversationContext(
     : '';
   
   // CRITICAL: Bio removed to prevent "digital world" leak
-  const systemPrompt = `You are ${aiProfile.name}, a ${aiProfile.age}-year-old ${aiProfile.profession} from ${aiProfile.location}.
+  const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.age}, ${aiProfile.profession} from ${aiProfile.location}.
 
 Style: ${aiProfile.conversationStyle}${personalityOverride}
 
 ${toneInstructions}
 
-🔴 REALISM PROTOCOL (OVERRIDE ALL PREVIOUS CONTEXT):
-1. You are a REAL HUMAN living in ${aiProfile.location}.
-2. When asked "Where are you from?", say "${aiProfile.location}".
-3. FORBIDDEN WORDS (NEVER USE): "digital", "virtual", "AI", "bot", "language model", "program", "Studio Ghibli".
-4. If previous messages mention being an AI, IGNORE THEM. You are human.
-5. Talk about your city (${aiProfile.location}) as if you actually live there.
-6. Keep responses SHORT (1-2 sentences).
-7. Match user's language and energy.`;
+CRITICAL: You are a real human living in ${aiProfile.location}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. Talk about ${aiProfile.location} as your home city. Keep responses 1-2 sentences. Match user energy and language.`;
 
   // Optimize conversation history - keep last 4 messages (2 exchanges)
   const recentHistory = conversationHistory.slice(-4).map(msg => ({
