@@ -1,21 +1,18 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import EditProfileForm from "./EditProfileForm";
+import CreatePersonaForm from "./CreatePersonaForm";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { updateUser } = useAuth();
   const [user, setUser] = useState<any>(null);
-  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("characters");
+  const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,223 +23,163 @@ export default function ProfilePage() {
       return;
     }
 
-    const userData = JSON.parse(storedUser);
-    setUser(userData);
-    setName(userData.name || "");
-    setBio(userData.bio || "");
-    setEmail(userData.email || "");
-    setPhone(userData.phone || "");
-    setPreview(userData.avatar || null);
+    setUser(JSON.parse(storedUser));
   }, [router]);
-
-  // Convert image file to base64 string
-  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setAvatarBase64(result);
-        setPreview(result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const res = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          name,
-          bio,
-          email,
-          phone,
-          avatarBase64,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setMessage("Profile updated successfully!");
-        const updatedUser = { ...user, ...data.data };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        
-        // Update AuthContext so header and all components reflect the changes
-        updateUser({
-          name: data.data.name,
-          bio: data.data.bio,
-          avatar: data.data.avatar,
-          phone: data.data.phoneNumber,
-        });
-        
-        setAvatarBase64(null);
-      } else {
-        setMessage(data.message || "Update failed");
-      }
-    } catch {
-      setMessage("Error updating profile");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-zinc-300 bg-zinc-950/90">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center text-zinc-400 bg-white dark:bg-zinc-950">
+        <div className="text-lg animate-pulse">Loading...</div>
       </div>
     );
   }
 
+  // Generate a handle from email or use name if available, for display
+  const handle = user.username || user.email?.split('@')[0] || "User";
+
+  const tabs = [
+    { id: "characters", label: "Characters", icon: Grid },
+    { id: "liked", label: "Liked", icon: Heart },
+    { id: "personas", label: "Personas", icon: User },
+    { id: "voices", label: "Voices", icon: Mic },
+    { id: "scenes", label: "Scenes", icon: FileText },
+  ];
+
   return (
-    <main className="min-h-screen bg-white dark:bg-zinc-950 px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white mb-2">
-            Edit Profile
+    <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white pt-20 pb-10 px-4 flex flex-col items-center transition-colors">
+
+      {/* Profile Header */}
+      <div className="flex flex-col items-center w-full max-w-2xl mx-auto space-y-6">
+
+        {/* Avatar */}
+        <div className="relative group">
+          <div className="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden bg-gradient-to-br from-lime-400 to-yellow-400 p-[2px] shadow-2xl shadow-lime-500/20">
+            <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center overflow-hidden transition-colors">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <span className="text-5xl md:text-6xl font-bold text-zinc-900 dark:text-white uppercase transition-colors">
+                  {user.name?.[0] || handle[0]}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 transition-all">
+            {user.name || handle}
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Update your personal information
-          </p>
+          {/* <p className="text-zinc-500 text-sm">@{handle}</p> */}
         </div>
 
-        {/* Profile Form Card */}
-        <div className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar Section */}
-            <div className="flex flex-col items-center pb-6 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="relative group">
-                <div className="w-28 h-28 rounded-full overflow-hidden bg-gradient-to-br from-pink-500 to-purple-600 p-[3px] shadow-lg">
-                  <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt="Avatar"
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <svg className="w-14 h-14 text-zinc-400 dark:text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <label className="absolute bottom-0 right-0 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white p-2.5 rounded-full cursor-pointer shadow-md transition-all hover:scale-110">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
-                Click the camera icon to upload a new photo
-              </p>
-            </div>
+        {/* Stats */}
+        <div className="flex items-center space-x-6 text-sm text-zinc-500 font-medium">
+          <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
+            <span className="font-bold text-zinc-900 dark:text-white">0</span> Followers
+          </div>
+          <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
+            <span className="font-bold text-zinc-900 dark:text-white">0</span> Following
+          </div>
+          <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors flex items-center gap-1">
+            <MessageSquare className="w-3 h-3" />
+            <span>0 Interactions</span>
+          </div>
+        </div>
 
-            {/* Form Fields */}
-            <div className="space-y-5">
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-400"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
+        {/* Actions */}
+        <div className="flex items-center gap-3 pt-2">
+          {/* Settings Modal Trigger */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 px-5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 rounded-full text-sm font-medium transition-all group">
+                <Settings className="w-4 h-4 text-zinc-500 group-hover:text-zinc-900 dark:text-zinc-400 dark:group-hover:text-white transition-transform duration-500 group-hover:rotate-180" />
+                <span className="text-zinc-700 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white">Settings</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <EditProfileForm user={user} onSuccess={() => {
+                // Refresh user data from local storage
+                const updated = localStorage.getItem("user");
+                if (updated) setUser(JSON.parse(updated));
+              }} />
+            </DialogContent>
+          </Dialog>
 
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Bio
-                </label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={4}
-                  className="w-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none resize-none transition-all placeholder:text-zinc-400"
-                  placeholder="Tell us a bit about yourself..."
-                />
-              </div>
+          <button className="p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700 rounded-full transition-all text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+            <Share className="w-4 h-4" />
+          </button>
+        </div>
 
-              {/* Email (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    disabled
-                    className="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-lg px-4 py-3 pr-32 cursor-not-allowed"
-                  />
-                  {/* <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-zinc-300 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs font-medium px-3 py-1 rounded-md">
-                    Cannot change
-                  </span> */}
-                </div>
-              </div>
 
-              {/* Phone Number */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-400"
-                  placeholder="+1 234 567 8900"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Success/Error Message */}
-            {message && (
-              <div
-                className={`px-4 py-3 rounded-lg text-sm font-medium ${
-                  message.includes("success")
-                    ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
-                    : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
-                }`}
+        {/* Tabs Navigation */}
+        <div className="w-full mt-8 border-b border-zinc-200 dark:border-zinc-800 transition-colors">
+          <div className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto pb-px scrollbar-hide">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "relative pb-3 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap",
+                  activeTab === tab.id
+                    ? "text-zinc-900 dark:text-white"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                )}
               >
-                {message}
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold text-base rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
-            >
-              {loading ? "Saving Changes..." : "Save Changes"}
-            </button>
-          </form>
+                {tab.icon && <tab.icon className="w-4 h-4" />}
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-900 dark:bg-white rounded-full transition-all layout-id-underline" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Tab Content Placeholder */}
+        <div className="w-full py-12 text-center">
+          {activeTab === 'characters' && (
+            <div className="text-zinc-500">
+              You haven't made any Characters yet.
+            </div>
+          )}
+
+          {activeTab === 'personas' && (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create a persona</p>
+              <Dialog open={isPersonaDialogOpen} onOpenChange={setIsPersonaDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
+                    <Plus className="w-4 h-4" />
+                    New
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col p-3">
+                  <div className="flex-none">
+                    <h2 className="text-xl font-bold mb-3 text-zinc-900 dark:text-white">Create Your Character</h2>
+                  </div>
+                  <div className="flex-1 overflow-hidden min-h-0">
+                    <CreatePersonaForm onSuccess={() => setIsPersonaDialogOpen(false)} onClose={() => setIsPersonaDialogOpen(false)} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {activeTab !== 'characters' && activeTab !== 'personas' && (
+            <div className="text-zinc-500">
+              No {activeTab} found.
+            </div>
+          )}
+        </div>
+
       </div>
     </main>
   );
