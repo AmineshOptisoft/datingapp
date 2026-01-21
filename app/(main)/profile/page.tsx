@@ -307,7 +307,7 @@ export default function ProfilePage() {
                     New
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-lg max-h-[85vh] h-[85vh] p-0 bg-transparent border-0">
+                <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0">
                   <CreatePersonaDialog 
                     onSuccess={() => {
                       setIsCreatePersonaDialogOpen(false);
