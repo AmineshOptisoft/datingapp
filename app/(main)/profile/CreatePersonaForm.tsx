@@ -62,6 +62,104 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
         }
     };
 
+    const handleSubmit = async () => {
+        try {
+            // Validation
+            if (!name.trim()) {
+                alert("Character name is required");
+                return;
+            }
+            
+            const ageNum = parseInt(age);
+            if (isNaN(ageNum) || ageNum < 18) {
+                alert("Character must be at least 18 years old");
+                return;
+            }
+
+            if (!description.trim() || !personality.trim() || !scenario.trim() || !firstMessage.trim()) {
+                alert("All fields (description, personality, scenario, first message) are required");
+                return;
+            }
+
+            // Get user ID from localStorage
+            const storedUser = localStorage.getItem("user");
+            if (!storedUser) {
+                alert("User not found. Please login again.");
+                return;
+            }
+
+            const user = JSON.parse(storedUser);
+            console.log("User from localStorage:", user); // Debug
+            
+            // Try different possible user ID fields
+            const userId = user._id || user.id || user.userId;
+            
+            if (!userId) {
+                console.error("No user ID found in user object:", user);
+                alert("User ID not found. Please try logging out and logging back in.");
+                return;
+            }
+
+            console.log("Using userId:", userId); // Debug
+
+            // Prepare data
+            const characterData = {
+                userId,
+                characterName: name.trim(),
+                characterImage: image,
+                characterAge: ageNum,
+                language: language,
+                tags: tags,
+                description: description.trim(),
+                personality: personality.trim(),
+                scenario: scenario.trim(),
+                firstMessage: firstMessage.trim(),
+                visibility: visibility.toLowerCase(),
+            };
+
+            console.log("Sending character data:", characterData); // Debug
+
+            // Call API
+            const response = await fetch("/api/characters", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(characterData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                alert(data.message || "Failed to create character");
+                return;
+            }
+
+            // Success
+            alert("Character created successfully!");
+            
+            // Reset form
+            setName("");
+            setImage(null);
+            setAge("18");
+            setLanguage("English");
+            setTags([]);
+            setDescription("");
+            setPersonality("");
+            setScenario("");
+            setFirstMessage("");
+            setVisibility("Private");
+
+            // Call onSuccess callback
+            if (onSuccess) {
+                onSuccess();
+            }
+        } catch (error) {
+            console.error("Error creating character:", error);
+            alert("An error occurred while creating the character");
+        }
+    };
+
     return (
         <div className="flex flex-col h-full max-h-[85vh]">
             {/* Custom Scrollable Area */}
@@ -305,7 +403,10 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                 <button className="px-5 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors" onClick={onClose}>
                     Cancel
                 </button>
-                <button className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold rounded-full hover:opacity-90 transition-opacity">
+                <button 
+                    className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold rounded-full hover:opacity-90 transition-opacity"
+                    onClick={handleSubmit}
+                >
                     Create Character
                 </button>
             </div>

@@ -13,6 +13,42 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("characters");
   const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
+  const [characters, setCharacters] = useState<any[]>([]);
+  const [loadingCharacters, setLoadingCharacters] = useState(false);
+
+  const fetchCharacters = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      const userData = JSON.parse(storedUser);
+      console.log("Fetching characters for user:", userData); // Debug
+      
+      // Try different possible user ID fields
+      const userId = userData._id || userData.id || userData.userId;
+      
+      if (!userId) {
+        console.error("No user ID found in user object:", userData);
+        return;
+      }
+
+      console.log("Fetching with userId:", userId); // Debug
+      setLoadingCharacters(true);
+
+      const response = await fetch(`/api/characters?userId=${userId}`);
+      const data = await response.json();
+
+      console.log("Fetched characters:", data); // Debug
+
+      if (data.success) {
+        setCharacters(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching characters:", error);
+    } finally {
+      setLoadingCharacters(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -24,6 +60,7 @@ export default function ProfilePage() {
     }
 
     setUser(JSON.parse(storedUser));
+    fetchCharacters();
   }, [router]);
 
   if (!user) {
@@ -146,30 +183,121 @@ export default function ProfilePage() {
         {/* Tab Content Placeholder */}
         <div className="w-full py-12 text-center">
           {activeTab === 'characters' && (
-            <div className="text-zinc-500">
-              You haven't made any Characters yet.
+            <div>
+              {/* Character Creation Section */}
+              <div className="flex flex-col items-center gap-4 mb-8">
+                <p className="text-zinc-900 dark:text-zinc-100 font-medium">Your Characters</p>
+                
+                {characters.length >= 5 ? (
+                  <div className="text-center space-y-2">
+                    <p className="text-amber-600 dark:text-amber-500 font-medium">
+                      Character limit reached (5/5)
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                      Delete a character to create a new one
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-zinc-500">
+                      {characters.length}/5 characters created
+                    </p>
+                    <Dialog open={isPersonaDialogOpen} onOpenChange={setIsPersonaDialogOpen}>
+                      <DialogTrigger asChild>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
+                          <Plus className="w-4 h-4" />
+                          New Character
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col p-3">
+                        <div className="flex-none">
+                          <h2 className="text-xl font-bold mb-3 text-zinc-900 dark:text-white">Create Your Character</h2>
+                        </div>
+                        <div className="flex-1 overflow-hidden min-h-0">
+                          <CreatePersonaForm 
+                            onSuccess={() => {
+                              setIsPersonaDialogOpen(false);
+                              fetchCharacters(); // Refresh the character list
+                            }} 
+                            onClose={() => setIsPersonaDialogOpen(false)} 
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
+              </div>
+
+              {/* Character Grid */}
+              {loadingCharacters ? (
+                <div className="text-zinc-500 animate-pulse">Loading characters...</div>
+              ) : characters.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {characters.map((character: any) => (
+                    <div
+                      key={character._id}
+                      className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      {/* Character Image */}
+                      <div className="h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                        {character.characterImage ? (
+                          <img
+                            src={character.characterImage}
+                            alt={character.characterName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                            <User className="w-12 h-12" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Character Info */}
+                      <div className="p-4 space-y-2">
+                        <h3 className="font-bold text-lg text-zinc-900 dark:text-white truncate">
+                          {character.characterName}
+                        </h3>
+                        <p className="text-sm text-zinc-500">
+                          Age: {character.characterAge} • {character.language}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                          {character.description}
+                        </p>
+                        
+                        {/* Tags */}
+                        {character.tags && character.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-2">
+                            {character.tags.slice(0, 3).map((tag: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 bg-pink-500/10 text-pink-500 text-xs rounded-md"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {character.tags.length > 3 && (
+                              <span className="px-2 py-0.5 text-zinc-500 text-xs">
+                                +{character.tags.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-zinc-500">
+                  No characters yet. Create your first character!
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'personas' && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create a persona</p>
-              <Dialog open={isPersonaDialogOpen} onOpenChange={setIsPersonaDialogOpen}>
-                <DialogTrigger asChild>
-                  <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
-                    <Plus className="w-4 h-4" />
-                    New
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col p-3">
-                  <div className="flex-none">
-                    <h2 className="text-xl font-bold mb-3 text-zinc-900 dark:text-white">Create Your Character</h2>
-                  </div>
-                  <div className="flex-1 overflow-hidden min-h-0">
-                    <CreatePersonaForm onSuccess={() => setIsPersonaDialogOpen(false)} onClose={() => setIsPersonaDialogOpen(false)} />
-                  </div>
-                </DialogContent>
-              </Dialog>
+            <div className="text-zinc-500">
+              Personas feature coming soon...
             </div>
           )}
 

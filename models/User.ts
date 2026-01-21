@@ -1,5 +1,67 @@
 import mongoose, { Schema, Model } from "mongoose";
-import { IUser } from "@/types/user";
+import { IUser, ICharacter } from "@/types/user";
+
+const CharacterSchema = new Schema<ICharacter>(
+  {
+    characterName: {
+      type: String,
+      required: [true, "Character name is required"],
+      trim: true,
+      maxlength: [100, "Character name cannot exceed 100 characters"],
+    },
+    characterImage: {
+      type: String,
+      default: null,
+    },
+    characterAge: {
+      type: Number,
+      required: [true, "Character age is required"],
+      min: [18, "Character must be at least 18 years old"],
+      max: [150, "Character age cannot exceed 150"],
+    },
+    language: {
+      type: String,
+      default: "English",
+      trim: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function(tags: string[]) {
+          return tags.length <= 10;
+        },
+        message: "Cannot add more than 10 tags",
+      },
+    },
+    description: {
+      type: String,
+      required: [true, "Description is required"],
+      maxlength: [1000, "Description cannot exceed 1000 characters"],
+    },
+    personality: {
+      type: String,
+      required: [true, "Personality is required"],
+      maxlength: [1000, "Personality cannot exceed 1000 characters"],
+    },
+    scenario: {
+      type: String,
+      required: [true, "Scenario is required"],
+      maxlength: [30, "Scenario cannot exceed 30 characters"],
+    },
+    firstMessage: {
+      type: String,
+      required: [true, "First message is required"],
+      maxlength: [500, "First message cannot exceed 500 characters"],
+    },
+    visibility: {
+      type: String,
+      enum: ["public", "private"],
+      default: "private",
+    },
+  },
+  { timestamps: true }
+);
 
 const UserSchema = new Schema<IUser>(
   {
@@ -42,6 +104,11 @@ const UserSchema = new Schema<IUser>(
       default: "",
       maxlength: [500, "Bio cannot exceed 500 characters"],
     },
+    role: {
+      type: String,
+      enum: ["user", "character"],
+      default: "user",
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -57,6 +124,10 @@ const UserSchema = new Schema<IUser>(
     stripeCustomerId: {
       type: String,
       default: null,
+    },
+    characters: {
+      type: [CharacterSchema],
+      default: [],
     },
   },
   { timestamps: true }
