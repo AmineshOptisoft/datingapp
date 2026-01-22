@@ -46,7 +46,7 @@ export default function BoyDetailPage() {
     } catch (error) {
       console.error('Failed to persist selected AI profile for chat:', error);
     }
-
+                                                                        
     router.push(`/messages?ai=${profile.profileId}`);
   };
 

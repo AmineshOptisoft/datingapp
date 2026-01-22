@@ -17,6 +17,8 @@ export default function ProfilePage() {
   const [isCreatePersonaDialogOpen, setIsCreatePersonaDialogOpen] = useState(false);
   const [characters, setCharacters] = useState<any[]>([]);
   const [loadingCharacters, setLoadingCharacters] = useState(false);
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [loadingPersonas, setLoadingPersonas] = useState(false);
 
   const fetchCharacters = async () => {
     try {
@@ -52,6 +54,36 @@ export default function ProfilePage() {
     }
   };
 
+  const fetchPersonas = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      const userData = JSON.parse(storedUser);
+      const userId = userData._id || userData.id || userData.userId;
+
+      if (!userId) {
+        console.error("User ID not found");
+        return;
+      }
+
+      setLoadingPersonas(true);
+      const response = await fetch(`/api/personas?userId=${userId}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch personas");
+      }
+
+      const data = await response.json();
+      setPersonas(data.personas || []);
+    } catch (error) {
+      console.error("Error fetching personas:", error);
+      setPersonas([]);
+    } finally {
+      setLoadingPersonas(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -63,6 +95,7 @@ export default function ProfilePage() {
 
     setUser(JSON.parse(storedUser));
     fetchCharacters();
+    fetchPersonas();
   }, [router]);
 
   if (!user) {
@@ -183,7 +216,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tab Content Placeholder */}
-        <div className="w-full py-12 text-center">
+        <div className="w-full py-6 text-center">
           {activeTab === 'characters' && (
             <div>
               {/* Character Grid First */}
@@ -298,25 +331,91 @@ export default function ProfilePage() {
           )}
 
           {activeTab === 'personas' && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create a persona</p>
-              <Dialog open={isCreatePersonaDialogOpen} onOpenChange={setIsCreatePersonaDialogOpen}>
-                <DialogTrigger asChild>
-                  <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
-                    <Plus className="w-4 h-4" />
-                    New
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0">
-                  <CreatePersonaDialog 
-                    onSuccess={() => {
-                      setIsCreatePersonaDialogOpen(false);
-                      // TODO: Refresh personas list
-                    }} 
-                    onClose={() => setIsCreatePersonaDialogOpen(false)} 
-                  />
-                </DialogContent>
-              </Dialog>
+            <div className="flex flex-col gap-6">
+              {/* Personas List */}
+              {loadingPersonas ? (
+                <div className="text-zinc-500">Loading personas...</div>
+              ) : personas.length > 0 ? (
+                <div className="space-y-3">
+                  {personas.map((persona: any) => (
+                    <div
+                      key={persona._id}
+                      className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer relative"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {persona.avatar ? (
+                            <img src={persona.avatar} alt={persona.displayName} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xl font-bold text-white">
+                              {persona.displayName.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 text-left">
+                          <h3 className="font-semibold text-zinc-900 dark:text-white truncate">
+                            {persona.displayName}
+                          </h3>
+                          {persona.background && (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                              {persona.background}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Options Menu */}
+                        <div className="">
+                          <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                            <svg className="w-5 h-5 text-zinc-500" fill="currentColor" viewBox="0 0 20 20">
+                              <circle cx="10" cy="5" r="1.5"/>
+                              <circle cx="10" cy="10" r="1.5"/>
+                              <circle cx="10" cy="15" r="1.5"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Default Badge */}
+                      {persona.makeDefault && (
+                        <div className="absolute top-2 right-2">
+                          <span className="inline-block px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs rounded-full">
+                            Default
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-zinc-500 py-8">
+                  No personas created yet
+                </div>
+              )}
+
+              {/* Create Persona Button */}
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create a persona</p>
+                <Dialog open={isCreatePersonaDialogOpen} onOpenChange={setIsCreatePersonaDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
+                      <Plus className="w-4 h-4" />
+                      New
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0">
+                    <CreatePersonaDialog 
+                      onSuccess={() => {
+                        setIsCreatePersonaDialogOpen(false);
+                        fetchPersonas(); // Refresh personas list
+                      }} 
+                      onClose={() => setIsCreatePersonaDialogOpen(false)} 
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           )}
 

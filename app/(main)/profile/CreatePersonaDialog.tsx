@@ -63,12 +63,18 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
 
       console.log("Saving persona:", personaData);
 
-      // TODO: Call API to save persona
-      // const response = await fetch("/api/personas", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(personaData),
-      // });
+      const response = await fetch("/api/personas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(personaData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to save persona");
+        return;
+      }
 
       alert("Persona saved successfully!");
       onSuccess();
