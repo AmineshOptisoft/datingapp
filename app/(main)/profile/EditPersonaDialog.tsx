@@ -1,19 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-interface CreatePersonaDialogProps {
+interface EditPersonaDialogProps {
+  persona: any;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePersonaDialogProps) {
-  const [displayName, setDisplayName] = useState("");
-  const [background, setBackground] = useState("");
-  const [makeDefault, setMakeDefault] = useState(false);
-  const [avatar, setAvatar] = useState<string | null>(null);
+export default function EditPersonaDialog({ persona, onSuccess, onClose }: EditPersonaDialogProps) {
+  const [displayName, setDisplayName] = useState(persona?.displayName || "");
+  const [background, setBackground] = useState(persona?.background || "");
+  const [makeDefault, setMakeDefault] = useState(persona?.makeDefault || false);
+  const [avatar, setAvatar] = useState<string | null>(persona?.avatar || null);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update state when persona prop changes
+  useEffect(() => {
+    if (persona) {
+      setDisplayName(persona.displayName || "");
+      setBackground(persona.background || "");
+      setMakeDefault(persona.makeDefault || false);
+      setAvatar(persona.avatar || null);
+    }
+  }, [persona]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,7 +39,6 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
   };
 
   const handleGenerateImage = () => {
-    // TODO: Integrate AI image generation
     alert("AI image generation coming soon!");
     setShowAvatarMenu(false);
   };
@@ -42,35 +52,17 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
 
       setIsSaving(true);
 
-      // Get user ID from localStorage
-      const storedUser = localStorage.getItem("user");
-      if (!storedUser) {
-        toast.error("User not found. Please login again.");
-        setIsSaving(false);
-        return;
-      }
-
-      const user = JSON.parse(storedUser);
-      const userId = user._id || user.id || user.userId;
-
-      if (!userId) {
-        toast.error("User ID not found. Please try logging out and logging back in.");
-        setIsSaving(false);
-        return;
-      }
-
       const personaData = {
-        userId,
         displayName: displayName.trim(),
         background: background.trim(),
         makeDefault,
         avatar,
       };
 
-      console.log("Saving persona:", personaData);
+      console.log("Updating persona:", personaData);
 
-      const response = await fetch("/api/personas", {
-        method: "POST",
+      const response = await fetch(`/api/personas/${persona._id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(personaData),
       });
@@ -78,16 +70,16 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || "Failed to save persona");
+        toast.error(data.error || "Failed to update persona");
         setIsSaving(false);
         return;
       }
 
-      toast.success("Persona saved successfully!");
+      toast.success("Persona updated successfully!");
       onSuccess();
     } catch (error) {
-      console.error("Error saving persona:", error);
-      toast.error("An error occurred while saving the persona");
+      console.error("Error updating persona:", error);
+      toast.error("An error occurred while updating the persona");
     } finally {
       setIsSaving(false);
     }
@@ -97,7 +89,7 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">Persona</h2>
+        <h2 className="text-lg font-bold">Edit Persona</h2>
         <button
           onClick={onClose}
           className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-colors"
@@ -115,19 +107,7 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
             </svg>
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Characters will remember your persona information to improve their conversations with you
-          </p>
-        </div>
-        
-        <div className="flex items-start gap-2">
-          <div className="bg-zinc-200 dark:bg-zinc-700 rounded-full p-1.5 mt-0.5">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
-              <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
-            </svg>
-          </div>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Create multiple personas to change your background info between chats
+            Update your persona information
           </p>
         </div>
       </div>
@@ -222,26 +202,33 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
-            id="makeDefault"
+            id="editMakeDefault"
             checked={makeDefault}
             onChange={(e) => setMakeDefault(e.target.checked)}
             className="w-3.5 h-3.5 bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 rounded focus:ring-2 focus:ring-orange-500"
           />
-          <label htmlFor="makeDefault" className="text-sm text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="editMakeDefault" className="text-sm text-zinc-700 dark:text-zinc-300">
             Make default for new chats
           </label>
         </div>
       </div>
 
       {/* Save Button */}
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end gap-2">
+        <button
+          onClick={onClose}
+          disabled={isSaving}
+          className="px-5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          Cancel
+        </button>
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="px-5 py-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-          {isSaving ? "Saving..." : "Save"}
+          {isSaving ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>

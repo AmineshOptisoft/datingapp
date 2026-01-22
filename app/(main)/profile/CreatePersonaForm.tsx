@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Upload, Image as ImageIcon, ChevronDown } from "lucide-react";
+import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const TAG_CATEGORIES = {
     default: ["NSFW", "Monster Girl", "Worlds-End-Challenge"],
@@ -43,6 +44,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
     const [firstMessage, setFirstMessage] = useState("");
     const [visibility, setVisibility] = useState("Private");
     const [tagSearch, setTagSearch] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -66,25 +68,25 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
         try {
             // Validation
             if (!name.trim()) {
-                alert("Character name is required");
+                toast.error("Character name is required");
                 return;
             }
             
             const ageNum = parseInt(age);
             if (isNaN(ageNum) || ageNum < 18) {
-                alert("Character must be at least 18 years old");
+                toast.error("Character must be at least 18 years old");
                 return;
             }
 
             if (!description.trim() || !personality.trim() || !scenario.trim() || !firstMessage.trim()) {
-                alert("All fields (description, personality, scenario, first message) are required");
+                toast.error("All fields (description, personality, scenario, first message) are required");
                 return;
             }
 
             // Get user ID from localStorage
             const storedUser = localStorage.getItem("user");
             if (!storedUser) {
-                alert("User not found. Please login again.");
+                toast.error("User not found. Please login again.");
                 return;
             }
 
@@ -96,11 +98,13 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             
             if (!userId) {
                 console.error("No user ID found in user object:", user);
-                alert("User ID not found. Please try logging out and logging back in.");
+                toast.error("User ID not found. Please try logging out and logging back in.");
                 return;
             }
 
             console.log("Using userId:", userId); // Debug
+
+            setIsCreating(true);
 
             // Prepare data
             const characterData = {
@@ -131,12 +135,13 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             const data = await response.json();
 
             if (!response.ok || !data.success) {
-                alert(data.message || "Failed to create character");
+                toast.error(data.message || "Failed to create character");
+                setIsCreating(false);
                 return;
             }
 
             // Success
-            alert("Character created successfully!");
+            toast.success("Character created successfully!");
             
             // Reset form
             setName("");
@@ -156,7 +161,9 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             }
         } catch (error) {
             console.error("Error creating character:", error);
-            alert("An error occurred while creating the character");
+            toast.error("An error occurred while creating the character");
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -400,14 +407,20 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
 
             {/* Footer Buttons */}
             <div className="pt-4 mt-2 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3 shrink-0">
-                <button className="px-5 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors" onClick={onClose}>
+                <button 
+                    className="px-5 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50" 
+                    onClick={onClose}
+                    disabled={isCreating}
+                >
                     Cancel
                 </button>
                 <button 
-                    className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold rounded-full hover:opacity-90 transition-opacity"
+                    className="px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     onClick={handleSubmit}
+                    disabled={isCreating}
                 >
-                    Create Character
+                    {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isCreating ? "Creating..." : "Create Character"}
                 </button>
             </div>
         </div>

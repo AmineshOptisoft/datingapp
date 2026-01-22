@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+    const lite = searchParams.get("lite");
 
     if (!userId) {
       return NextResponse.json(
@@ -18,7 +19,15 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
-    const user = await User.findById(userId).select("characters");
+    const isLite = lite === "1" || lite === "true";
+
+    const user = await User.findById(userId)
+      .select(
+        isLite
+          ? "characters._id characters.characterName characters.characterAge characters.language characters.tags characters.description characters.visibility"
+          : "characters"
+      )
+      .lean();
     
     if (!user) {
       return NextResponse.json(
@@ -29,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: user.characters || [],
+      data: (user as any).characters || [],
     });
   } catch (error) {
     console.error("Get characters error:", error);

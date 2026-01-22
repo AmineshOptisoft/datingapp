@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus } from "lucide-react";
+import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EditProfileForm from "./EditProfileForm";
 import CreatePersonaForm from "./CreatePersonaForm";
 import CreatePersonaDialog from "./CreatePersonaDialog";
+import EditPersonaDialog from "./EditPersonaDialog";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,12 +22,20 @@ export default function ProfilePage() {
   const [loadingCharacters, setLoadingCharacters] = useState(false);
   const [personas, setPersonas] = useState<any[]>([]);
   const [loadingPersonas, setLoadingPersonas] = useState(false);
+  const [openPersonaMenuId, setOpenPersonaMenuId] = useState<string | null>(null);
+  const [isEditPersonaDialogOpen, setIsEditPersonaDialogOpen] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<any>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [personaToDelete, setPersonaToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchCharacters = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const storedUser = localStorage.getItem("user");
       if (!storedUser) return;
-
+ 
       const userData = JSON.parse(storedUser);
       console.log("Fetching characters for user:", userData); // Debug
       
@@ -39,7 +50,9 @@ export default function ProfilePage() {
       console.log("Fetching with userId:", userId); // Debug
       setLoadingCharacters(true);
 
-      const response = await fetch(`/api/characters?userId=${userId}`);
+      const response = await fetch(`/api/characters?userId=${userId}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       console.log("Fetched characters:", data); // Debug
@@ -48,8 +61,13 @@ export default function ProfilePage() {
         setCharacters(data.data || []);
       }
     } catch (error) {
-      console.error("Error fetching characters:", error);
+      if ((error as any)?.name === "AbortError") {
+        console.error("Fetch characters timed out");
+      } else {
+        console.error("Error fetching characters:", error);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoadingCharacters(false);
     }
   };
@@ -84,6 +102,34 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeletePersona = async () => {
+    if (!personaToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/personas/${personaToDelete._id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.error || "Failed to delete persona");
+        return;
+      }
+
+      toast.success("Persona deleted successfully!");
+      fetchPersonas(); // Refresh list
+    } catch (error) {
+      console.error("Error deleting persona:", error);
+      toast.error("An error occurred");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteConfirmOpen(false);
+      setPersonaToDelete(null);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -99,11 +145,7 @@ export default function ProfilePage() {
   }, [router]);
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-zinc-400 bg-white dark:bg-zinc-950">
-        <div className="text-lg animate-pulse">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner icon={User} title="Loading Profile" subtitle="Getting your information..." />;
   }
 
   // Generate a handle from email or use name if available, for display
@@ -282,7 +324,7 @@ export default function ProfilePage() {
 
               {/* Character Creation Section Below */}
               <div className="flex flex-col items-center gap-4 mt-8">
-                {characters.length === 0 && (
+                {!loadingCharacters && characters.length === 0 && (
                   <p className="text-zinc-500 mb-4">
                     No characters yet. Create your first character!
                   </p>
@@ -367,14 +409,84 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Options Menu */}
-                        <div className="">
-                          <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                        <div className="relative">
+                          <button 
+                            onClick={() => setOpenPersonaMenuId(openPersonaMenuId === persona._id ? null : persona._id)}
+                            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                          >
                             <svg className="w-5 h-5 text-zinc-500" fill="currentColor" viewBox="0 0 20 20">
                               <circle cx="10" cy="5" r="1.5"/>
                               <circle cx="10" cy="10" r="1.5"/>
                               <circle cx="10" cy="15" r="1.5"/>
                             </svg>
                           </button>
+
+                          {/* Dropdown Menu */}
+                          {openPersonaMenuId === persona._id && (
+                            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 min-w-[180px]">
+                              {/* Edit */}
+                              <button
+                                onClick={() => {
+                                  setSelectedPersona(persona);
+                                  setIsEditPersonaDialogOpen(true);
+                                  setOpenPersonaMenuId(null);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center justify-between"
+                              >
+                                <span>Edit</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </button>
+
+                              {/* Make default */}
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(`/api/personas/${persona._id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ makeDefault: true }),
+                                    });
+
+                                    if (!response.ok) {
+                                      const data = await response.json();
+                                      toast.error(data.error || "Failed to set as default");
+                                      return;
+                                    }
+
+                                    toast.success("Set as default persona!");
+                                    fetchPersonas(); // Refresh list
+                                  } catch (error) {
+                                    console.error("Error setting default:", error);
+                                    alert("An error occurred");
+                                  }
+                                  setOpenPersonaMenuId(null);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center justify-between"
+                              >
+                                <span>Make default</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+
+                              {/* Remove */}
+                              <button
+                                onClick={() => {
+                                  setPersonaToDelete(persona);
+                                  setIsDeleteConfirmOpen(true);
+                                  setOpenPersonaMenuId(null);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center justify-between"
+                              >
+                                <span>Remove</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -427,6 +539,58 @@ export default function ProfilePage() {
         </div>
 
       </div>
+
+      {/* Edit Persona Dialog */}
+      <Dialog open={isEditPersonaDialogOpen} onOpenChange={setIsEditPersonaDialogOpen}>
+        <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0">
+          {selectedPersona && (
+            <EditPersonaDialog 
+              persona={selectedPersona}
+              onSuccess={() => {
+                setIsEditPersonaDialogOpen(false);
+                setSelectedPersona(null);
+                fetchPersonas(); // Refresh personas list
+              }} 
+              onClose={() => {
+                setIsEditPersonaDialogOpen(false);
+                setSelectedPersona(null);
+              }} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="max-w-md p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Delete Persona</h2>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Are you sure you want to delete <span className="font-semibold text-zinc-900 dark:text-white">{personaToDelete?.displayName}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false);
+                  setPersonaToDelete(null);
+                }}
+                disabled={isDeleting}
+                className="px-5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeletePersona}
+                disabled={isDeleting}
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+              >
+                {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
