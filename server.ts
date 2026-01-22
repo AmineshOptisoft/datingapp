@@ -789,13 +789,13 @@ app.prepare().then(async () => {
     console.log(`🔌 User connected: ${socket.data.userId}`);
 
     socket.on("send_message", async (data) => {
-      const { message, profileId } = data;
+      const { message, profileId, personaId, personaContext } = data;
       if (!message) return;
       const userId = socket.data.userId;
       const aiBotId = profileId || "ai_bot";
 
       console.log(
-        `📨 send_message event received: "${message}" from user ${userId}`
+        `📨 send_message event received: "${message}" from user ${userId}${personaContext ? ` (Persona: ${personaContext.substring(0, 30)}...)` : ''}`
       );
 
       // Check rate limit to prevent spam and control API costs
@@ -877,14 +877,28 @@ app.prepare().then(async () => {
               userTone
             );
             systemPrompt = optimized.systemPrompt;
+            
+            // Inject persona context if provided
+            if (personaContext) {
+              systemPrompt += `\n\nIMPORTANT USER INFORMATION: ${personaContext}\nRemember and acknowledge this information about the user in your responses. Treat this as factual information about who they are, including their name, profession, interests, or current situation.`;
+              console.log(`🎭 Persona context added to prompt`);
+            }
+            
             optimizedHistory = optimized.conversationHistory as LLMMessage[];
             inputTokens = optimized.tokenEstimate;
             console.log(
-              `💡 Grok tokens (input): ${inputTokens} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}`
+              `💡 Grok tokens (input): ${inputTokens} | User tone: ${userTone.style} | Explicitness: ${userTone.explicitness}${personaContext ? ' | Persona: Active' : ''}`
             );
           } else {
             systemPrompt =
               "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
+            
+            // Inject persona context for generic profile too
+            if (personaContext) {
+              systemPrompt += ` IMPORTANT USER INFO: ${personaContext}. Remember these details about the user and reference them naturally in conversation.`;
+              console.log(`🎭 Persona context added to generic prompt`);
+            }
+            
             optimizedHistory = conversationHistory.slice(-6) as LLMMessage[];
             inputTokens = estimateTokens(systemPrompt) + 
               optimizedHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);

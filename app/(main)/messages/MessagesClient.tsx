@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile } from 'react-icons/fa';
-import { Phone } from 'lucide-react';
+import { Phone, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import { useSocket } from '@/lib/socket';
@@ -40,7 +40,12 @@ interface Message {
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
-  const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId, isAITyping } = useSocket();
+  const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId, isAITyping, socket } = useSocket();
+  
+  // Store socket reference
+  useEffect(() => {
+    socketRef.current = socket;
+  }, [socket]);
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messageText, setMessageText] = useState('');
@@ -48,11 +53,15 @@ export default function MessagesClient() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [showPersonaSelector, setShowPersonaSelector] = useState(false);
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasProcessedUrlParam = useRef(false);
   const pendingSelection = useRef<{ profileId: string; conversationId: number } | null>(null);
+  const socketRef = useRef<any>(null);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
@@ -109,6 +118,41 @@ export default function MessagesClient() {
     };
 
     fetchConversations();
+  }, [userId]);
+
+  // Fetch user personas
+  useEffect(() => {
+    const fetchPersonas = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`/api/personas?userId=${userId}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        setPersonas(data.personas || []);
+        
+        // Check localStorage for saved persona selection
+        const savedPersonaId = localStorage.getItem(`selectedPersona_${userId}`);
+        
+        if (savedPersonaId && data.personas?.some((p: any) => p._id === savedPersonaId)) {
+          // Restore saved persona
+          setSelectedPersonaId(savedPersonaId);
+          console.log('🔄 Restored persona from localStorage:', savedPersonaId);
+        } else {
+          // Set default persona if exists and no saved selection
+          const defaultPersona = data.personas?.find((p: any) => p.makeDefault);
+          if (defaultPersona) {
+            setSelectedPersonaId(defaultPersona._id);
+            console.log('✅ Auto-selected default persona:', defaultPersona.displayName);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching personas:', error);
+      }
+    };
+
+    fetchPersonas();
   }, [userId]);
 
   // Auto-select conversation when arriving from a profile page
@@ -199,7 +243,28 @@ export default function MessagesClient() {
 
   const handleSendMessage = () => {
     if (messageText.trim() && selectedConv?.profileId) {
-      sendMessage(messageText, selectedConv.profileId);
+      // Include persona ID in message metadata
+      if (selectedPersonaId) {
+        // Find selected persona details
+        const selectedPersona = personas.find(p => p._id === selectedPersonaId);
+        
+        console.log('🎭 Sending with persona:', {
+          personaId: selectedPersonaId,
+          displayName: selectedPersona?.displayName,
+          background: selectedPersona?.background
+        });
+        
+        // Send message with persona context
+        socketRef.current?.emit("send_message", { 
+          message: messageText, 
+          profileId: selectedConv.profileId,
+          personaId: selectedPersonaId,
+          personaContext: selectedPersona?.background || ''
+        });
+      } else {
+        console.log('📝 Sending without persona');
+        sendMessage(messageText, selectedConv.profileId);
+      }
       setMessageText('');
       setShowEmojiPicker(false);
     }
@@ -367,6 +432,124 @@ export default function MessagesClient() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-4">
+              {/* Persona Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowPersonaSelector(!showPersonaSelector)}
+                  className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors relative"
+                  title="Select Persona"
+                >
+                  <User className="w-5 h-5" />
+                  {selectedPersonaId && (
+                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full border border-white dark:border-zinc-900" />
+                  )}
+                </button>
+
+                {/* Persona Dropdown */}
+                {showPersonaSelector && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowPersonaSelector(false)}
+                    />
+                    
+                    {/* Dropdown */}
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-xl overflow-hidden z-50">
+                      <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
+                        <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Select Persona</h3>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Choose how AI sees you</p>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto">
+                        {/* No Persona Option */}
+                        <button
+                          onClick={() => {
+                            setSelectedPersonaId(null);
+                            setShowPersonaSelector(false);
+                            // Save to localStorage
+                            localStorage.removeItem(`selectedPersona_${userId}`);
+                            console.log('❌ No persona selected - cleared localStorage');
+                          }}
+                          className={`w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700/50 ${
+                            !selectedPersonaId ? 'bg-zinc-100 dark:bg-zinc-700' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                              <User className="w-5 h-5 text-zinc-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-zinc-900 dark:text-white text-sm">No Persona</p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">Chat as yourself</p>
+                            </div>
+                            {!selectedPersonaId && (
+                              <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Personas List */}
+                        {personas.length === 0 ? (
+                          <div className="px-4 py-8 text-center">
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">No personas yet</p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Create one in your profile</p>
+                          </div>
+                        ) : (
+                          personas.map((persona) => (
+                            <button
+                              key={persona._id}
+                              onClick={() => {
+                                setSelectedPersonaId(persona._id);
+                                setShowPersonaSelector(false);
+                                // Save to localStorage
+                                localStorage.setItem(`selectedPersona_${userId}`, persona._id);
+                                console.log('💾 Saved persona to localStorage:', persona.displayName);
+                              }}
+                              className={`w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700/50 last:border-b-0 ${
+                                selectedPersonaId === persona._id ? 'bg-zinc-100 dark:bg-zinc-700' : ''
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center overflow-hidden shrink-0">
+                                  {persona.avatar ? (
+                                    <img src={persona.avatar} alt={persona.displayName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-white font-bold text-sm">
+                                      {persona.displayName.charAt(0).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
+                                    {persona.displayName}
+                                  </p>
+                                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                                    {persona.background || 'No background'}
+                                  </p>
+                                </div>
+
+                                {/* Selected Indicator */}
+                                {selectedPersonaId === persona._id && (
+                                  <svg className="w-5 h-5 text-orange-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Voice Call Button (Yellow Circle) */}
               <button
                 onClick={() => setShowVoiceCall(true)}

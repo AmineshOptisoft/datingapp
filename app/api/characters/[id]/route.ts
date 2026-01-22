@@ -1,15 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import connectToDatabase from "@/lib/mongodb";
+import Character from "@/models/Character";
 
-// PUT - Update a character
+// GET - Fetch single character by ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectToDatabase();
+    const { id } = params;
+
+    const character = await Character.findById(id);
+
+    if (!character) {
+      return NextResponse.json(
+        { success: false, message: "Character not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, character });
+  } catch (error) {
+    console.error("Error fetching character:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch character" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update character
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const characterId = params.id;
+    await connectToDatabase();
+    const { id } = params;
     const body = await request.json();
+
     const {
       userId,
       characterName,
@@ -24,6 +54,7 @@ export async function PUT(
       visibility,
     } = body;
 
+    // Validation
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "User ID is required" },
@@ -31,82 +62,84 @@ export async function PUT(
       );
     }
 
-    // Validation
-    if (characterAge && characterAge < 18) {
+    if (!characterName || characterName.trim().length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Character name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!characterAge || characterAge < 18) {
       return NextResponse.json(
         { success: false, message: "Character must be at least 18 years old" },
         { status: 400 }
       );
     }
 
-    if (tags && tags.length > 10) {
+    if (!description || !personality || !scenario || !firstMessage) {
       return NextResponse.json(
-        { success: false, message: "Cannot add more than 10 tags" },
+        { success: false, message: "All fields are required" },
         { status: 400 }
       );
     }
 
-    await dbConnect();
+    // Find character and verify ownership
+    const character = await Character.findById(id);
 
-    // Build update object
-    const updateFields: any = {};
-    if (characterName !== undefined) updateFields["characters.$.characterName"] = characterName;
-    if (characterImage !== undefined) updateFields["characters.$.characterImage"] = characterImage;
-    if (characterAge !== undefined) updateFields["characters.$.characterAge"] = characterAge;
-    if (language !== undefined) updateFields["characters.$.language"] = language;
-    if (tags !== undefined) updateFields["characters.$.tags"] = tags;
-    if (description !== undefined) updateFields["characters.$.description"] = description;
-    if (personality !== undefined) updateFields["characters.$.personality"] = personality;
-    if (scenario !== undefined) updateFields["characters.$.scenario"] = scenario;
-    if (firstMessage !== undefined) updateFields["characters.$.firstMessage"] = firstMessage;
-    if (visibility !== undefined) updateFields["characters.$.visibility"] = visibility;
-
-    const user = await User.findOneAndUpdate(
-      { _id: userId, "characters._id": characterId },
-      { $set: updateFields },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
+    if (!character) {
       return NextResponse.json(
-        { success: false, message: "User or character not found" },
+        { success: false, message: "Character not found" },
         { status: 404 }
       );
     }
 
-    const updatedCharacter = user.characters?.find(
-      (char: any) => char._id.toString() === characterId
+    if (character.userId.toString() !== userId) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized to update this character" },
+        { status: 403 }
+      );
+    }
+
+    // Update character
+    const updatedCharacter = await Character.findByIdAndUpdate(
+      id,
+      {
+        characterName: characterName.trim(),
+        characterImage,
+        characterAge,
+        language,
+        tags: tags || [],
+        description: description.trim(),
+        personality: personality.trim(),
+        scenario: scenario.trim(),
+        firstMessage: firstMessage.trim(),
+        visibility: visibility || "private",
+      },
+      { new: true, runValidators: true }
     );
 
     return NextResponse.json({
       success: true,
       message: "Character updated successfully",
-      data: updatedCharacter,
+      character: updatedCharacter,
     });
-  } catch (error: any) {
-    console.error("Update character error:", error);
-    
-    if (error.name === "ValidationError") {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 400 }
-      );
-    }
-
+  } catch (error) {
+    console.error("Error updating character:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { success: false, message: "Failed to update character" },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Delete a character
+// DELETE - Delete character
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const characterId = params.id;
+    await connectToDatabase();
+    const { id } = params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
@@ -117,29 +150,33 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
+    // Find character and verify ownership
+    const character = await Character.findById(id);
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $pull: { characters: { _id: characterId } } },
-      { new: true }
-    );
-
-    if (!user) {
+    if (!character) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
+        { success: false, message: "Character not found" },
         { status: 404 }
       );
     }
+
+    if (character.userId.toString() !== userId) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized to delete this character" },
+        { status: 403 }
+      );
+    }
+
+    await Character.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,
       message: "Character deleted successfully",
     });
   } catch (error) {
-    console.error("Delete character error:", error);
+    console.error("Error deleting character:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { success: false, message: "Failed to delete character" },
       { status: 500 }
     );
   }

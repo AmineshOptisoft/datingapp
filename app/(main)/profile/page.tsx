@@ -8,6 +8,7 @@ import EditProfileForm from "./EditProfileForm";
 import CreatePersonaForm from "./CreatePersonaForm";
 import CreatePersonaDialog from "./CreatePersonaDialog";
 import EditPersonaDialog from "./EditPersonaDialog";
+import EditCharacterDialog from "./EditCharacterDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -28,6 +29,9 @@ export default function ProfilePage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [personaToDelete, setPersonaToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditCharacterDialogOpen, setIsEditCharacterDialogOpen] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<any>(null);
+  const [openCharacterMenuId, setOpenCharacterMenuId] = useState<string | null>(null);
 
   const fetchCharacters = async () => {
     const controller = new AbortController();
@@ -272,7 +276,7 @@ export default function ProfilePage() {
                       className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer"
                     >
                       {/* Character Image */}
-                      <div className="h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                      <div className="relative h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                         {character.characterImage ? (
                           <img
                             src={character.characterImage}
@@ -284,6 +288,49 @@ export default function ProfilePage() {
                             <User className="w-12 h-12" />
                           </div>
                         )}
+                        
+                        {/* Action Menu Button (Three Dots) */}
+                        <div className="absolute top-2 right-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCharacterMenuId(openCharacterMenuId === character._id ? null : character._id);
+                            }}
+                            className="p-2 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-full hover:bg-white dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <svg className="w-5 h-5 text-zinc-700 dark:text-zinc-300" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {openCharacterMenuId === character._id && (
+                            <>
+                              {/* Backdrop */}
+                              <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setOpenCharacterMenuId(null)}
+                              />
+                              
+                              {/* Menu */}
+                              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden z-20">
+                                <button
+                                  onClick={() => {
+                                    setSelectedCharacter(character);
+                                    setIsEditCharacterDialogOpen(true);
+                                    setOpenCharacterMenuId(null);
+                                  }}
+                                  className="w-full px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Edit
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Character Info */}
@@ -589,6 +636,26 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Character Dialog */}
+      <Dialog open={isEditCharacterDialogOpen} onOpenChange={setIsEditCharacterDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] p-0 bg-white dark:bg-zinc-900">
+          {selectedCharacter && (
+            <EditCharacterDialog 
+              character={selectedCharacter}
+              onSuccess={() => {
+                setIsEditCharacterDialogOpen(false);
+                setSelectedCharacter(null);
+                fetchCharacters(); // Refresh characters list
+              }} 
+              onClose={() => {
+                setIsEditCharacterDialogOpen(false);
+                setSelectedCharacter(null);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </main>
