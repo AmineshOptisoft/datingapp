@@ -641,7 +641,7 @@ export default function ProfilePage() {
 
       {/* Edit Character Dialog */}
       <Dialog open={isEditCharacterDialogOpen} onOpenChange={setIsEditCharacterDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] p-0 bg-white dark:bg-zinc-900">
+        <DialogContent className="max-w-2xl max-h-[90vh] h-[90vh] flex flex-col p-3 bg-white dark:bg-zinc-900">
           {selectedCharacter && (
             <EditCharacterDialog 
               character={selectedCharacter}
