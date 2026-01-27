@@ -17,6 +17,10 @@ interface Message {
   receiver: string;
   message: string;
   createdAt?: Date | string;
+  isGift?: boolean;
+  giftId?: number;
+  giftImage?: string;
+  giftPrice?: number;
 }
 
 interface SocketContextType {

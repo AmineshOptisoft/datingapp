@@ -28,37 +28,32 @@ import {
 
 const GIFTS = [
   { id: 1, name: "Star", image: "/gifts-reactions/star.png", price: 3 },
-  { id: 2, name: "Purple Star", image: "/gifts-reactions/happy-start.png", price: 5 },
+  { id: 2, name: "Happy Star", image: "/gifts-reactions/happy-start.png", price: 5 },
   { id: 3, name: "Sunflower", image: "/gifts-reactions/sunflower.png", price: 7 },
-  { id: 4, name: "Cat", image: "/gifts-reactions/joy-ride.png", price: 9 },
+  { id: 4, name: "Joy Ride", image: "/gifts-reactions/joy-ride.png", price: 9 },
   { id: 5, name: "Rainbow", image: "/gifts-reactions/rainbow.png", price: 5 },
   { id: 6, name: "Target", image: "/gifts-reactions/target-locked.png", price: 11 },
   { id: 7, name: "Heart Box", image: "/gifts-reactions/hearts.png", price: 19 },
-  { id: 8, name: "Ferris Wheel", image: "/gifts-reactions/joy-ride.png", price: 29 },
-  { id: 9, name: "Sun", image: "/gifts-reactions/sunny.png", price: 5 },
-  { id: 10, name: "Clap", image: "/gifts-reactions/applaud.png", price: 39 },
-  { id: 11, name: "Daisy", image: "/gifts-reactions/sunflower.png", price: 59 },
-  { id: 12, name: "TikTok", image: "/gifts-reactions/hi.png", price: 79 },
-  { id: 13, name: "Hamster", image: "/gifts-reactions/blush.png", price: 49 },
-  { id: 14, name: "Bear", image: "/gifts-reactions/love-from-this-side.png", price: 89 },
-  { id: 15, name: "Cheers", image: "/gifts-reactions/cheers.png", price: 129 },
-  { id: 16, name: "Bunny", image: "/gifts-reactions/bunny.png", price: 229 },
-  { id: 17, name: "Fire", image: "/gifts-reactions/fire.png", price: 99 },
-  { id: 18, name: "Fireworks", image: "/gifts-reactions/sparkles.png", price: 199 },
-  { id: 19, name: "Lips", image: "/gifts-reactions/kiss.png", price: 279 },
-  { id: 20, name: "Rose", image: "/gifts-reactions/rose.png", price: 359 },
-  { id: 21, name: "Aww", image: "/gifts-reactions/awww.png", price: 99 },
-  { id: 22, name: "Laugh", image: "/gifts-reactions/laughing.png", price: 99 },
-  { id: 23, name: "In Love", image: "/gifts-reactions/in-love.png", price: 99 },
-  { id: 24, name: "Kiss", image: "/gifts-reactions/warm-kiss.png", price: 99 },
-  { id: 25, name: "Heart", image: "/gifts-reactions/packed-heart.png", price: 8 },
-  { id: 26, name: "Snowflake", image: "/gifts-reactions/sparkles.png", price: 49 },
-  { id: 27, name: "Chocolaty", image: "/gifts-reactions/chocolaty.png", price: 59 },
-  { id: 28, name: "Double Kisses", image: "/gifts-reactions/double-kisses.png", price: 79 },
-  { id: 29, name: "Gold Rose", image: "/gifts-reactions/rosees.png", price: 99 },
-  { id: 30, name: "Pink Heart", image: "/gifts-reactions/hearts.png", price: 199 },
-  { id: 31, name: "Flower Pot", image: "/gifts-reactions/flower-pot.png", price: 1499 },
-  { id: 32, name: "Luxury Bouquet", image: "/gifts-reactions/rosees.png", price: 2999 },
+  { id: 8, name: "Sun", image: "/gifts-reactions/sunny.png", price: 5 },
+  { id: 9, name: "Clap", image: "/gifts-reactions/applaud.png", price: 39 },
+  { id: 10, name: "Bear Hi", image: "/gifts-reactions/hi.png", price: 79 },
+  { id: 11, name: "Hamster", image: "/gifts-reactions/blush.png", price: 49 },
+  { id: 12, name: "Bear", image: "/gifts-reactions/love-from-this-side.png", price: 89 },
+  { id: 13, name: "Cheers", image: "/gifts-reactions/cheers.png", price: 129 },
+  { id: 14, name: "Bunny", image: "/gifts-reactions/bunny.png", price: 229 },
+  { id: 15, name: "Fire", image: "/gifts-reactions/fire.png", price: 99 },
+  { id: 16, name: "Fireworks", image: "/gifts-reactions/sparkles.png", price: 199 },
+  { id: 17, name: "Lips", image: "/gifts-reactions/kiss.png", price: 279 },
+  { id: 18, name: "Rose", image: "/gifts-reactions/rose.png", price: 359 },
+  { id: 19, name: "Aww", image: "/gifts-reactions/awww.png", price: 99 },
+  { id: 20, name: "Laugh", image: "/gifts-reactions/laughing.png", price: 99 },
+  { id: 21, name: "In Love", image: "/gifts-reactions/in-love.png", price: 99 },
+  { id: 22, name: "Kiss", image: "/gifts-reactions/warm-kiss.png", price: 99 },
+  { id: 23, name: "Heart", image: "/gifts-reactions/packed-heart.png", price: 8 },
+  { id: 24, name: "Chocolaty", image: "/gifts-reactions/chocolaty.png", price: 59 },
+  { id: 25, name: "Double Kisses", image: "/gifts-reactions/double-kisses.png", price: 79 },
+  { id: 26, name: "Roses", image: "/gifts-reactions/rosees.png", price: 99 },
+  { id: 27, name: "Flower Pot", image: "/gifts-reactions/flower-pot.png", price: 1499 },
 ];
 
 interface Conversation {
@@ -78,6 +73,10 @@ interface Message {
   receiver: string;
   message: string;
   createdAt?: Date | string;
+  isGift?: boolean;
+  giftId?: number;
+  giftImage?: string;
+  giftPrice?: number;
 }
 
 export default function MessagesClient() {
@@ -331,25 +330,24 @@ export default function MessagesClient() {
     const targetProfileId = selectedConv?.profileId || selectedProfileId;
 
     if (targetProfileId) {
-      // For now, send as a message with the gift info
-      // You might want to update this to a specific "gift" message type later
+      // For fallback/logging
       const giftMessage = `🎁 Sent ${gift.name} (${gift.price} coins)`;
-      if (selectedPersonaId) {
-        const selectedPersona = personas.find(p => p._id === selectedPersonaId);
-        if (socketRef.current) {
-          socketRef.current.emit("send_message", {
-            message: giftMessage,
-            profileId: targetProfileId,
-            personaId: selectedPersonaId,
-            personaContext: selectedPersona?.background || '',
-            isGift: true,
-            giftId: gift.id,
-            giftPrice: gift.price
-          });
-        } else {
-          sendMessage(giftMessage, targetProfileId);
-        }
+
+      const giftData = {
+        message: giftMessage,
+        profileId: targetProfileId,
+        personaId: selectedPersonaId,
+        isGift: true,
+        giftId: gift.id,
+        giftImage: gift.image,
+        giftPrice: gift.price,
+        personaContext: selectedPersonaId ? personas.find(p => p._id === selectedPersonaId)?.background || '' : ''
+      };
+
+      if (socketRef.current) {
+        socketRef.current.emit("send_message", giftData);
       } else {
+        // Fallback to basic sendMessage if socket emit fails
         sendMessage(giftMessage, targetProfileId);
       }
     }
@@ -566,6 +564,20 @@ export default function MessagesClient() {
               <>
                 {socketMessages.map((message, index) => {
                   const isOwn = message.sender === userId;
+
+                  // Robust gift detection (even if flag is missing)
+                  let displayGift = message.isGift ? { image: message.giftImage, price: message.giftPrice } : null;
+                  if (!displayGift && message.message.startsWith('🎁 Sent ')) {
+                    const match = message.message.match(/🎁 Sent (.+) \((\d+) coins\)/);
+                    if (match) {
+                      const giftName = match[1];
+                      const foundGift = GIFTS.find(g => g.name === giftName);
+                      if (foundGift) {
+                        displayGift = { image: foundGift.image, price: foundGift.price };
+                      }
+                    }
+                  }
+
                   return (
                     <div
                       key={message._id || index}
@@ -581,16 +593,30 @@ export default function MessagesClient() {
                       )}
 
                       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-                        <div
-                          className={`rounded-2xl px-4 py-2 transition-all duration-300 hover:scale-[1.02] ${isOwn
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
-                            }`}
-                        >
-                          <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.message}</p>
-                        </div>
+                        {displayGift ? (
+                          <div className="relative group p-2">
+                            <img
+                              src={displayGift.image}
+                              alt={message.message}
+                              className="w-32 h-32 object-contain animate-bounce-subtle hover:scale-110 transition-all duration-300 drop-shadow-xl cursor-default"
+                            />
+                            <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 border border-white dark:border-zinc-800 scale-90 group-hover:scale-100 transition-all">
+                              <PiCoinsFill className="w-2.5 h-2.5" />
+                              {displayGift.price}
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`rounded-2xl px-4 py-2 transition-all duration-300 ${isOwn
+                              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                              : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
+                              }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap wrap-break-word font-medium tracking-tight">{message.message}</p>
+                          </div>
+                        )}
 
-                        <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-1 px-1">
                           {(() => {
                             const timestamp = message.createdAt;
                             return timestamp
@@ -626,7 +652,7 @@ export default function MessagesClient() {
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-2xl blur-sm animate-pulse"></div>
 
                       {/* Main bubble */}
-                      <div className="relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 shadow-lg">
+                      <div className="relative rounded-2xl px-4 py-2 transition-all duration-300 bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
                         <div className="flex items-center gap-1.5">
                           {/* Animated dots with gradient */}
                           <div className="flex items-center gap-1">
@@ -665,7 +691,7 @@ export default function MessagesClient() {
           </div>
 
           {/* Message Input Container */}
-          <div className="sticky bottom-0 z-10 p-4 w-full max-w-4xl mx-auto">
+          <div className="sticky bottom-0 z-10 p-2 w-full max-w-4xl mx-auto">
             {/* Quick Reactions / Gifts above input */}
             <div className="flex items-center gap-2 mb-2 px-2">
               {GIFTS.slice(0, 5).map((gift) => (
