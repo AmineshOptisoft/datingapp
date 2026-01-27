@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/mongodb";
-import Character from "@/models/Character";
+import connectToDatabase from "@/lib/db";
+import User from "@/models/User";
 
 // GET - Fetch single character by ID
 export async function GET(
@@ -11,14 +11,17 @@ export async function GET(
     await connectToDatabase();
     const { id } = params;
 
-    const character = await Character.findById(id);
+    // Find user with the character
+    const user = await User.findOne({ "characters._id": id }).lean();
 
-    if (!character) {
+    if (!user) {
       return NextResponse.json(
         { success: false, message: "Character not found" },
         { status: 404 }
       );
     }
+
+    const character = (user as any).characters.find((c: any) => c._id.toString() === id);
 
     return NextResponse.json({ success: true, character });
   } catch (error) {
@@ -83,40 +86,45 @@ export async function PUT(
       );
     }
 
-    // Find character and verify ownership
-    const character = await Character.findById(id);
+    // Find user with the character and verify ownership
+    const user = await User.findOne({ _id: userId, "characters._id": id });
 
-    if (!character) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, message: "Character not found" },
+        { success: false, message: "Character not found or unauthorized" },
         { status: 404 }
       );
     }
 
-    if (character.userId.toString() !== userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized to update this character" },
-        { status: 403 }
-      );
-    }
-
-    // Update character
-    const updatedCharacter = await Character.findByIdAndUpdate(
-      id,
+    // Update the character within the user's characters array
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, "characters._id": id },
       {
-        characterName: characterName.trim(),
-        characterImage,
-        characterAge,
-        language,
-        tags: tags || [],
-        description: description.trim(),
-        personality: personality.trim(),
-        scenario: scenario.trim(),
-        firstMessage: firstMessage.trim(),
-        visibility: visibility || "private",
+        $set: {
+          "characters.$.characterName": characterName.trim(),
+          "characters.$.characterImage": characterImage,
+          "characters.$.characterAge": characterAge,
+          "characters.$.language": language,
+          "characters.$.tags": tags || [],
+          "characters.$.description": description.trim(),
+          "characters.$.personality": personality.trim(),
+          "characters.$.scenario": scenario.trim(),
+          "characters.$.firstMessage": firstMessage.trim(),
+          "characters.$.visibility": visibility || "private",
+        },
       },
       { new: true, runValidators: true }
     );
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { success: false, message: "Failed to update character" },
+        { status: 500 }
+      );
+    }
+
+    // Find the updated character to return
+    const updatedCharacter = updatedUser.characters.find((c: any) => c._id.toString() === id);
 
     return NextResponse.json({
       success: true,
@@ -150,24 +158,22 @@ export async function DELETE(
       );
     }
 
-    // Find character and verify ownership
-    const character = await Character.findById(id);
+    // Find user with the character and verify ownership
+    const user = await User.findOne({ _id: userId, "characters._id": id });
 
-    if (!character) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, message: "Character not found" },
+        { success: false, message: "Character not found or unauthorized" },
         { status: 404 }
       );
     }
 
-    if (character.userId.toString() !== userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized to delete this character" },
-        { status: 403 }
-      );
-    }
-
-    await Character.findByIdAndDelete(id);
+    // Remove character from the user's characters array
+    await User.findByIdAndUpdate(
+      userId,
+      { $pull: { characters: { _id: id } } },
+      { new: true }
+    );
 
     return NextResponse.json({
       success: true,
