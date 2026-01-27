@@ -35,7 +35,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   return (
     <>
       <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-sm!">
-        <div className="flex items-center px-4 md:px-8 py-3">
+        <div className="flex items-center px-4 md:px-8 py-1.5">
           {/* Left side - Logo */}
           <div className="flex-1 flex items-center gap-4">
             <Link href="/" className="flex items-center">
@@ -51,35 +51,32 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
           {/* Center - Category Links (Desktop Only) */}
           <div className="hidden md:flex items-center gap-4 md:gap-8">
-            <Link 
-              href="/for-men" 
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
-                pathname === '/for-men' 
-                  ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50' 
+            <Link
+              href="/for-men"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-men'
+                  ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50'
                   : ''
-              }`}
+                }`}
             >
               <FaMars className="w-5 h-5 md:w-6 md:h-6 text-blue-500 dark:text-blue-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
             </Link>
-            <Link 
-              href="/for-women" 
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
-                pathname === '/for-women' 
-                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50' 
+            <Link
+              href="/for-women"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-women'
+                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
                   : ''
-              }`}
+                }`}
             >
               <FaVenus className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
             </Link>
-            <Link 
-              href="/for-lgbtq" 
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${
-                pathname === '/for-lgbtq' 
-                  ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50' 
+            <Link
+              href="/for-lgbtq"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-lgbtq'
+                  ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50'
                   : ''
-              }`}
+                }`}
             >
               <Transgender className="w-5 h-5 md:w-6 md:h-6 text-purple-500 dark:text-purple-400" />
               <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
@@ -126,35 +123,32 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       {/* Mobile Bottom Navigation Bar */}
       <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 shadow-lg ${pathname === '/messages' ? 'hidden' : ''}`}>
         <div className="flex items-center justify-around px-4 py-3">
-          <Link 
-            href="/for-men" 
-            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
-              pathname === '/for-men' 
-                ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50' 
+          <Link
+            href="/for-men"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${pathname === '/for-men'
+                ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50'
                 : ''
-            }`}
+              }`}
           >
             <FaMars className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
           </Link>
-          <Link 
-            href="/for-women" 
-            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
-              pathname === '/for-women' 
-                ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50' 
+          <Link
+            href="/for-women"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${pathname === '/for-women'
+                ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
                 : ''
-            }`}
+              }`}
           >
             <FaVenus className="w-6 h-6 text-pink-500 dark:text-pink-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
           </Link>
-          <Link 
-            href="/for-lgbtq" 
-            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${
-              pathname === '/for-lgbtq' 
-                ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50' 
+          <Link
+            href="/for-lgbtq"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${pathname === '/for-lgbtq'
+                ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50'
                 : ''
-            }`}
+              }`}
           >
             <Transgender className="w-6 h-6 text-purple-500 dark:text-purple-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>

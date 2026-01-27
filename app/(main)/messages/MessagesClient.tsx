@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile } from 'react-icons/fa';
-import { Phone, User } from 'lucide-react';
+import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
+import { PiCoinsFill } from "react-icons/pi";
+import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import { useSocket } from '@/lib/socket';
@@ -18,6 +19,47 @@ const Picker = dynamic(
   () => import('emoji-picker-react').then((mod) => mod.default),
   { ssr: false }
 );
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const GIFTS = [
+  { id: 1, name: "Star", image: "/gifts-reactions/star.png", price: 3 },
+  { id: 2, name: "Purple Star", image: "/gifts-reactions/happy-start.png", price: 5 },
+  { id: 3, name: "Sunflower", image: "/gifts-reactions/sunflower.png", price: 7 },
+  { id: 4, name: "Cat", image: "/gifts-reactions/joy-ride.png", price: 9 },
+  { id: 5, name: "Rainbow", image: "/gifts-reactions/rainbow.png", price: 5 },
+  { id: 6, name: "Target", image: "/gifts-reactions/target-locked.png", price: 11 },
+  { id: 7, name: "Heart Box", image: "/gifts-reactions/hearts.png", price: 19 },
+  { id: 8, name: "Ferris Wheel", image: "/gifts-reactions/joy-ride.png", price: 29 },
+  { id: 9, name: "Sun", image: "/gifts-reactions/sunny.png", price: 5 },
+  { id: 10, name: "Clap", image: "/gifts-reactions/applaud.png", price: 39 },
+  { id: 11, name: "Daisy", image: "/gifts-reactions/sunflower.png", price: 59 },
+  { id: 12, name: "TikTok", image: "/gifts-reactions/hi.png", price: 79 },
+  { id: 13, name: "Hamster", image: "/gifts-reactions/blush.png", price: 49 },
+  { id: 14, name: "Bear", image: "/gifts-reactions/love-from-this-side.png", price: 89 },
+  { id: 15, name: "Cheers", image: "/gifts-reactions/cheers.png", price: 129 },
+  { id: 16, name: "Bunny", image: "/gifts-reactions/bunny.png", price: 229 },
+  { id: 17, name: "Fire", image: "/gifts-reactions/fire.png", price: 99 },
+  { id: 18, name: "Fireworks", image: "/gifts-reactions/sparkles.png", price: 199 },
+  { id: 19, name: "Lips", image: "/gifts-reactions/kiss.png", price: 279 },
+  { id: 20, name: "Rose", image: "/gifts-reactions/rose.png", price: 359 },
+  { id: 21, name: "Aww", image: "/gifts-reactions/awww.png", price: 99 },
+  { id: 22, name: "Laugh", image: "/gifts-reactions/laughing.png", price: 99 },
+  { id: 23, name: "In Love", image: "/gifts-reactions/in-love.png", price: 99 },
+  { id: 24, name: "Kiss", image: "/gifts-reactions/warm-kiss.png", price: 99 },
+  { id: 25, name: "Heart", image: "/gifts-reactions/packed-heart.png", price: 8 },
+  { id: 26, name: "Snowflake", image: "/gifts-reactions/sparkles.png", price: 49 },
+  { id: 27, name: "Chocolaty", image: "/gifts-reactions/chocolaty.png", price: 59 },
+  { id: 28, name: "Double Kisses", image: "/gifts-reactions/double-kisses.png", price: 79 },
+  { id: 29, name: "Gold Rose", image: "/gifts-reactions/rosees.png", price: 99 },
+  { id: 30, name: "Pink Heart", image: "/gifts-reactions/hearts.png", price: 199 },
+  { id: 31, name: "Flower Pot", image: "/gifts-reactions/flower-pot.png", price: 1499 },
+  { id: 32, name: "Luxury Bouquet", image: "/gifts-reactions/rosees.png", price: 2999 },
+];
 
 interface Conversation {
   id: number;
@@ -41,12 +83,12 @@ interface Message {
 export default function MessagesClient() {
   const searchParams = useSearchParams();
   const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId, isAITyping, socket } = useSocket();
-  
+
   // Store socket reference
   useEffect(() => {
     socketRef.current = socket;
   }, [socket]);
-  
+
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +99,7 @@ export default function MessagesClient() {
   const [personas, setPersonas] = useState<any[]>([]);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [sfwEnabled, setSfwEnabled] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasProcessedUrlParam = useRef(false);
@@ -96,17 +139,17 @@ export default function MessagesClient() {
             online: conv.online !== false,
             profileId: conv.profileId,
           }));
-          
+
           console.log('📥 API returned conversations:', mappedConversations.length);
-          
+
           // Merge with existing conversations instead of replacing
           setConversations(prev => {
             // Keep manually created conversations that aren't in API response
             const apiProfileIds = new Set(mappedConversations.map(c => c.profileId));
             const manualConversations = prev.filter(c => !apiProfileIds.has(c.profileId));
-            
+
             console.log('🔄 Merging:', { api: mappedConversations.length, manual: manualConversations.length });
-            
+
             return [...manualConversations, ...mappedConversations];
           });
         }
@@ -131,10 +174,10 @@ export default function MessagesClient() {
 
         const data = await response.json();
         setPersonas(data.personas || []);
-        
+
         // Check localStorage for saved persona selection
         const savedPersonaId = localStorage.getItem(`selectedPersona_${userId}`);
-        
+
         if (savedPersonaId && data.personas?.some((p: any) => p._id === savedPersonaId)) {
           // Restore saved persona
           setSelectedPersonaId(savedPersonaId);
@@ -173,7 +216,7 @@ export default function MessagesClient() {
       // Use functional update to access latest conversations without adding to dependencies
       setConversations((prevConversations) => {
         console.log('🔧 Processing conversation:', { aiProfileId, existingCount: prevConversations.length });
-        
+
         // Check if conversation already exists
         const existing = prevConversations.find((c) => c.profileId === aiProfileId);
         if (existing) {
@@ -197,10 +240,10 @@ export default function MessagesClient() {
         };
 
         console.log('➕ Creating new conversation:', newConversation.name, 'ID:', uniqueId);
-        
+
         // Mark for selection in separate effect
         pendingSelection.current = { profileId: aiProfileId, conversationId: newConversation.id };
-        
+
         return [newConversation, ...prevConversations];
       });
     } catch (error) {
@@ -215,7 +258,7 @@ export default function MessagesClient() {
       const { profileId, conversationId } = pendingSelection.current;
       console.log('🔍 Selecting conversation:', { profileId, conversationId });
       pendingSelection.current = null; // Clear immediately to prevent re-runs
-      
+
       setSelectedConversation(conversationId);
       setSelectedProfileId(profileId);
       fetchConversation(profileId);
@@ -230,7 +273,7 @@ export default function MessagesClient() {
   }, [socketMessages]);
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
-  
+
   // Debug log
   useEffect(() => {
     console.log('📊 State Debug:', {
@@ -242,31 +285,73 @@ export default function MessagesClient() {
   }, [selectedConversation, conversations, selectedConv]);
 
   const handleSendMessage = () => {
-    if (messageText.trim() && selectedConv?.profileId) {
-      // Include persona ID in message metadata
+    const targetProfileId = selectedConv?.profileId || selectedProfileId;
+
+    console.log('📤 handleSendMessage called', {
+      messageText: messageText.trim(),
+      targetProfileId,
+      selectedPersonaId,
+      socketConnected: socketRef.current?.connected
+    });
+
+    if (messageText.trim() && targetProfileId) {
       if (selectedPersonaId) {
-        // Find selected persona details
         const selectedPersona = personas.find(p => p._id === selectedPersonaId);
-        
         console.log('🎭 Sending with persona:', {
           personaId: selectedPersonaId,
-          displayName: selectedPersona?.displayName,
-          background: selectedPersona?.background
+          displayName: selectedPersona?.displayName
         });
-        
-        // Send message with persona context
-        socketRef.current?.emit("send_message", { 
-          message: messageText, 
-          profileId: selectedConv.profileId,
-          personaId: selectedPersonaId,
-          personaContext: selectedPersona?.background || ''
-        });
+
+        if (socketRef.current) {
+          socketRef.current.emit("send_message", {
+            message: messageText,
+            profileId: targetProfileId,
+            personaId: selectedPersonaId,
+            personaContext: selectedPersona?.background || ''
+          });
+        } else {
+          console.error('❌ Socket not available, falling back to sendMessage');
+          sendMessage(messageText, targetProfileId);
+        }
       } else {
         console.log('📝 Sending without persona');
-        sendMessage(messageText, selectedConv.profileId);
+        sendMessage(messageText, targetProfileId);
       }
       setMessageText('');
       setShowEmojiPicker(false);
+    } else {
+      console.warn('⚠️ Send condition not met:', {
+        hasText: !!messageText.trim(),
+        hasProfileId: !!targetProfileId
+      });
+    }
+  };
+
+  const handleSendGift = (gift: any) => {
+    const targetProfileId = selectedConv?.profileId || selectedProfileId;
+
+    if (targetProfileId) {
+      // For now, send as a message with the gift info
+      // You might want to update this to a specific "gift" message type later
+      const giftMessage = `🎁 Sent ${gift.name} (${gift.price} coins)`;
+      if (selectedPersonaId) {
+        const selectedPersona = personas.find(p => p._id === selectedPersonaId);
+        if (socketRef.current) {
+          socketRef.current.emit("send_message", {
+            message: giftMessage,
+            profileId: targetProfileId,
+            personaId: selectedPersonaId,
+            personaContext: selectedPersona?.background || '',
+            isGift: true,
+            giftId: gift.id,
+            giftPrice: gift.price
+          });
+        } else {
+          sendMessage(giftMessage, targetProfileId);
+        }
+      } else {
+        sendMessage(giftMessage, targetProfileId);
+      }
     }
   };
 
@@ -302,13 +387,13 @@ export default function MessagesClient() {
               placeholder="Search messages..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full text-sm bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-lg pl-10 pr-4 py-1.5 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {isLoadingConversations ? (
             <div className="flex flex-col items-center justify-center h-full py-12">
               <div className="relative w-20 h-20 mb-6">
@@ -360,8 +445,7 @@ export default function MessagesClient() {
                     setTimeout(() => setIsLoadingMessages(false), 800);
                   }
                 }}
-                className={`w-full p-4 flex items-center gap-3 hover:bg-zinc-200 dark:hover:bg-white/5 transition-all duration-300 border-b border-zinc-200 dark:border-white/5 ${
-                  selectedConversation === conv.id ? 'bg-zinc-200 dark:bg-white/10' : ''
+                className={`w-full p-2 flex items-center gap-3 hover:bg-zinc-200 dark:hover:bg-white/5 transition-all duration-300 border border-zinc-200 dark:border-white/5 rounded-[14px] shadow-lg ${selectedConversation === conv.id ? 'bg-white dark:bg-[#1e1e24]' : ''
                   }`}
               >
                 {/* Avatar */}
@@ -401,7 +485,7 @@ export default function MessagesClient() {
       {selectedConv ? (
         <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 h-full">
           {/* Chat Header */}
-          <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-sm p-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
+          <div className="sticky top-0 z-10 p-3 bg-white dark:bg-[#1e1e24] border border-zinc-200 dark:border-white/5 rounded-[24px] shadow-lg flex items-center justify-between m-2">
             <div className="flex items-center gap-3">
               {/* Back Button for Mobile */}
               <button
@@ -432,124 +516,6 @@ export default function MessagesClient() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-4">
-              {/* Persona Selector */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowPersonaSelector(!showPersonaSelector)}
-                  className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors relative"
-                  title="Select Persona"
-                >
-                  <User className="w-5 h-5" />
-                  {selectedPersonaId && (
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full border border-white dark:border-zinc-900" />
-                  )}
-                </button>
-
-                {/* Persona Dropdown */}
-                {showPersonaSelector && (
-                  <>
-                    {/* Backdrop */}
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowPersonaSelector(false)}
-                    />
-                    
-                    {/* Dropdown */}
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-xl overflow-hidden z-50">
-                      <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Select Persona</h3>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Choose how AI sees you</p>
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto">
-                        {/* No Persona Option */}
-                        <button
-                          onClick={() => {
-                            setSelectedPersonaId(null);
-                            setShowPersonaSelector(false);
-                            // Save to localStorage
-                            localStorage.removeItem(`selectedPersona_${userId}`);
-                            console.log('❌ No persona selected - cleared localStorage');
-                          }}
-                          className={`w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700/50 ${
-                            !selectedPersonaId ? 'bg-zinc-100 dark:bg-zinc-700' : ''
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                              <User className="w-5 h-5 text-zinc-500" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-zinc-900 dark:text-white text-sm">No Persona</p>
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">Chat as yourself</p>
-                            </div>
-                            {!selectedPersonaId && (
-                              <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Personas List */}
-                        {personas.length === 0 ? (
-                          <div className="px-4 py-8 text-center">
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">No personas yet</p>
-                            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Create one in your profile</p>
-                          </div>
-                        ) : (
-                          personas.map((persona) => (
-                            <button
-                              key={persona._id}
-                              onClick={() => {
-                                setSelectedPersonaId(persona._id);
-                                setShowPersonaSelector(false);
-                                // Save to localStorage
-                                localStorage.setItem(`selectedPersona_${userId}`, persona._id);
-                                console.log('💾 Saved persona to localStorage:', persona.displayName);
-                              }}
-                              className={`w-full px-4 py-3 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700/50 last:border-b-0 ${
-                                selectedPersonaId === persona._id ? 'bg-zinc-100 dark:bg-zinc-700' : ''
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                {/* Avatar */}
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center overflow-hidden shrink-0">
-                                  {persona.avatar ? (
-                                    <img src={persona.avatar} alt={persona.displayName} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <span className="text-white font-bold text-sm">
-                                      {persona.displayName.charAt(0).toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Info */}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
-                                    {persona.displayName}
-                                  </p>
-                                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                                    {persona.background || 'No background'}
-                                  </p>
-                                </div>
-
-                                {/* Selected Indicator */}
-                                {selectedPersonaId === persona._id && (
-                                  <svg className="w-5 h-5 text-orange-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </div>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
               {/* Voice Call Button (Yellow Circle) */}
               <button
                 onClick={() => setShowVoiceCall(true)}
@@ -616,11 +582,10 @@ export default function MessagesClient() {
 
                       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
                         <div
-                          className={`rounded-2xl px-4 py-2 transition-all duration-300 hover:scale-[1.02] ${
-                            isOwn
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
-                          }`}
+                          className={`rounded-2xl px-4 py-2 transition-all duration-300 hover:scale-[1.02] ${isOwn
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
+                            }`}
                         >
                           <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.message}</p>
                         </div>
@@ -628,7 +593,7 @@ export default function MessagesClient() {
                         <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
                           {(() => {
                             const timestamp = message.createdAt;
-                            return timestamp 
+                            return timestamp
                               ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                               : 'now';
                           })()}
@@ -641,7 +606,7 @@ export default function MessagesClient() {
                     </div>
                   );
                 })}
-                
+
                 {/* Premium Typing Indicator */}
                 {isAITyping && (
                   <div className="flex justify-start animate-fadeIn">
@@ -654,38 +619,38 @@ export default function MessagesClient() {
                         className="relative w-8 h-8 rounded-full object-cover ring-2 ring-purple-500/30"
                       />
                     </div>
-                    
+
                     {/* Glassmorphism bubble with gradient */}
                     <div className="relative group">
                       {/* Gradient background animation */}
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-2xl blur-sm animate-pulse"></div>
-                      
+
                       {/* Main bubble */}
                       <div className="relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 shadow-lg">
                         <div className="flex items-center gap-1.5">
                           {/* Animated dots with gradient */}
                           <div className="flex items-center gap-1">
-                            <div 
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50" 
+                            <div
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50"
                               style={{ animationDelay: '0ms', animationDuration: '1.4s' }}
                             ></div>
-                            <div 
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 animate-bounce shadow-lg shadow-pink-500/50" 
+                            <div
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 animate-bounce shadow-lg shadow-pink-500/50"
                               style={{ animationDelay: '200ms', animationDuration: '1.4s' }}
                             ></div>
-                            <div 
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50" 
+                            <div
+                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50"
                               style={{ animationDelay: '400ms', animationDuration: '1.4s' }}
                             ></div>
                           </div>
-                          
+
                           {/* Typing text with fade animation */}
                           <span className="ml-2 text-xs text-zinc-400 font-medium animate-pulse">
                             typing...
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Shimmer effect on hover */}
                       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-2xl animate-shimmer"></div>
@@ -693,57 +658,219 @@ export default function MessagesClient() {
                     </div>
                   </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
               </>
             )}
           </div>
 
-          {/* Message Input */}
-          <div className="sticky bottom-0 z-10 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-sm p-4 border-t border-zinc-200 dark:border-white/10">
-            <div className="flex items-center gap-3">
-              {/* Emoji Picker */}
-              <div className="relative">
+          {/* Message Input Container */}
+          <div className="sticky bottom-0 z-10 p-4 w-full max-w-4xl mx-auto">
+            {/* Quick Reactions / Gifts above input */}
+            <div className="flex items-center gap-2 mb-2 px-2">
+              {GIFTS.slice(0, 5).map((gift) => (
                 <button
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                  title="Add emoji"
+                  key={gift.id}
+                  onClick={() => handleSendGift(gift)}
+                  className="flex flex-col items-center bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-white/10 rounded-xl p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700/80 transition-all hover:scale-105"
                 >
-                  <FaSmile className="w-5 h-5 mt-2" />
+                  <img src={gift.image} alt={gift.name} className="w-8 h-8 object-contain" />
+                  <span className="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold mt-0.5 flex items-center gap-0.5">
+                    <PiCoinsFill className="w-2.5 h-2.5" /> {gift.price}
+                  </span>
                 </button>
+              ))}
 
-                {showEmojiPicker && (
-                  <div className="absolute bottom-12 left-0 z-50">
-                    <Picker
-                      onEmojiClick={handleEmojiClick}
-                      theme={'dark' as any}
-                      width={300}
-                      height={400}
-                    />
+              {/* Gift Icon Button with Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-10 h-10 flex items-center justify-center bg-zinc-100 dark:bg-white rounded-full shadow-lg hover:bg-zinc-200 dark:hover:bg-zinc-100 transition-colors">
+                    <FaGift className="w-5 h-5 text-zinc-900" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-[320px] p-0 bg-white dark:bg-[#1a1a1a] border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                  {/* Gift Popup Header */}
+                  <div className="p-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 rounded-full">
+                      <PiCoinsFill className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm font-bold text-zinc-900 dark:text-white">0</span>
+                      <button className="ml-1 w-5 h-5 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-full">
+                        <span className="text-white dark:text-zinc-900 font-bold text-lg leading-none">+</span>
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Text Input */}
-              <div className="flex-1 relative">
+                  {/* Gift Selection Grid */}
+                  <div className="h-[400px] overflow-y-auto p-4 custom-scrollbar">
+                    <h4 className="text-zinc-500 text-sm font-medium mb-4">Classic</h4>
+                    <div className="grid grid-cols-4 gap-4">
+                      {GIFTS.map((gift) => (
+                        <button
+                          key={gift.id}
+                          onClick={() => handleSendGift(gift)}
+                          className="flex flex-col items-center gap-1 group relative active:scale-95 transition-transform"
+                        >
+                          <div className="relative">
+                            <img src={gift.image} alt={gift.name} className="w-12 h-12 object-contain transition-transform group-hover:scale-110" />
+                            {gift.name.includes("Snowflake") || gift.name.includes("Double Kisses") || gift.name.includes("Bouquet") ? (
+                              <span className="absolute -top-1 -left-1 bg-pink-500 text-[8px] font-bold px-1 rounded text-white italic">AR</span>
+                            ) : null}
+                          </div>
+                          <span className="text-xs text-yellow-600 dark:text-yellow-500 font-bold flex items-center gap-0.5">
+                            <PiCoinsFill className="w-3 h-3" /> {gift.price}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Main Input Area */}
+            <div className="bg-white dark:bg-[#1e1e24] border border-zinc-200 dark:border-white/5 rounded-[24px] p-2 flex flex-col gap-2 shadow-2xl">
+
+              {/* Input Row */}
+              <div className="flex items-center gap-2 pl-2">
+                {/* Text Field */}
                 <input
                   type="text"
-                  placeholder="Message..."
+                  placeholder="Type a message..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  className="w-full bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-full px-4 py-2 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  className="flex-1 bg-transparent border-none focus:outline-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 text-sm py-2"
                 />
+
+                {/* Right Icons */}
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!messageText.trim()}
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all group disabled:opacity-50"
+                >
+                  <Send className="w-5 h-5 text-purple-600 dark:text-purple-500 group-hover:scale-110 transition-transform" />
+                </button>
               </div>
 
-              {/* Send Button */}
-              <button
-                onClick={handleSendMessage}
-                disabled={!messageText.trim()}
-                className="text-purple-500 hover:text-purple-400 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Send
-              </button>
+              {/* Bottom Actions Row */}
+              <div className="flex items-center justify-between px-2 pb-1 border-t border-zinc-100 dark:border-white/5 pt-2">
+                <div className="flex items-center gap-3">
+
+                  {/* Persona Selector Popover */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowPersonaSelector(!showPersonaSelector)}
+                      className="flex items-center gap-1.5 bg-zinc-100 dark:bg-[#2a2a35] hover:bg-zinc-200 dark:hover:bg-[#323240] rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all border border-zinc-200 dark:border-white/5 shadow-sm active:scale-95"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center p-1 shadow-sm overflow-hidden">
+                        {(() => {
+                          const persona = selectedPersonaId ? personas.find(p => p._id === selectedPersonaId) : null;
+                          if (persona?.avatar) return <img src={persona.avatar} alt="" className="w-full h-full object-cover rounded-full" />;
+                          return <User className="w-full h-full text-white" />;
+                        })()}
+                      </div>
+                      <span className="truncate max-w-[80px]">
+                        {selectedPersonaId ? personas.find(p => p._id === selectedPersonaId)?.displayName : 'Persona'}
+                      </span>
+                      <ChevronDown className={`w-3 h-3 text-zinc-500 transition-transform duration-200 ${showPersonaSelector ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showPersonaSelector && (
+                      <div className="absolute left-0 bottom-full mb-3 w-[260px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        {/* Backdrop for closing */}
+                        <div className="fixed inset-0 z-[-1]" onClick={() => setShowPersonaSelector(false)} />
+
+                        <div className="bg-white dark:bg-[#1a1a1f] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
+                          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-800/20">
+                            <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Select Persona</h3>
+                          </div>
+
+                          <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {/* Default Option */}
+                            <button
+                              onClick={() => {
+                                setSelectedPersonaId(null);
+                                setShowPersonaSelector(false);
+                                localStorage.removeItem(`selectedPersona_${userId}`);
+                              }}
+                              className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 ${!selectedPersonaId ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                            >
+                              <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                                <User className="w-5 h-5 text-zinc-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-zinc-900 dark:text-white">Default Mode</p>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">Chat as yourself</p>
+                              </div>
+                            </button>
+
+                            {/* Personas */}
+                            {personas.map((persona) => (
+                              <button
+                                key={persona._id}
+                                onClick={() => {
+                                  setSelectedPersonaId(persona._id);
+                                  setShowPersonaSelector(false);
+                                  localStorage.setItem(`selectedPersona_${userId}`, persona._id);
+                                }}
+                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedPersonaId === persona._id ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                              >
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                                  {persona.avatar ? (
+                                    <img src={persona.avatar} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-white font-bold text-sm">{persona.displayName.charAt(0)}</span>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{persona.displayName}</p>
+                                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{persona.background || 'Persona profile'}</p>
+                                </div>
+                              </button>
+                            ))}
+
+                            {personas.length === 0 && (
+                              <div className="p-8 text-center">
+                                <p className="text-xs text-zinc-500">No personas found</p>
+                                <p className="text-[10px] text-zinc-400 mt-1">Create one in your profile settings</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Emoji Picker Button (Old logic kept) */}
+                  <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-white transition-colors relative"
+                  >
+                    <FaSmile className="w-4 h-4" />
+                    {showEmojiPicker && (
+                      <div className="absolute bottom-10 left-0 z-50">
+                        {/* Backdrop to close on outside click */}
+                        <div className="fixed inset-0 z-[-1]" onClick={(e) => {
+                          e.stopPropagation();
+                          setShowEmojiPicker(false);
+                        }} />
+                        <Picker
+                          onEmojiClick={handleEmojiClick}
+                          theme={'dark' as any}
+                          width={300}
+                          height={400}
+                        />
+                      </div>
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <button className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-white transition-colors">
+                    <Mic className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
