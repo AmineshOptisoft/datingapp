@@ -5,6 +5,7 @@ export interface ICharacter {
   characterName: string;
   characterImage?: string;
   characterAge: number;
+  characterGender: 'male' | 'female' | 'other';
   language: string;
   tags: string[];
   description: string;

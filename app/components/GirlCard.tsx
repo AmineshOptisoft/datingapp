@@ -5,7 +5,7 @@ import { RoutePrefix } from '@/types/ai-profile';
 import { getProfileRoute } from '@/lib/url-helpers';
 
 interface GirlCardProps {
-  legacyId: number;
+  legacyId: number | string | null;
   routePrefix: RoutePrefix;
   name: string;
   cardTitle: string;

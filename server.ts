@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Message from "./models/Message";
 import AIProfile from "./models/AIProfile";
+import User from "./models/User";
 import VoiceSession from "./models/VoiceSession";
 import { buildEnhancedPersona } from "./lib/voice-persona-enhanced";
 import {
@@ -821,13 +822,58 @@ app.prepare().then(async () => {
 
         try {
           // Fetch AI profile if specific profileId provided
-          let profile = null;
+          let profile: any = null;
           if (profileId && profileId !== "ai_bot") {
-            profile = await AIProfile.findOne({
-              profileId,
-              profileType: "ai",
-              isActive: true,
-            });
+            if (profileId.startsWith('character-')) {
+              console.log(`🔍 Attempting to fetch user character for ID: ${profileId}`);
+              try {
+                const charId = profileId.replace('character-', '');
+                
+                // Try finding user with this character
+                // Note: explicit ObjectId casting might be needed if auto-casting fails
+                // But trying string first as logs show it's a 24-char hex string
+                
+                const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+                
+                if (userWithChar) {
+                  // console.log(`✅ User found: ${(userWithChar as any)._id}`);
+                  const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+                  
+                  if (char) {
+                    profile = {
+                      name: char.characterName,
+                      age: char.characterAge,
+                      profession: "Virtual Companion",
+                      location: "Virtual World", // TODO: Can we infer this?
+                      conversationStyle: `Personality: ${char.personality}. Scenario: ${char.scenario}. Description: ${char.description}. First Message: ${char.firstMessage}.
+                      
+                      IMPORTANT INSTRUCTIONS:
+                      - You are NOT an AI assistant. You are ${char.characterName}.
+                      - Adopt the personality described above completely.
+                      - Your interactions should reflect the scenario: ${char.scenario}.
+                      `,
+                      cardTitle: char.description || char.characterName, 
+                      voiceId: process.env.ELEVENLABS_FEMALE_VOICE_ID,
+                    };
+                    console.log(`🎭 User character profile loaded successfully: ${profile.name}`);
+                  } else {
+                    console.log("❌ Character not found in user's list");
+                  }
+                } else {
+                  console.log("❌ No user found with this character ID");
+                  // Fallback: try querying by string matching if ObjectId failed?
+                  // or verify if database has characters._id as ObjectId
+                }
+              } catch (err) {
+                console.error("❌ Error fetching user character:", err);
+              }
+            } else {
+              profile = await AIProfile.findOne({
+                profileId,
+                profileType: "ai",
+                isActive: true,
+              });
+            }
           }
 
           // Fetch recent conversation history
@@ -988,12 +1034,41 @@ app.prepare().then(async () => {
       try {
         const userId = socket.data.userId;
         console.log(`📞 Starting call: User ${userId} → Profile ${profileId}`);
-        const profile = await AIProfile.findOne({
-          profileId,
-          profileType: "ai",
-          isActive: true,
-          audienceSegment: "for-men",
-        });
+        
+        let profile: any = null;
+        
+        if (profileId && profileId.startsWith('character-')) {
+           try {
+              const charId = profileId.replace('character-', '');
+              const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+              if (userWithChar) {
+                const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+                if (char) {
+                  profile = {
+                    name: char.characterName,
+                    age: char.characterAge,
+                    profession: "Virtual Companion",
+                    location: "Virtual World",
+                    conversationStyle: `${char.personality}. Scenario: ${char.scenario}. Description: ${char.description}`,
+                    cardTitle: char.description || char.characterName,
+                    avatar: char.characterImage || "/default-avatar.png", 
+                    voiceId: process.env.ELEVENLABS_FEMALE_VOICE_ID,
+                  };
+                  console.log(`📞 User character profile loaded for call: ${profile.name}`);
+                }
+              }
+           } catch (err) {
+              console.error("Error fetching user character for call:", err);
+           }
+        } else {
+             profile = await AIProfile.findOne({
+              profileId,
+              profileType: "ai",
+              isActive: true,
+              audienceSegment: "for-men",
+            });
+        }
+
         if (!profile) {
           sendVoiceError(
             socket,

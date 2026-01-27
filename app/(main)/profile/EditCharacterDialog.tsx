@@ -36,6 +36,7 @@ interface Character {
     characterName: string;
     characterImage?: string;
     characterAge: number;
+    characterGender?: 'male' | 'female' | 'other';
     language: string;
     tags: string[];
     description: string;
@@ -57,13 +58,14 @@ export default function EditCharacterDialog({
     const [name, setName] = useState(character.characterName || "");
     const [image, setImage] = useState<string | null>(character.characterImage || null);
     const [age, setAge] = useState(character.characterAge?.toString() || "18");
+    const [gender, setGender] = useState<"male" | "female" | "other">(character.characterGender || "female");
     const [language, setLanguage] = useState(character.language || "English");
     const [tags, setTags] = useState<string[]>(character.tags || []);
     const [description, setDescription] = useState(character.description || "");
     const [personality, setPersonality] = useState(character.personality || "");
     const [scenario, setScenario] = useState(character.scenario || "");
     const [firstMessage, setFirstMessage] = useState(character.firstMessage || "");
-    const [visibility, setVisibility] = useState(character.visibility || "Private");
+    const [visibility, setVisibility] = useState(character.visibility?.toLowerCase() || "private");
     const [tagSearch, setTagSearch] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
@@ -124,6 +126,7 @@ export default function EditCharacterDialog({
                 characterName: name.trim(),
                 characterImage: image,
                 characterAge: ageNum,
+                characterGender: gender,
                 language,
                 tags,
                 description: description.trim(),
@@ -132,6 +135,8 @@ export default function EditCharacterDialog({
                 firstMessage: firstMessage.trim(),
                 visibility: visibility.toLowerCase(),
             };
+
+            console.log("📤 Sending character data to API:", characterData);
 
             const response = await fetch(`/api/characters/${character._id}`, {
                 method: "PUT",
@@ -240,6 +245,26 @@ export default function EditCharacterDialog({
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-400"
                         />
                         <p className="text-xs text-zinc-500 mt-1.5">This is your character's age.</p>
+                    </div>
+
+                    {/* Character Gender */}
+                    <div>
+                        <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+                            Character Gender
+                        </label>
+                        <div className="relative">
+                            <select
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value as "male" | "female" | "other")}
+                                className="w-full text-sm appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
+                            >
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1.5">Select your character's gender. This determines where your character appears in public sections.</p>
                     </div>
 
                     {/* Language */}
@@ -395,13 +420,13 @@ export default function EditCharacterDialog({
                         </label>
                         <div className="relative">
                             <select
-                                value={visibility}
+                                value={visibility.toLowerCase()}
                                 onChange={(e) => setVisibility(e.target.value)}
                                 className="w-full text-sm appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
                             >
-                                <option value="Private">Private</option>
-                                <option value="Public">Public</option>
-                                <option value="Unlisted">Unlisted</option>
+                                <option value="private">Private</option>
+                                <option value="public">Public</option>
+                                <option value="unlisted">Unlisted</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-zinc-500 pointer-events-none" />
                         </div>

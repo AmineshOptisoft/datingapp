@@ -19,6 +19,11 @@ const CharacterSchema = new Schema<ICharacter>(
       min: [18, "Character must be at least 18 years old"],
       max: [150, "Character age cannot exceed 150"],
     },
+    characterGender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      required: [true, "Character gender is required"],
+    },
     language: {
       type: String,
       default: "English",

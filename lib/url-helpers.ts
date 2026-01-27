@@ -23,7 +23,7 @@ export function getProfileRoute(
     routePrefix: RoutePrefix,
     name: string,
     cardTitle: string,
-    legacyId: number
+    legacyId: number | string | null
 ): string {
     const nameSlug = slugify(name);
     const titleSlug = slugify(cardTitle);
@@ -33,14 +33,15 @@ export function getProfileRoute(
 /**
  * Extracts the legacy ID from a profile URL slug
  * Example: "Hinata-The-Shy-AI-Girlfriend-424" returns "424"
+ * Example: "My-Char-69789009e1da83ed124d3ab5" returns "69789009e1da83ed124d3ab5"
  */
 export function extractLegacyIdFromSlug(slug: string): string | null {
     // The ID is always after the last dash
     const parts = slug.split('-');
     const lastPart = parts[parts.length - 1];
 
-    // Check if it's a valid number
-    if (/^\d+$/.test(lastPart)) {
+    // Check if it's a valid number OR a valid MongoDB ObjectId (24 hex chars)
+    if (/^\d+$/.test(lastPart) || /^[0-9a-fA-F]{24}$/.test(lastPart)) {
         return lastPart;
     }
 

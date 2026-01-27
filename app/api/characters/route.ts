@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       characterName,
       characterImage,
       characterAge,
+      characterGender,
       language,
       tags,
       description,
@@ -126,6 +127,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!characterGender || !["male", "female", "other"].includes(characterGender)) {
+      return NextResponse.json(
+        { success: false, message: "Valid character gender is required (male, female, or other)" },
+        { status: 400 }
+      );
+    }
+
     if (tags && tags.length > 10) {
       return NextResponse.json(
         { success: false, message: "Cannot add more than 10 tags" },
@@ -158,6 +166,7 @@ export async function POST(request: NextRequest) {
       characterName,
       characterImage: characterImage || null,
       characterAge,
+      characterGender,
       language: language || "English",
       tags: tags || [],
       description,

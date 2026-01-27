@@ -1,9 +1,9 @@
-export type RoutePrefix = "girl" | "boy" | "companion";
+export type RoutePrefix = "girl" | "boy" | "companion" | "character";
 export type AudienceSegment = "for-men" | "for-women" | "for-lgbtq";
 
 export interface AIProfileOverview {
   profileId: string;
-  legacyId: number;
+  legacyId: number | string | null;
   routePrefix: RoutePrefix;
   audienceSegment: AudienceSegment;
   name: string;

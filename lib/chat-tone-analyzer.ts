@@ -123,9 +123,13 @@ export function optimizeConversationContext(
     : '';
   
   // CRITICAL: Bio removed to prevent "digital world" leak
+  // Restored for User Characters who use bio/description
+  const bioSection = aiProfile.bio ? `\nBackground: ${aiProfile.bio}` : '';
+  const scenarioSection = aiProfile.scenario ? `\nScenario: ${aiProfile.scenario}` : '';
+
   const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.age}, ${aiProfile.profession} from ${aiProfile.location}.
 
-Style: ${aiProfile.conversationStyle}${personalityOverride}
+Style: ${aiProfile.conversationStyle}${personalityOverride}${bioSection}${scenarioSection}
 
 ${toneInstructions}
 

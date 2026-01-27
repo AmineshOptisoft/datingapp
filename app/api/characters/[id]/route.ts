@@ -48,6 +48,7 @@ export async function PUT(
       characterName,
       characterImage,
       characterAge,
+      characterGender,
       language,
       tags,
       description,
@@ -56,6 +57,8 @@ export async function PUT(
       firstMessage,
       visibility,
     } = body;
+
+    console.log("📥 Received character update data:", { characterName, characterAge, characterGender, visibility });
 
     // Validation
     if (!userId) {
@@ -75,6 +78,13 @@ export async function PUT(
     if (!characterAge || characterAge < 18) {
       return NextResponse.json(
         { success: false, message: "Character must be at least 18 years old" },
+        { status: 400 }
+      );
+    }
+
+    if (!characterGender || !["male", "female", "other"].includes(characterGender)) {
+      return NextResponse.json(
+        { success: false, message: "Valid character gender is required (male, female, or other)" },
         { status: 400 }
       );
     }
@@ -104,6 +114,7 @@ export async function PUT(
           "characters.$.characterName": characterName.trim(),
           "characters.$.characterImage": characterImage,
           "characters.$.characterAge": characterAge,
+          "characters.$.characterGender": characterGender,
           "characters.$.language": language,
           "characters.$.tags": tags || [],
           "characters.$.description": description.trim(),

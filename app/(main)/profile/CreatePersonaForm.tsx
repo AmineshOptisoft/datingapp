@@ -36,13 +36,14 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
     const [name, setName] = useState("");
     const [image, setImage] = useState<string | null>(null);
     const [age, setAge] = useState("18");
+    const [gender, setGender] = useState<"male" | "female" | "other">("female");
     const [language, setLanguage] = useState("English");
     const [tags, setTags] = useState<string[]>([]);
     const [description, setDescription] = useState("");
     const [personality, setPersonality] = useState("");
     const [scenario, setScenario] = useState("");
     const [firstMessage, setFirstMessage] = useState("");
-    const [visibility, setVisibility] = useState("Private");
+    const [visibility, setVisibility] = useState("private");
     const [tagSearch, setTagSearch] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
@@ -112,6 +113,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                 characterName: name.trim(),
                 characterImage: image,
                 characterAge: ageNum,
+                characterGender: gender,
                 language: language,
                 tags: tags,
                 description: description.trim(),
@@ -232,6 +234,26 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-400"
                         />
                         <p className="text-xs text-zinc-500 mt-1.5">This is your character's age.</p>
+                    </div>
+
+                    {/* Character Gender */}
+                    <div>
+                        <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+                            Character Gender
+                        </label>
+                        <div className="relative">
+                            <select
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value as "male" | "female" | "other")}
+                                className="w-full text-sm appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
+                            >
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1.5">Select your character's gender. This determines where your character appears in public sections.</p>
                     </div>
 
                     {/* Language */}
@@ -389,13 +411,13 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                         </label>
                         <div className="relative">
                             <select
-                                value={visibility}
+                                value={visibility.toLowerCase()}
                                 onChange={(e) => setVisibility(e.target.value)}
                                 className="w-full text-sm appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
                             >
-                                <option value="Private">Private</option>
-                                <option value="Public">Public</option>
-                                <option value="Unlisted">Unlisted</option>
+                                <option value="private">Private</option>
+                                <option value="public">Public</option>
+                                <option value="unlisted">Unlisted</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-zinc-500 pointer-events-none" />
                         </div>
