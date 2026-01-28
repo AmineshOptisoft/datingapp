@@ -115,7 +115,7 @@ export default function CharacterDetailPage() {
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white mb-2">
                 {profile.name}
               </h1>
-              <p className="text-xl text-zinc-600 dark:text-zinc-400 mb-2">{profile.cardTitle}</p>
+              <p className="text-xl text-zinc-600 dark:text-zinc-400 mb-2">{profile.personalityType}</p>
               
               <div className="flex items-center gap-2 mt-4">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
@@ -211,9 +211,9 @@ export default function CharacterDetailPage() {
         <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-6">
           About {profile.name}
         </h2>
-        <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-lg">
+        {/* <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-lg">
           {profile.bio}
-        </p>
+        </p> */}
       </section>
 
       {/* Feature Cards Grid */}
