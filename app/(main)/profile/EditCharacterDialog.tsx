@@ -360,6 +360,7 @@ export default function EditCharacterDialog({
                             rows={4}
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none resize-none transition-all placeholder:text-zinc-500"
                             placeholder="You're pretty sure Brooklyn's local hero has a crush on you..."
+                            maxLength={1000}
                         />
                         <p className="text-xs text-zinc-500 mt-1.5">Write a brief overview of your character.</p>
                     </div>
@@ -377,6 +378,7 @@ export default function EditCharacterDialog({
                             rows={3}
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none resize-none transition-all placeholder:text-zinc-500"
                             placeholder="Adventurous, witty, and kind-hearted..."
+                            maxLength={1000}
                         />
                         <p className="text-xs text-zinc-500 mt-1.5">Describe your character's traits, behavior, and demeanor.</p>
                     </div>
@@ -394,6 +396,7 @@ export default function EditCharacterDialog({
                             rows={6}
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none resize-none transition-all placeholder:text-zinc-500"
                             placeholder="Miles has been Brooklyn's very own, Spiderman for at least 3-4 months now..."
+                            maxLength={1000}
                         />
                     </div>
 
@@ -410,6 +413,7 @@ export default function EditCharacterDialog({
                             rows={4}
                             className="w-full text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none resize-none transition-all placeholder:text-zinc-500"
                             placeholder="Why does this always keep happening to you?!..."
+                            maxLength={1000}
                         />
                     </div>
 

@@ -52,12 +52,12 @@ const CharacterSchema = new Schema<ICharacter>(
     scenario: {
       type: String,
       required: [true, "Scenario is required"],
-      maxlength: [30, "Scenario cannot exceed 30 characters"],
+      maxlength: [1000, "Scenario cannot exceed 1000 characters"],
     },
     firstMessage: {
       type: String,
       required: [true, "First message is required"],
-      maxlength: [500, "First message cannot exceed 500 characters"],
+      maxlength: [1000, "First message cannot exceed 1000 characters"],
     },
     visibility: {
       type: String,
