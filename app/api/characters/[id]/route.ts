@@ -135,7 +135,7 @@ export async function PUT(
     }
 
     // Find the updated character to return
-    const updatedCharacter = updatedUser.characters.find((c: any) => c._id.toString() === id);
+    const updatedCharacter = updatedUser.characters?.find((c: any) => c._id.toString() === id);
 
     return NextResponse.json({
       success: true,

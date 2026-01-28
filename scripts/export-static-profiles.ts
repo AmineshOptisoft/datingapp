@@ -7,7 +7,7 @@ import type { AIProfileSeed } from "../models/AIProfile";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-type RoutePrefix = "girl" | "boy" | "companion";
+type RoutePrefix = "girl" | "boy" | "companion" | "character";
 
 const groupByRoute = aiProfilesData.reduce<Record<RoutePrefix, AIProfileSeed[]>>(
   (acc, profile) => {
@@ -18,6 +18,7 @@ const groupByRoute = aiProfilesData.reduce<Record<RoutePrefix, AIProfileSeed[]>>
     girl: [],
     boy: [],
     companion: [],
+    character: [],
   }
 );
 

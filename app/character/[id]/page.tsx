@@ -99,7 +99,7 @@ export default function CharacterDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
         {/* Image Section */}
         <div className="relative mx-auto lg:mx-0">
-          <div className="relative rounded-2xl overflow-hidden h-full bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10">
+          <div className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10">
             <img
               src={primaryPhoto}
               alt={profile.name}

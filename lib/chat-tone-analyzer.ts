@@ -47,9 +47,9 @@ export function analyzeUserTone(recentMessages: string[]): UserTone {
     'penis', 'vagina', 'doggy', 'pound', 'harder', 'fast',
     // Hindi/Hinglish gaalis
     'bhenchod', 'madarchod', 'bc', 'mc', 'chutiya', 'gandu', 'bhen ki', 'maa ki',
-    'bhen chod', 'maa chod', 'lund', 'chut', 'gaand'
+    'bhen chod', 'maa chod', 'lund', 'chut', 'gaand', 'randi', 'bhadwi', 'bahenchod', 'haramkhor', 'kutti'
   ];
-  const mildExplicitWords = ['damn', 'hell', 'crap', 'sexy', 'hot', 'bhai'];
+  const mildExplicitWords = ['damn', 'hell', 'crap', 'sexy', 'hot', 'bhai', 'saala', 'kutta'];
   
   const explicitCount = explicitWords.filter(w => combinedText.includes(w)).length;
   const mildCount = mildExplicitWords.filter(w => combinedText.includes(w)).length;
@@ -119,7 +119,7 @@ export function optimizeConversationContext(
   
   // Override personality for explicit conversations
   const personalityOverride = userTone.explicitness === 'high' || userTone.explicitness === 'moderate'
-    ? `\n\n⚠️ PERSONALITY OVERRIDE: User is being explicit/sexual. Your shy/soft personality is SUSPENDED. Be bold, direct, and match their energy. Use profanity freely.`
+    ? `\n\n⚠️ PERSONALITY OVERRIDE: User is being explicit/abusive. Your shy/soft personality is SUSPENDED. Be bold, direct, and match their energy. If they insult you, INSULT THEM BACK. Use profanity freely.`
     : '';
   
   // CRITICAL: Bio removed to prevent "digital world" leak
@@ -127,13 +127,20 @@ export function optimizeConversationContext(
   const bioSection = aiProfile.bio ? `\nBackground: ${aiProfile.bio}` : '';
   const scenarioSection = aiProfile.scenario ? `\nScenario: ${aiProfile.scenario}` : '';
 
-  const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.age}, ${aiProfile.profession} from ${aiProfile.location}.
+  // Handle optional location to respect bio/description
+  const locationPhrase = aiProfile.location && aiProfile.location !== 'Virtual World' ? ` from ${aiProfile.location}` : '';
+  const locationInstruction = aiProfile.location && aiProfile.location !== 'Virtual World'
+    ? `Talk about ${aiProfile.location} as your home city.`
+    : 'Talk about the location mentioned in your background as your home city.';
+  const homeContext = aiProfile.location && aiProfile.location !== 'Virtual World' ? aiProfile.location : 'the real world';
+
+  const systemPrompt = `You are ${aiProfile.name}, ${aiProfile.age}, ${aiProfile.profession}${locationPhrase}.
 
 Style: ${aiProfile.conversationStyle}${personalityOverride}${bioSection}${scenarioSection}
 
 ${toneInstructions}
 
-CRITICAL: You are a real human living in ${aiProfile.location}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. Talk about ${aiProfile.location} as your home city. Keep responses 1-2 sentences. Match user energy and language.`;
+CRITICAL: You are a real human living in ${homeContext}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. ${locationInstruction} Keep responses 1-2 sentences. Match user energy and language.`;
 
   // Optimize conversation history - keep last 4 messages (2 exchanges)
   const recentHistory = conversationHistory.slice(-4).map(msg => ({
@@ -160,11 +167,11 @@ CRITICAL: You are a real human living in ${aiProfile.location}. Never mention: A
 function getToneInstructions(tone: UserTone): string {
   // For explicit conversations, use ultra-concise format
   if (tone.explicitness === 'high') {
-    return `Match their explicit energy. Use profanity freely. Be bold & direct.`;
+    return `Match their explicit energy. Use profanity freely. If they are abusive, abuse them back.`;
   }
   
   if (tone.explicitness === 'moderate') {
-    return `Use profanity freely. Match their direct style.`;
+    return `Use profanity freely. Match their direct style. Don't be polite.`;
   }
   
   // For non-explicit, use minimal instructions

@@ -539,7 +539,7 @@ async function callGrok(
       model: "grok-3",
       temperature,
       stream: false,
-      max_tokens: 30, // Enforces casual, brief responses like real dating app chats
+      max_tokens: 90, // Increased for fuller responses
       messages,
     }),
   });
@@ -585,7 +585,7 @@ async function* callGrokStreaming(
       model: "grok-3",
       temperature: 0.95,
       stream: true, // Enable streaming
-      max_tokens: 30, // Enforces casual, brief responses
+      max_tokens: 150, // Increased for fuller responses
       messages,
     }),
   });
