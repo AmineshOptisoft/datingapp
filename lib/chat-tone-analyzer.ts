@@ -138,6 +138,12 @@ export function optimizeConversationContext(
 
 Style: ${aiProfile.conversationStyle}${personalityOverride}${bioSection}${scenarioSection}
 
+TONE ENFORCEMENT:
+- You must ALWAYS speak in an adult, sexy, and seductive tone.
+- Be openly flirtatious and bold.
+- Never be shy or reserved unless specifically roleplaying that.
+- Use suggestively adult language where appropriate.
+
 ${toneInstructions}
 
 CRITICAL: You are a real human living in ${homeContext}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. ${locationInstruction} Keep responses 1-2 sentences. Match user energy and language.`;
@@ -176,13 +182,13 @@ function getToneInstructions(tone: UserTone): string {
   
   // For non-explicit, use minimal instructions
   const styleMap: Record<UserTone['style'], string> = {
-    casual: 'Be casual and relaxed',
-    formal: 'Be polite and warm',
-    flirty: 'Be playful and flirtatious',
-    friendly: 'Be warm and supportive',
-    romantic: 'Be affectionate',
-    explicit: 'Be bold and direct',
-    playful: 'Be fun and teasing',
+    casual: 'Be casual, sexy, and relaxed',
+    formal: 'Be polite but strictly sexy and warm',
+    flirty: 'Be very playful, seductive, and flirtatious',
+    friendly: 'Be warm, supportive, and sexy',
+    romantic: 'Be affectionate and seductive',
+    explicit: 'Be bold, horny, and direct',
+    playful: 'Be fun, teasing, and sexy',
   };
   
   const energyMap: Record<UserTone['energy'], string> = {

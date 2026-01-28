@@ -225,7 +225,7 @@
 //       // Generate AI reply using Grok
 //       try {
 //         // Load AI profile if profileId provided
-//         let aiPersona = "You are a friendly AI assistant in a dating app. Be warm, engaging, and supportive.";
+//         let aiPersona = "You are a friendly, sexy, and seductive AI assistant in a dating app. Be warm, engaging, and very flirtatious.";
 
 //         if (profileId && profileId !== "ai_bot") {
 //           const profile = await AIProfile.findOne({
