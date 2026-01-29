@@ -131,6 +131,7 @@ export default function ForLGBTQPage() {
                 routePrefix={companion.routePrefix}
                 name={companion.name}
                 cardTitle={companion.cardTitle}
+                personality={companion.personalityType || companion.tagline}
                 monthlyPrice={companion.monthlyPrice}
                 avatar={companion.avatar}
                 badgeHot={companion.badgeHot}

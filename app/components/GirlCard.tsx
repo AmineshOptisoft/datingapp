@@ -13,6 +13,7 @@ interface GirlCardProps {
   avatar: string;
   badgeHot?: boolean;
   badgePro?: boolean;
+  personality?: string;
 }
 
 export default function GirlCard({
@@ -24,8 +25,13 @@ export default function GirlCard({
   avatar,
   badgeHot = false,
   badgePro = false,
+  personality,
 }: GirlCardProps) {
   const priceLabel = `$${monthlyPrice.toFixed(2)}`;
+  
+  // For user-created characters (routePrefix === 'character'), show personality
+  // For AI profiles, show cardTitle
+  const displayText = routePrefix === 'character' && personality ? personality : cardTitle;
 
   return (
     <Link
@@ -67,7 +73,7 @@ export default function GirlCard({
 
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <h3 className="text-white font-semibold text-lg mb-1">{name}</h3>
-          <p className="text-zinc-300 text-sm mb-3">{cardTitle}</p>
+          <p className="text-zinc-300 text-sm mb-3 line-clamp-2" title={displayText}>{displayText}</p>
 
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-1">

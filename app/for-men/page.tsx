@@ -138,6 +138,7 @@ export default function ForMenPage() {
                 routePrefix={girl.routePrefix}
                 name={girl.name}
                 cardTitle={girl.cardTitle}
+                personality={girl.personalityType || girl.tagline}
                 monthlyPrice={girl.monthlyPrice}
                 avatar={girl.avatar}
                 badgeHot={girl.badgeHot}

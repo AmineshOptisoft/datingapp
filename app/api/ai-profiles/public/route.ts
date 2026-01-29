@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
                 avatar: char.characterImage || "/default-avatar.png",
                 bio: char.description,
                 tagline: char.personality,
+                personalityType: char.personality,
                 interests: char.tags || [],
                 badgeHot: false,
                 badgePro: false,

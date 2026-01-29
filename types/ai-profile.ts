@@ -16,6 +16,7 @@ export interface AIProfileOverview {
   interests: string[];
   badgeHot: boolean;
   badgePro: boolean;
+  personalityType?: string;
 }
 
 export interface AIProfileDetail extends AIProfileOverview {
