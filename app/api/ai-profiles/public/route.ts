@@ -87,8 +87,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Combine AI profiles with user characters
-    const allProfiles = [...formattedProfiles, ...userCharacters];
+    // Sort user characters by creation date (newest first)
+    // MongoDB ObjectIds contain timestamp, so we can sort by _id
+    userCharacters.sort((a, b) => {
+      const idA = a._id?.toString() || '';
+      const idB = b._id?.toString() || '';
+      return idB.localeCompare(idA); // Descending order (newest first)
+    });
+
+    // Combine with user characters first, then AI profiles
+    // This ensures latest user-created characters appear at the top
+    const allProfiles = [...userCharacters, ...formattedProfiles];
 
     return NextResponse.json({
       success: true,
