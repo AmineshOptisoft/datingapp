@@ -273,6 +273,56 @@ async function processUserAudio(
         content: m.content,
       }));
 
+    // ========== FIRST MESSAGE LOGIC FOR VOICE ==========
+    // Check if this is the first voice interaction with this character
+    let fullResponse = "";
+    
+    if (call.session.messages.length === 0 && call.profileId?.startsWith('character-')) {
+      // This is the FIRST time this user is voice-calling this character
+      const charId = call.profileId.replace('character-', '');
+      const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+      
+      if (userWithChar) {
+        const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+        
+        if (char && char.firstMessage && char.firstMessage.trim()) {
+          fullResponse = char.firstMessage.trim();
+          console.log(`👋 First voice call detected! Speaking firstMessage: "${fullResponse}"`);
+          
+          // Synthesize and send the first message
+          socket.emit("voice:ai-speaking");
+          const voiceSettings = getVoiceSettings(call.profile);
+          
+          try {
+            const audioBase64 = await synthesizeSpeech(fullResponse, voiceSettings);
+            socket.emit("voice:ai-audio", { base64: audioBase64 });
+            console.log(`🎵 First message sent via TTS`);
+          } catch (ttsError) {
+            console.error("❌ TTS error for first message:", ttsError);
+            socket.emit("voice:error", { message: "Failed to synthesize first message" });
+            return;
+          }
+          
+          // Save to database
+          call.session.messages.push(
+            { role: "user", content: transcript, createdAt: new Date() },
+            { role: "assistant", content: fullResponse, createdAt: new Date() }
+          );
+          
+          if (!call.isSaving) {
+            call.isSaving = true;
+            try {
+              await call.session.save();
+            } finally {
+              call.isSaving = false;
+            }
+          }
+          return; // Exit early, don't call Grok
+        }
+      }
+    }
+
+    // ========== NORMAL VOICE CONVERSATION FLOW ==========
     // Analyze user's tone from recent voice messages
     const userMessages = extractUserMessages(conversationHistory);
     const userTone = analyzeUserTone(userMessages);
@@ -298,7 +348,6 @@ async function processUserAudio(
     ];
 
     // STREAMING PIPELINE: Stream LLM → Stream TTS → Send audio chunks
-    let fullResponse = "";
     let sentenceBuffer = "";
     let chunkCount = 0;
     let firstAudioTime: number | null = null;
@@ -895,6 +944,44 @@ app.prepare().then(async () => {
               .map((m) => ({ sender: m.sender, message: m.message }))
           );
 
+          // ========== FIRST MESSAGE LOGIC ==========
+          // Check if this is user's first conversation with this character
+          // If recentMessages only has 1 message (the one we just saved), it's the first interaction
+          let aiReply: string;
+          
+          if (recentMessages.length === 1 && profile && profileId?.startsWith('character-')) {
+            // This is the FIRST time this user is chatting with this character
+            // Fetch the character's firstMessage
+            const charId = profileId.replace('character-', '');
+            const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+            
+            if (userWithChar) {
+              const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+              
+              if (char && char.firstMessage && char.firstMessage.trim()) {
+                aiReply = char.firstMessage.trim();
+                console.log(`👋 First interaction detected! Sending firstMessage: "${aiReply}"`);
+                
+                // Save and emit the first message
+                await Message.create({
+                  sender: aiBotId,
+                  receiver: userId,
+                  message: aiReply,
+                });
+                socket.emit("receive_message", {
+                  sender: aiBotId,
+                  receiver: userId,
+                  message: aiReply,
+                });
+                
+                // Stop typing indicator
+                socket.emit("ai_typing_stop", { profileId: aiBotId });
+                return; // Exit early, don't call Grok
+              }
+            }
+          }
+          
+          // ========== NORMAL CONVERSATION FLOW ==========
           const conversationHistory: LLMMessage[] = recentMessages
             .reverse()
             .map((msg: any) => ({
@@ -961,7 +1048,7 @@ app.prepare().then(async () => {
           // Debug log to verify no duplication
           console.log("messages", llmMessages);
 
-          const aiReply = await callGrok(llmMessages, userTone);
+          aiReply = await callGrok(llmMessages, userTone);
           
           // Calculate output tokens and total cost
           const outputTokens = estimateTokens(aiReply);

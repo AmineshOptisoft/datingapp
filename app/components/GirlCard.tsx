@@ -33,9 +33,11 @@ export default function GirlCard({
   // For AI profiles, show cardTitle
   const displayText = routePrefix === 'character' && personality ? personality : cardTitle;
 
+  const slugSource = routePrefix === 'character' && personality ? personality : cardTitle;
+
   return (
     <Link
-      href={getProfileRoute(routePrefix, name, cardTitle, legacyId)}
+      href={getProfileRoute(routePrefix, name, slugSource, legacyId)}
       className="group relative bg-zinc-800 rounded-2xl overflow-hidden hover:ring-2 hover:ring-pink-500 transition-all duration-300 cursor-pointer block"
     >
       <div className="relative h-[500px] overflow-hidden">
