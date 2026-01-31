@@ -273,3 +273,14 @@ aside::after {
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* Smooth touch scrolling for mobile chat */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS layout: 100dvh adapts to browser chrome (address bar); fallback for older browsers */
+.h-screen-dvh {
+  height: 100vh;
+  height: 100dvh;
+}

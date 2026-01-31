@@ -104,6 +104,9 @@ export default function MessagesClient() {
   const hasProcessedUrlParam = useRef(false);
   const pendingSelection = useRef<{ profileId: string; conversationId: number } | null>(null);
   const socketRef = useRef<any>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
+  const [chatContainerHeight, setChatContainerHeight] = useState<number | null>(null);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
@@ -139,15 +142,11 @@ export default function MessagesClient() {
             profileId: conv.profileId,
           }));
 
-          console.log('📥 API returned conversations:', mappedConversations.length);
-
           // Merge with existing conversations instead of replacing
           setConversations(prev => {
             // Keep manually created conversations that aren't in API response
             const apiProfileIds = new Set(mappedConversations.map(c => c.profileId));
             const manualConversations = prev.filter(c => !apiProfileIds.has(c.profileId));
-
-            console.log('🔄 Merging:', { api: mappedConversations.length, manual: manualConversations.length });
 
             return [...manualConversations, ...mappedConversations];
           });
@@ -180,13 +179,11 @@ export default function MessagesClient() {
         if (savedPersonaId && data.personas?.some((p: any) => p._id === savedPersonaId)) {
           // Restore saved persona
           setSelectedPersonaId(savedPersonaId);
-          console.log('🔄 Restored persona from localStorage:', savedPersonaId);
         } else {
           // Set default persona if exists and no saved selection
           const defaultPersona = data.personas?.find((p: any) => p.makeDefault);
           if (defaultPersona) {
             setSelectedPersonaId(defaultPersona._id);
-            console.log('✅ Auto-selected default persona:', defaultPersona.displayName);
           }
         }
       } catch (error) {
@@ -214,12 +211,9 @@ export default function MessagesClient() {
 
       // Use functional update to access latest conversations without adding to dependencies
       setConversations((prevConversations) => {
-        console.log('🔧 Processing conversation:', { aiProfileId, existingCount: prevConversations.length });
-
         // Check if conversation already exists
         const existing = prevConversations.find((c) => c.profileId === aiProfileId);
         if (existing) {
-          console.log('✅ Found existing conversation:', existing.name);
           // Mark for selection in separate effect
           pendingSelection.current = { profileId: aiProfileId, conversationId: existing.id };
           return prevConversations; // No change needed
@@ -238,8 +232,6 @@ export default function MessagesClient() {
           profileId: aiProfileId,
         };
 
-        console.log('➕ Creating new conversation:', newConversation.name, 'ID:', uniqueId);
-
         // Mark for selection in separate effect
         pendingSelection.current = { profileId: aiProfileId, conversationId: newConversation.id };
 
@@ -255,13 +247,11 @@ export default function MessagesClient() {
   useEffect(() => {
     if (pendingSelection.current) {
       const { profileId, conversationId } = pendingSelection.current;
-      console.log('🔍 Selecting conversation:', { profileId, conversationId });
       pendingSelection.current = null; // Clear immediately to prevent re-runs
 
       setSelectedConversation(conversationId);
       setSelectedProfileId(profileId);
       fetchConversation(profileId);
-      console.log('✅ Conversation selected successfully');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations]);
@@ -271,36 +261,39 @@ export default function MessagesClient() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [socketMessages]);
 
-  const selectedConv = conversations.find(c => c.id === selectedConversation);
-
-  // Debug log
+  // VisualViewport: when mobile keyboard opens, constrain chat height so input stays visible
   useEffect(() => {
-    console.log('📊 State Debug:', {
-      selectedConversation,
-      conversationsCount: conversations.length,
-      selectedConv: selectedConv ? `Found: ${selectedConv.name}` : 'NOT FOUND',
-      allConversationIds: conversations.map(c => c.id)
-    });
-  }, [selectedConversation, conversations, selectedConv]);
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+
+    const handler = () => {
+      const diff = window.innerHeight - vv.height;
+      setChatContainerHeight(diff > 150 ? vv.height : null); // keyboard open when viewport shrinks >150px
+    };
+    handler();
+    vv.addEventListener('resize', handler);
+    vv.addEventListener('scroll', handler);
+    return () => {
+      vv.removeEventListener('resize', handler);
+      vv.removeEventListener('scroll', handler);
+    };
+  }, []);
+
+  // Scroll input into view when focused (fixes first-tap keyboard covering input on Android)
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      inputContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 350);
+  };
+
+  const selectedConv = conversations.find(c => c.id === selectedConversation);
 
   const handleSendMessage = () => {
     const targetProfileId = selectedConv?.profileId || selectedProfileId;
 
-    console.log('📤 handleSendMessage called', {
-      messageText: messageText.trim(),
-      targetProfileId,
-      selectedPersonaId,
-      socketConnected: socketRef.current?.connected
-    });
-
     if (messageText.trim() && targetProfileId) {
       if (selectedPersonaId) {
         const selectedPersona = personas.find(p => p._id === selectedPersonaId);
-        console.log('🎭 Sending with persona:', {
-          personaId: selectedPersonaId,
-          displayName: selectedPersona?.displayName
-        });
-
         if (socketRef.current) {
           socketRef.current.emit("send_message", {
             message: messageText,
@@ -313,7 +306,6 @@ export default function MessagesClient() {
           sendMessage(messageText, targetProfileId);
         }
       } else {
-        console.log('📝 Sending without persona');
         sendMessage(messageText, targetProfileId);
       }
       setMessageText('');
@@ -362,7 +354,7 @@ export default function MessagesClient() {
   );
 
   return (
-    <div className="h-[calc(100vh-80px)] flex">
+    <div className="flex-1 min-h-0 flex">
       {/* Left Sidebar - Conversations List */}
       <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-zinc-200 dark:border-white/10 flex flex-col bg-zinc-100/50 dark:bg-zinc-900/20 ${selectedConversation && 'hidden md:flex'
         }`}>
@@ -481,9 +473,12 @@ export default function MessagesClient() {
 
       {/* Right Side - Chat Area */}
       {selectedConv ? (
-        <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 h-full">
-          {/* Chat Header */}
-          <div className="sticky top-0 z-10 p-3 bg-white dark:bg-[#1e1e24] border border-zinc-200 dark:border-white/5 rounded-[24px] shadow-lg flex items-center justify-between m-2">
+        <div
+          className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 min-h-0"
+          style={chatContainerHeight ? { height: chatContainerHeight, minHeight: 0 } : undefined}
+        >
+          {/* Chat Header - safe-area for iOS notch; no top margin on mobile */}
+          <div className="sticky top-0 z-20 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))] px-3 pb-3 bg-white dark:bg-[#1e1e24] border-b border-zinc-200 dark:border-white/5 flex items-center justify-between md:mx-2 md:mt-2 md:mb-0 md:rounded-[24px] md:border md:shadow-lg md:pt-3">
             <div className="flex items-center gap-3">
               {/* Back Button for Mobile */}
               <button
@@ -531,8 +526,8 @@ export default function MessagesClient() {
             </div>
           </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Messages Area - min-h-0 allows flex shrink when keyboard opens; pb-24 so last message clears input bar */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-24 space-y-4 overscroll-contain touch-scroll">
             {isLoadingMessages ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="relative w-24 h-24 mb-6">
@@ -612,7 +607,7 @@ export default function MessagesClient() {
                               : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
                               }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap wrap-break-word font-medium tracking-tight">{message.message}</p>
+                            <p className="text-sm whitespace-pre-wrap break-words font-medium tracking-tight">{message.message}</p>
                           </div>
                         )}
 
@@ -690,10 +685,13 @@ export default function MessagesClient() {
             )}
           </div>
 
-          {/* Message Input Container */}
-          <div className="sticky bottom-0 z-10 p-2 w-full max-w-4xl mx-auto">
-            {/* Quick Reactions / Gifts above input */}
-            <div className="flex items-center gap-2 mb-2 px-2">
+          {/* Message Input Container - solid bg so messages don't show through gifts */}
+          <div
+            ref={inputContainerRef}
+            className="sticky bottom-0 z-10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] w-full max-w-4xl mx-auto shrink-0 bg-zinc-50 dark:bg-[#0a0a0a]"
+          >
+            {/* Quick Reactions / Gifts above input - solid background */}
+            <div className="flex items-center gap-2 mb-2 px-2 bg-zinc-50 dark:bg-[#0a0a0a] pt-1">
               {GIFTS.slice(0, 5).map((gift) => (
                 <button
                   key={gift.id}
@@ -760,12 +758,15 @@ export default function MessagesClient() {
               <div className="flex items-center gap-2 pl-2">
                 {/* Text Field */}
                 <input
+                  ref={messageInputRef}
                   type="text"
+                  inputMode="text"
                   placeholder="Type a message..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  onFocus={handleInputFocus}
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  className="flex-1 bg-transparent border-none focus:outline-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 text-sm py-2"
+                  className="flex-1 bg-transparent border-none focus:outline-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 text-base py-2 min-w-0"
                 />
 
                 {/* Right Icons */}
