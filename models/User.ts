@@ -90,14 +90,17 @@ const UserSchema = new Schema<IUser>(
     },
     phoneNumber: {
       type: String,
-      required: [true, "Phone number is required"],
       unique: true,
+      sparse: true,
       trim: true,
       match: [/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number"],
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: function() {
+        // @ts-ignore
+        return this.authProvider === 'email';
+      },
       minlength: [6, "Password must be at least 6 characters"],
     },
     avatar: {
@@ -133,6 +136,16 @@ const UserSchema = new Schema<IUser>(
     characters: {
       type: [CharacterSchema],
       default: [],
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["email", "google"],
+      default: "email",
     },
   },
   { timestamps: true }

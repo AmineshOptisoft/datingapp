@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +12,46 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // We need to manually store token and user since useAuth.login does it internally for email/pass
+        // Ideally we should expose a 'googleLogin' method in AuthContext, or just hack it here by setting localStorage and forcing reload/redirect
+        // But better: call a method from AuthContext if possible, or just replicate what login does.
+        // Let's assume we can just redirect and the AuthContext will pick up the token from localStorage if we set it.
+        // Actually, looking at AuthContext would be good. 
+        // For now, let's set localStorage and redirect. "login" function in AuthContext usually sets state.
+        
+        // BETTER APPROACH: Add loginWithGoogle to AuthContext? 
+        // Or just reload the page/window.location.href to let AuthContext initialize with new token.
+        
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        
+        // Trigger a custom event or just redirect
+        window.location.href = "/dashboard"; 
+      } else {
+        setMessage(data.message || "Google Login failed");
+      }
+    } catch (err: any) {
+        setMessage(err.message || "Google Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setMessage("Google Login Failed");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +148,27 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-zinc-900 text-zinc-400">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+             <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_black"
+                shape="circle"
+                width="100%"
+             />
+          </div>
+        </div>
 
         <p className="text-center mt-6 text-sm text-zinc-400">
           Don't have an account?{" "}

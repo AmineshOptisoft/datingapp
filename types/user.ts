@@ -21,8 +21,10 @@ export interface IUser extends Document {
   _id: Types.ObjectId;
   name: string;
   email: string;
-  phoneNumber: string;
-  password: string;
+  phoneNumber?: string;
+  password?: string;
+  googleId?: string;
+  authProvider?: 'email' | 'google';
   avatar?: string;
   bio?: string;
   role: 'user' | 'character';

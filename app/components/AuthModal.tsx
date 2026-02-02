@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { GoogleLogin } from "@react-oauth/google";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -211,6 +212,40 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const switchMode = (newMode: 'login' | 'signup' | 'forgot' | 'verify') => {
     resetForm();
     setMode(newMode);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+
+        setSuccess('Google Login successful!');
+        setTimeout(() => {
+             // Reload to update AuthContext state if strictly needed, or just close if context picks it up
+             // Usually reload is safest if context doesn't expose manual set
+             window.location.reload(); 
+        }, 500);
+
+      } else {
+        setError(data.message || "Google Login failed");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+        setError(err.message || "Google Login failed");
+        setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google Login Failed");
   };
 
   return (
@@ -503,6 +538,30 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               )}
             </button>
           </form>
+          )}
+
+          {/* Google Login - Only for Login/Signup */}
+          {(mode === 'login' || mode === 'signup') && (
+            <div className="mt-6">
+               <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-200 dark:border-zinc-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-zinc-900 text-zinc-500">Or continue with</span>
+                </div>
+              </div>
+
+               <div className="flex justify-center">
+                 <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="filled_black"
+                    shape="circle"
+                    width="100%"
+                 />
+               </div>
+            </div>
           )}
 
           {/* Switch Mode Links */}
