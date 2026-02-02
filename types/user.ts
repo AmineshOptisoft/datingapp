@@ -35,6 +35,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   stripeCustomerId: string;
   characters?: ICharacter[];
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 export interface UserRegistrationData {

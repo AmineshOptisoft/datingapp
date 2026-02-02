@@ -121,16 +121,32 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
       return;
     }
 
-    // Keep signup / forgot as simple client-side flows for now
+    // Forgot Password Flow
     if (mode === 'forgot') {
-      setTimeout(() => {
-        setSuccess('Password reset link sent to your email!');
-        setIsLoading(false);
-        setTimeout(() => {
-          setMode('login');
-          setSuccess('');
-        }, 2000);
-      }, 1500);
+      try {
+        const response = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+           setSuccess('Password reset link sent to your email!');
+           setIsLoading(false);
+           setTimeout(() => {
+             setMode('login');
+             setSuccess('');
+           }, 5000); // 5 seconds to read
+        } else {
+            setError(data.message || 'Failed to send reset email');
+            setIsLoading(false);
+        }
+      } catch (err: any) {
+          setError('Failed to send request. Please try again.');
+          setIsLoading(false);
+      }
     }
   };
 

@@ -147,6 +147,14 @@ const UserSchema = new Schema<IUser>(
       enum: ["email", "google"],
       default: "email",
     },
+    resetPasswordToken: {
+      type: String,
+      default: undefined,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: undefined,
+    },
   },
   { timestamps: true }
 );

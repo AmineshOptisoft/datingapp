@@ -1,4 +1,5 @@
 import { createServer } from "http";
+import { networkInterfaces } from "os";
 import { parse } from "url";
 import next from "next";
 import { Server as SocketIOServer } from "socket.io";
@@ -1267,8 +1268,24 @@ app.prepare().then(async () => {
   });
 
   server.listen(PORT, () => {
-    console.log(
-      `🚀 Next.js + Socket.io server running on http://localhost:${PORT}`
-    );
+    // Get local IP address
+    const nets = networkInterfaces();
+    let localIp = 'localhost';
+    
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]!) {
+        // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+        if (net.family === 'IPv4' && !net.internal) {
+          localIp = net.address;
+          break;
+        }
+      }
+      if (localIp !== 'localhost') break;
+    }
+
+    console.log(`\n🚀 Use the following addresses to access the application:\n`);
+    console.log(`   Local:    http://localhost:${PORT}`);
+    console.log(`   Network:  http://${localIp}:${PORT}\n`);
+    console.log(`   Socket.io is running on port ${PORT}`);
   });
 });
