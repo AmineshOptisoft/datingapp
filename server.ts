@@ -17,6 +17,8 @@ import {
   estimateTokens,
 } from "./lib/chat-tone-analyzer";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
+import { containsRestrictedWords } from "./lib/restricted_words";
+import UserSubscription from "./models/UserSubscriptions";
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -859,6 +861,56 @@ app.prepare().then(async () => {
         return;
       }
 
+      // Check for restricted content
+      let hasRestrictedContent = false;
+      let restrictedContentData: { profileId: string; name: string; price: number } | null = null;
+      
+      if (containsRestrictedWords(message)) {
+        // Check for active subscription
+        const activeSubscription = await UserSubscription.findOne({
+          userId,
+          aiProfileId: profileId,
+          status: 'active',
+        });
+
+        if (!activeSubscription) {
+          console.log(`⚠️ Restricted content detected for user ${userId} with profile ${profileId} - will prompt after response`);
+          hasRestrictedContent = true;
+          
+          let price = 0;
+          let restrictedName = "this character";
+
+          if (profileId.startsWith('character-')) {
+            price = parseFloat(process.env.NEXT_PUBLIC_USER_CHARACTER_PRICE || "2");
+            // Try to fetch character name if possible, or generic fallback
+             try {
+                const charId = profileId.replace('character-', '');
+                const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+                if (userWithChar) {
+                    const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+                    if (char) restrictedName = char.characterName;
+                }
+             } catch (e) {
+                console.error("Error fetching character name for restriction", e);
+             }
+
+          } else {
+             const aiProfile = await AIProfile.findOne({ profileId, isActive: true });
+             if (aiProfile && aiProfile.pricing) {
+                price = aiProfile.pricing.monthlyPrice || 4.99;
+                restrictedName = aiProfile.name;
+             }
+          }
+          
+          restrictedContentData = {
+            profileId,
+            name: restrictedName,
+            price
+          };
+        }
+      }
+
+
       try {
         await Message.create({ sender: userId, receiver: aiBotId, message });
         socket.emit("receive_message", {
@@ -866,6 +918,16 @@ app.prepare().then(async () => {
           receiver: aiBotId,
           message,
         });
+
+        // If restricted content detected, show modal immediately and DON'T call AI
+        if (hasRestrictedContent && restrictedContentData) {
+          console.log(`🚫 Blocking AI response - prompting user to subscribe`);
+          socket.emit("restricted_content", {
+            ...restrictedContentData,
+            message: "To continue this type of conversation, please subscribe to unlock adult content."
+          });
+          return; // Exit early - no AI response
+        }
 
         // Emit typing indicator - AI is processing
         socket.emit("ai_typing_start", { profileId: aiBotId });

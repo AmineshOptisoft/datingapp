@@ -131,33 +131,79 @@ export async function createCheckoutSession(
     userId: string,
     email: string,
     name: string,
-    aiProfileId: string,
+    profileId: string,
     planType: 'monthly' | 'annual' | 'lifetime'
 ): Promise<Stripe.Checkout.Session> {
     try {
-        const aiProfile = await AIProfile.findOne({ profileId: aiProfileId });
-        if (!aiProfile || !aiProfile.pricing) {
-            throw new Error('AI Profile or pricing not found');
-        }
-
         let priceId: string;
-        let amount: number;
+       let amount: number;
+        let characterName = 'Character';
 
-        switch (planType) {
-            case 'monthly':
-                priceId = aiProfile.pricing.monthlyPriceId;
-                amount = aiProfile.pricing.monthlyPrice;
-                break;
-            case 'annual':
-                priceId = aiProfile.pricing.annualPriceId;
-                amount = aiProfile.pricing.annualPrice;
-                break;
-            case 'lifetime':
-                priceId = aiProfile.pricing.lifetimePriceId;
-                amount = aiProfile.pricing.lifetimePrice;
-                break;
-            default:
-                throw new Error('Invalid plan type');
+        // Check if this is a user-created character (starts with 'character-')
+        if (profileId.startsWith('character-')) {
+            // User-created characters have fixed monthly pricing
+            const monthlyPrice = parseFloat(process.env.NEXT_PUBLIC_USER_CHARACTER_PRICE || "2");
+            
+            // For user characters, only monthly is supported
+            if (planType !== 'monthly') {
+                throw new Error('User-created characters only support monthly subscriptions');
+            }
+
+            amount = monthlyPrice * 100; // Convert to cents for Stripe
+            
+            // Try to fetch character name
+            try {
+                const charId = profileId.replace('character-', '');
+                const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+                if (userWithChar) {
+                    const char = (userWithChar as any).characters.find((c: any) => c._id.toString() === charId);
+                    if (char) characterName = char.characterName;
+                }
+            } catch (e) {
+                console.error("Error fetching character name:", e);
+            }
+
+            // Create a Stripe price for this user character monthly subscription
+            const product = await stripe.products.create({
+                name: `${characterName} - Monthly Subscription`,
+                description: `Monthly access to ${characterName} with unrestricted content`,
+            });
+
+            const price = await stripe.prices.create({
+                product: product.id,
+                unit_amount: amount,
+                currency: 'usd',
+                recurring: {
+                    interval: 'month',
+                },
+            });
+
+            priceId = price.id;
+        } else {
+            // AI Profile lookup
+            const aiProfile = await AIProfile.findOne({ profileId });
+            if (!aiProfile || !aiProfile.pricing) {
+                throw new Error('AI Profile or pricing not found');
+            }
+
+            characterName = aiProfile.name;
+
+            switch (planType) {
+                case 'monthly':
+                    priceId = aiProfile.pricing.monthlyPriceId;
+                    amount = aiProfile.pricing.monthlyPrice;
+                    break;
+                case 'annual':
+                    priceId = aiProfile.pricing.annualPriceId;
+                    amount = aiProfile.pricing.annualPrice;
+                    break;
+                case 'lifetime':
+                    priceId = aiProfile.pricing.lifetimePriceId;
+                    amount = aiProfile.pricing.lifetimePrice;
+                    break;
+                default:
+                    throw new Error('Invalid plan type');
+            }
         }
 
         // ensure stripe customer exists
@@ -166,7 +212,7 @@ export async function createCheckoutSession(
         // Prepare metadata
         const metadata = {
             userId: userId.toString(),
-            aiProfileId: aiProfileId.toString(),
+            aiProfileId: profileId.toString(),
             planType,
             amount: amount.toString(),
         };
@@ -181,8 +227,8 @@ export async function createCheckoutSession(
                     quantity: 1,
                 },
             ],
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}&profileId=${aiProfileId}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel?profileId=${aiProfileId}`,  
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}&profileId=${profileId}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel?profileId=${profileId}`,  
             metadata,
         };
 

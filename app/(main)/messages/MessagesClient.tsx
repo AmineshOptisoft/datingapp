@@ -13,6 +13,10 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
+import RestrictedContentModal from '@/components/RestrictedContentModal';
+
+
+
 
 // Dynamically import emoji picker to avoid SSR issues
 const Picker = dynamic(
@@ -94,18 +98,62 @@ export default function MessagesClient() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  // Restricted Content Modal State
+  const [restrictedModalOpen, setRestrictedModalOpen] = useState(false);
+  const [restrictedData, setRestrictedData] = useState<{
+    profileId: string;
+    alias: string;
+    name: string;
+    price: number;
+    avatar?: string;
+  } | null>(null);
+
+  // Socket listener for restricted content
+  useEffect(() => {
+    if (!socket) return;
+    
+    // Listen for restricted content event
+    const handleRestrictedContent = (data: any) => {
+      console.log('🚫 Restricted content event received:', data);
+      
+      // Try to find avatar from conversations
+      const conversation = conversations.find(c => c.profileId === data.profileId);
+      const avatar = conversation?.avatar;
+
+      setRestrictedData({
+        profileId: data.profileId,
+        alias: data.alias,
+        name: data.name,
+        price: data.price,
+        avatar: avatar
+      });
+      setRestrictedModalOpen(true);
+    };
+    
+    socket.on('restricted_content', handleRestrictedContent);
+    
+    return () => {
+      socket.off('restricted_content', handleRestrictedContent);
+    };
+  }, [socket, conversations]);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [personas, setPersonas] = useState<any[]>([]);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [sfwEnabled, setSfwEnabled] = useState(true);
 
+
+
+
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasProcessedUrlParam = useRef(false);
   const pendingSelection = useRef<{ profileId: string; conversationId: number } | null>(null);
   const socketRef = useRef<any>(null);
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+
 
   // Fetch all conversations when component mounts
   useEffect(() => {
@@ -928,7 +976,18 @@ export default function MessagesClient() {
             />
           )}
         </DialogContent>
+
       </Dialog>
+      
+      {/* Restricted Content Modal */}
+      <RestrictedContentModal 
+        isOpen={restrictedModalOpen}
+        onClose={() => setRestrictedModalOpen(false)}
+        profileId={restrictedData?.profileId || ''}
+        characterName={restrictedData?.name || 'Character'} // Default name if null
+        price={restrictedData?.price || 4.99} // Default price if null
+        avatar={restrictedData?.avatar}
+      />
     </div>
   );
 }

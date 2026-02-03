@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
 
+    // If user has no password (e.g. Google-only account), they cannot login with password
+    if (!user.password) {
+       return NextResponse.json(
+        { success: false, message: "Please log in with Google" },
+        { status: 400 }
+      );
+    }
+
     const validPass = await verifyPassword(password, user.password);
     if (!validPass)
       return NextResponse.json(
