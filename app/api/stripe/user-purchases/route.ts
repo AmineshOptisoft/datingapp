@@ -35,25 +35,62 @@ export async function GET(request: NextRequest) {
             status: { $in: ['active', 'trialing'] }
         }).sort({ createdAt: -1 });
 
-        // Manually fetch AI profiles (populate doesn't work since aiProfileId is a string, not ObjectId)
+        // Manually fetch AI profiles and user characters
         const AIProfile = (await import('@/models/AIProfile')).default;
+        const User = (await import('@/models/User')).default;
         
         const purchasedAIProfiles = await Promise.all(
             subscriptions.map(async (sub) => {
-                // Fetch full AI profile data using profileId
-                const aiProfile = await AIProfile.findOne({ profileId: sub.aiProfileId });
+                let profileData = null;
+                
+                // Check if this is a user-created character
+                if (sub.aiProfileId.startsWith('character-')) {
+                    // Extract character ID
+                    const characterId = sub.aiProfileId.replace('character-', '');
+                    
+                    // Find user with this character
+                    const userWithChar = await User.findOne({ 
+                        "characters._id": characterId 
+                    }).lean();
+                    
+                    if (userWithChar) {
+                        const character = (userWithChar as any).characters.find(
+                            (c: any) => c._id.toString() === characterId
+                        );
+                        
+                        if (character) {
+                            profileData = {
+                                _id: character._id,
+                                name: character.characterName,
+                                cardTitle: character.characterName,
+                                routePrefix: 'character',
+                                legacyId: characterId,
+                                profileId: sub.aiProfileId,
+                                images: character.characterImage ? [character.characterImage] : [],
+                                tagline: character.personality || '',
+                            };
+                        }
+                    }
+                } else {
+                    // Fetch full AI profile data using profileId
+                    const aiProfile = await AIProfile.findOne({ profileId: sub.aiProfileId });
+                    
+                    if (aiProfile) {
+                        profileData = {
+                            _id: aiProfile._id,
+                            name: aiProfile.name,
+                            cardTitle: aiProfile.cardTitle,
+                            routePrefix: aiProfile.routePrefix,
+                            legacyId: aiProfile.legacyId,
+                            profileId: aiProfile.profileId,
+                            images: aiProfile.photos || [],
+                            tagline: aiProfile.tagline,
+                        };
+                    }
+                }
                 
                 return {
-                    aiProfileId: aiProfile ? {
-                        _id: aiProfile._id,
-                        name: aiProfile.name,
-                        cardTitle: aiProfile.cardTitle,
-                        routePrefix: aiProfile.routePrefix,
-                        legacyId: aiProfile.legacyId,
-                        profileId: aiProfile.profileId,
-                        images: aiProfile.photos || [],
-                        tagline: aiProfile.tagline,
-                    } : null,
+                    aiProfileId: profileData,
                     planType: sub.planType,
                     status: sub.status,
                     subscriptionId: sub.stripeSubscriptionId,
