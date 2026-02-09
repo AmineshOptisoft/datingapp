@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EditProfileForm from "./EditProfileForm";
 import CreatePersonaForm from "./CreatePersonaForm";
 import CreatePersonaDialog from "./CreatePersonaDialog";
+import CreateSceneDialog from "./CreateSceneDialog";
 import EditPersonaDialog from "./EditPersonaDialog";
 import EditCharacterDialog from "./EditCharacterDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -19,6 +20,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("characters");
   const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
   const [isCreatePersonaDialogOpen, setIsCreatePersonaDialogOpen] = useState(false);
+  const [isCreateSceneDialogOpen, setIsCreateSceneDialogOpen] = useState(false);
   const [characters, setCharacters] = useState<any[]>([]);
   const [loadingCharacters, setLoadingCharacters] = useState(false);
   const [personas, setPersonas] = useState<any[]>([]);
@@ -190,7 +192,7 @@ export default function ProfilePage() {
 
         {/* Info */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 transition-all">
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white transition-all">
             {user.name || handle}
           </h1>
           {/* <p className="text-zinc-500 text-sm">@{handle}</p> */}
@@ -578,7 +580,29 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeTab !== 'characters' && activeTab !== 'personas' && (
+          {activeTab === 'scenes' && (
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create an Imaginary Scene</p>
+                <Dialog open={isCreateSceneDialogOpen} onOpenChange={setIsCreateSceneDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-white rounded-full font-medium transition-all shadow-sm">
+                      <Plus className="w-4 h-4" />
+                      New
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0" showCloseButton={false}>
+                    <CreateSceneDialog
+                      onSuccess={() => setIsCreateSceneDialogOpen(false)}
+                      onClose={() => setIsCreateSceneDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== 'characters' && activeTab !== 'personas' && activeTab !== 'scenes' && (
             <div className="text-zinc-500">
               No {activeTab} found.
             </div>
