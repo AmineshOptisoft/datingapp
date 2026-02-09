@@ -34,7 +34,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <>
-      <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-sm!">
+      <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-sm! pt-[env(safe-area-inset-top)]">
         <div className="flex items-center px-4 md:px-8 py-1.5">
           {/* Left side - Logo */}
           <div className="flex-1 flex items-center gap-4">

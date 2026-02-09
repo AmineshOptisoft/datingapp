@@ -21,7 +21,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isMessagesPage = pathname === '/messages';
 
   return (
-    <div className="flex h-screen overflow-hidden relative">
+    <div className="flex h-screen-dvh overflow-hidden relative">
       {/* Global Background Image */}
       <div 
         className="fixed inset-0 z-0"
@@ -50,8 +50,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {/* Header */}
         <Header />
 
-        {/* Page Content */}
-        <main className={`flex-1 overflow-y-auto ${isMessagesPage ? 'pb-0' : 'pb-20 md:pb-0'}`}>
+        {/* Page Content - flex for messages so chat area gets proper height for scroll */}
+        <main className={`flex-1 min-h-0 ${isMessagesPage ? 'flex flex-col overflow-hidden pb-0' : 'overflow-y-auto pb-20 md:pb-0'}`}>
           {children}
         </main>
       </div>

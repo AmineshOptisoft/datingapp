@@ -16,6 +16,14 @@ export const metadata: Metadata = {
     "AI Girlfriends starting at just $1.99/month - Affordable AI companionship",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
