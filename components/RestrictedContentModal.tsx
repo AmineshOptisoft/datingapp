@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Lock, Sparkles } from 'lucide-react';
+import { Lock, Sparkles, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface RestrictedContentModalProps {
@@ -71,7 +71,7 @@ export default function RestrictedContentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-black text-white h-[600px] flex flex-col">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-none bg-black text-white h-[600px] flex flex-col">
         {/* Background Image */}
         {avatar && (
             <div className="absolute inset-0 z-0">
@@ -115,22 +115,15 @@ export default function RestrictedContentModal({
                     </div>
                 </div>
 
-                <div className="w-full mt-2 flex items-center gap-3">
-                  <button 
-                        onClick={onClose}
-                        className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-xl transition-all active:scale-[0.98]"
-                    >
-                        Maybe later
-                    </button>
+                <div className="w-full mt-2">
                     <button
                         onClick={handleSubscribe}
                         disabled={loading}
-                        className="flex-1 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-pink-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-pink-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {loading ? 'Processing...' : 'Unlock Now'}
+                        <MessageCircle className="w-5 h-5 fill-current" />
+                        {loading ? 'Processing...' : 'Unlock Full Chat Access'}
                     </button>
-                    
-                    
                 </div>
             </div>
         </div>
