@@ -15,6 +15,8 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
   const [sceneDescription, setSceneDescription] = useState("");
   const [outputType, setOutputType] = useState<"photo" | "video">("photo");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedMediaUrl, setGeneratedMediaUrl] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
 
   const step1Valid = sceneTitle.trim().length >= 3;
   const step2Valid = sceneDescription.trim().length >= 10;
@@ -31,21 +33,117 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
   const handleGenerate = async () => {
     if (!canGenerate) return;
     setIsGenerating(true);
+
     try {
-      // TODO: Integrate with image/video generation API
-      await new Promise((r) => setTimeout(r, 1500));
-      toast.success(
-        outputType === "photo"
-          ? "Scene photo generation started! We'll notify you when it's ready."
-          : "Scene video generation started! We'll notify you when it's ready."
-      );
-      onSuccess();
-    } catch (error) {
-      console.error("Generate scene error:", error);
-      toast.error("Something went wrong. Please try again.");
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Please login to generate scenes");
+        return;
+      }
+
+      if (outputType === "photo") {
+        // Image generation (synchronous)
+        console.log("🎨 Generating image...");
+        
+        const response = await fetch("/api/grok/generate-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sceneTitle,
+            prompt: sceneDescription,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to generate image");
+        }
+
+        console.log("✅ Image generated:", data.imageUrl);
+        toast.success("Image generated successfully! 🎨");
+        
+        // Display the generated image
+        setGeneratedMediaUrl(data.imageUrl);
+        setIsComplete(true);
+        
+        // Trigger gallery refresh when dialog closes
+        onSuccess();
+      } else {
+        // Video generation (asynchronous)
+        console.log("🎬 Starting video generation...");
+        
+        const response = await fetch("/api/grok/generate-video", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sceneTitle,
+            prompt: sceneDescription,
+            duration: 10,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to start video generation");
+        }
+
+        console.log("⏳ Video generation started, polling...");
+        toast.success("Video generation started! ⏳ This may take 30-60 seconds...");
+
+        // Poll for video completion
+        await pollVideoStatus(data.requestId, token);
+        
+        onSuccess();
+      }
+    } catch (error: any) {
+      console.error("❌ Generate scene error:", error);
+      toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const pollVideoStatus = async (requestId: string, token: string) => {
+    const maxAttempts = 60; // 5 minutes max (5s intervals)
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await new Promise((r) => setTimeout(r, 5000)); // Wait 5 seconds
+
+      console.log(`🔍 Checking video status... (Attempt ${attempts + 1}/${maxAttempts})`);
+
+      const response = await fetch(`/api/grok/generate-video?requestId=${requestId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (data.status === "completed") {
+        console.log("✅ Video generated:", data.videoUrl);
+        toast.success("Video generated successfully! 🎬");
+        
+        // Display the generated video
+        setGeneratedMediaUrl(data.videoUrl);
+        setIsComplete(true);
+        
+        return;
+      } else if (data.status === "failed") {
+        throw new Error(data.error || "Video generation failed");
+      }
+
+      attempts++;
+    }
+
+    throw new Error("Video generation timed out. Please try again.");
   };
 
   const progressPercent = (unlockedStep / 3) * 100;
@@ -66,6 +164,72 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
 
       {/* Content - all in one frame, steps 2 & 3 blurred until unlocked */}
       <div className="p-4 space-y-6 overflow-y-auto flex-1 min-h-0">
+        {/* Generated Media Preview */}
+        {isComplete && generatedMediaUrl && (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-300 dark:border-green-700 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="font-bold">Generation Complete!</span>
+            </div>
+            
+            {outputType === "photo" ? (
+              <div className="space-y-2">
+                <img 
+                  src={generatedMediaUrl} 
+                  alt="Generated scene" 
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700"
+                />
+                <div className="flex gap-2">
+                  <a 
+                    href={generatedMediaUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium text-center transition-all"
+                  >
+                    Open in New Tab
+                  </a>
+                  <a 
+                    href={generatedMediaUrl} 
+                    download
+                    className="flex-1 px-3 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg text-sm font-medium text-center transition-all hover:opacity-90"
+                  >
+                    Download Image
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <video 
+                  src={generatedMediaUrl} 
+                  controls 
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700"
+                  autoPlay
+                  loop
+                />
+                <div className="flex gap-2">
+                  <a 
+                    href={generatedMediaUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium text-center transition-all"
+                  >
+                    Open in New Tab
+                  </a>
+                  <a 
+                    href={generatedMediaUrl} 
+                    download
+                    className="flex-1 px-3 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg text-sm font-medium text-center transition-all hover:opacity-90"
+                  >
+                    Download Video
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 1. What scene are you thinking of? */}
         <div className="space-y-3">
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -185,13 +349,13 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
         >
-          Cancel
+          {isComplete ? "Close" : "Cancel"}
         </button>
 
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={!canGenerate || isGenerating}
+          disabled={!canGenerate || isGenerating || isComplete}
           className="flex items-center gap-2 px-5 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (

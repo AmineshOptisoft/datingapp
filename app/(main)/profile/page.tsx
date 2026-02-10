@@ -34,6 +34,13 @@ export default function ProfilePage() {
   const [isEditCharacterDialogOpen, setIsEditCharacterDialogOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<any>(null);
   const [openCharacterMenuId, setOpenCharacterMenuId] = useState<string | null>(null);
+  const [scenes, setScenes] = useState<any[]>([]);
+  const [loadingScenes, setLoadingScenes] = useState(false);
+  const [isDeleteSceneDialogOpen, setIsDeleteSceneDialogOpen] = useState(false);
+  const [sceneToDelete, setSceneToDelete] = useState<any>(null);
+  const [isDeletingScene, setIsDeletingScene] = useState(false);
+  const [viewingScene, setViewingScene] = useState<any>(null);
+  const [isSceneViewOpen, setIsSceneViewOpen] = useState(false);
 
   const fetchCharacters = async () => {
     const controller = new AbortController();
@@ -136,6 +143,57 @@ export default function ProfilePage() {
     }
   };
 
+  const fetchScenes = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      setLoadingScenes(true);
+      const response = await fetch("/api/scenes", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setScenes(data.scenes || []);
+      }
+    } catch (error) {
+      console.error("Error fetching scenes:", error);
+    } finally {
+      setLoadingScenes(false);
+    }
+  };
+
+  const handleDeleteScene = async () => {
+    if (!sceneToDelete) return;
+
+    setIsDeletingScene(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/scenes/${sceneToDelete._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Scene deleted successfully");
+        fetchScenes(); // Refresh list
+      } else {
+        toast.error(data.error || "Failed to delete scene");
+      }
+    } catch (error) {
+      console.error("Error deleting scene:", error);
+      toast.error("Failed to delete scene");
+    } finally {
+      setIsDeletingScene(false);
+      setIsDeleteSceneDialogOpen(false);
+      setSceneToDelete(null);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -149,6 +207,13 @@ export default function ProfilePage() {
     fetchCharacters();
     fetchPersonas();
   }, [router]);
+
+  // Fetch scenes when scenes tab is active
+  useEffect(() => {
+    if (activeTab === "scenes") {
+      fetchScenes();
+    }
+  }, [activeTab]);
 
   if (!user) {
     return <LoadingSpinner icon={User} title="Loading Profile" subtitle="Getting your information..." />;
@@ -582,6 +647,72 @@ export default function ProfilePage() {
 
           {activeTab === 'scenes' && (
             <div className="flex flex-col gap-6">
+              {/* Scenes Gallery */}
+              {scenes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {scenes.map((scene) => (
+                    <div
+                      key={scene._id}
+                      className="group relative bg-zinc-50 dark:bg-zinc-800/50 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all"
+                    >
+                      {/* Media */}
+                      <div 
+                        className="aspect-square w-full bg-zinc-100 dark:bg-zinc-900 cursor-pointer"
+                        onClick={() => {
+                          setViewingScene(scene);
+                          setIsSceneViewOpen(true);
+                        }}
+                      >
+                        {scene.mediaType === 'image' ? (
+                          <img
+                            src={scene.mediaUrl}
+                            alt={scene.sceneTitle}
+                            className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                          />
+                        ) : (
+                          <video
+                            src={scene.mediaUrl}
+                            className="w-full h-full object-cover"
+                            controls
+                            preload="metadata"
+                          />
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-3">
+                        <h3 className="font-semibold text-zinc-900 dark:text-white truncate">
+                          {scene.sceneTitle}
+                        </h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-1">
+                          {scene.sceneDescription}
+                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {scene.mediaType === 'image' ? '🎨 Image' : '🎬 Video'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setSceneToDelete(scene);
+                              setIsDeleteSceneDialogOpen(true);
+                            }}
+                            className="px-3 py-1 text-xs text-red-600 cursor-pointer dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-zinc-500 dark:text-zinc-400">No scenes created yet</p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">Click "New" to create your first scene!</p>
+                </div>
+              )}
+
+              {/* Create New Button */}
               <div className="flex flex-col items-center gap-2">
                 <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create an Imaginary Scene</p>
                 <Dialog open={isCreateSceneDialogOpen} onOpenChange={setIsCreateSceneDialogOpen}>
@@ -593,7 +724,10 @@ export default function ProfilePage() {
                   </DialogTrigger>
                   <DialogContent className="max-w-md max-h-[75vh] h-auto p-0 bg-transparent border-0" showCloseButton={false}>
                     <CreateSceneDialog
-                      onSuccess={() => setIsCreateSceneDialogOpen(false)}
+                      onSuccess={() => {
+                        setIsCreateSceneDialogOpen(false);
+                        fetchScenes(); // Refresh scenes after creation
+                      }}
                       onClose={() => setIsCreateSceneDialogOpen(false)}
                     />
                   </DialogContent>
@@ -660,6 +794,93 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Scene Confirmation Dialog */}
+      <Dialog open={isDeleteSceneDialogOpen} onOpenChange={setIsDeleteSceneDialogOpen}>
+        <DialogContent className="max-w-md p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Delete Scene</h2>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Are you sure you want to delete <span className="font-semibold text-zinc-900 dark:text-white">{sceneToDelete?.sceneTitle}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsDeleteSceneDialogOpen(false);
+                  setSceneToDelete(null);
+                }}
+                disabled={isDeletingScene}
+                className="px-5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteScene}
+                disabled={isDeletingScene}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isDeletingScene ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scene Image/Video Viewer Dialog */}
+      <Dialog open={isSceneViewOpen} onOpenChange={setIsSceneViewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          {viewingScene && (
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+                  {viewingScene.sceneTitle}
+                </h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                  {viewingScene.sceneDescription}
+                </p>
+              </div>
+
+              {/* Media */}
+              <div className="flex-1 flex items-center justify-center bg-zinc-100 dark:bg-zinc-950 p-4 overflow-hidden">
+                {viewingScene.mediaType === 'image' ? (
+                  <img
+                    src={viewingScene.mediaUrl}
+                    alt={viewingScene.sceneTitle}
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                ) : (
+                  <video
+                    src={viewingScene.mediaUrl}
+                    controls
+                    className="max-w-full max-h-full rounded-lg"
+                  />
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {viewingScene.mediaType === 'image' ? '🎨 Image' : '🎬 Video'}
+                </span>
+                <button
+                  onClick={() => setIsSceneViewOpen(false)}
+                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
