@@ -7,18 +7,22 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
 }
 
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  throw new Error('STRIPE_WEBHOOK_SECRET is not set in environment variables');
-}
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-12-15.clover',
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export async function POST(request: NextRequest) {
   try {
+    // Check webhook secret at runtime, not build time
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
+      return NextResponse.json(
+        { error: 'Webhook secret not configured' },
+        { status: 500 }
+      );
+    }
     const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get('stripe-signature');
