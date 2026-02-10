@@ -21,16 +21,26 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { isEmailVerified: true, isPhoneVerified: true },
-      { new: true }
-    );
+    const user = await User.findById(userId);
     if (!user)
       return NextResponse.json(
         { success: false, message: "User not found" },
         { status: 404 }
       );
+
+    user.isEmailVerified = true;
+    user.isPhoneVerified = true;
+    await user.save();
+
+    // Create wallet with 100 free coins for new user
+    try {
+      const { WalletService } = await import("@/lib/walletService");
+      await WalletService.getWallet(user._id.toString());
+      console.log(`✨ Wallet created for new user ${user._id} with 100 free coins`);
+    } catch (walletError) {
+      console.error("⚠️ Failed to create wallet, but user verified:", walletError);
+      // Don't fail the verification if wallet creation fails
+    }
 
     return NextResponse.json(
       { success: true, message: "Verification successful", data: user },

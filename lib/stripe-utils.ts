@@ -348,7 +348,38 @@ export async function handleCheckoutCompleted(
     try {
         const metadata = session.metadata;
 
-        if (!metadata || !metadata.userId || !metadata.aiProfileId || !metadata.planType) {
+        if (!metadata || !metadata.userId) {
+            console.error('Missing userId in checkout session:', session.id);
+            return;
+        }
+
+        // **NEW: Check if this is a COIN PURCHASE (not a subscription)**
+        if (metadata.packageId && metadata.coins) {
+            console.log('💰 Detected coin purchase in checkout session');
+            
+            try {
+                const { WalletService } = await import('@/lib/walletService');
+                
+                await WalletService.addCoins({
+                    userId: metadata.userId,
+                    amount: parseInt(metadata.coins),
+                    description: `Purchased ${metadata.packageId} package via Stripe`,
+                    type: 'purchase',
+                    packageType: metadata.packageId as 'starter' | 'popular' | 'premium',
+                    stripePaymentId: session.payment_intent as string,
+                    stripeSessionId: session.id,
+                });
+
+                console.log(`✅ Successfully credited ${metadata.coins} coins to user ${metadata.userId}`);
+                return; // Exit early - this was a coin purchase, not a subscription
+            } catch (coinError) {
+                console.error('❌ Failed to credit coins:', coinError);
+                throw coinError;
+            }
+        }
+
+        // **EXISTING: Handle subscription/lifetime purchases**
+        if (!metadata.aiProfileId || !metadata.planType) {
             console.error('Missing metadata in checkout session:', session.id);
             return;
         }

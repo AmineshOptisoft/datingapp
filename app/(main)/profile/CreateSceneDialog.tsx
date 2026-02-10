@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Image, Video, Loader2 } from "lucide-react";
+import { PiCoinsFill } from "react-icons/pi";
 import { toast } from "sonner";
 
 interface CreateSceneDialogProps {
@@ -296,39 +297,53 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
             unlockedStep < 3 ? "pointer-events-none select-none opacity-60 blur-[2px]" : ""
           }`}
         >
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Generate as photo or video?
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setOutputType("photo")}
-              className={`
-                flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all
-                ${outputType === "photo"
-                  ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
-                  : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-600"
-                }
-              `}
-            >
-              <Image className="w-8 h-8 text-zinc-700 dark:text-zinc-200" />
-              <span className="text-sm font-medium">Photo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setOutputType("video")}
-              className={`
-                flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all
-                ${outputType === "video"
-                  ? "border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800"
-                  : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-600"
-                }
-              `}
-            >
-              <Video className="w-8 h-8 text-zinc-700 dark:text-zinc-200" />
-              <span className="text-sm font-medium">Video</span>
-            </button>
-          </div>
+              {/* Photo / Video Selection */}
+              <div>
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3 block">
+                  Generate as photo or video?
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOutputType("photo")}
+                    className={`relative p-4 rounded-xl border-2 transition-all ${
+                      outputType === "photo"
+                        ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-800"
+                        : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Image className={`w-6 h-6 ${outputType === "photo" ? "text-zinc-900 dark:text-white" : "text-zinc-500"}`} />
+                      <span className={`text-sm font-medium ${outputType === "photo" ? "text-zinc-900 dark:text-white" : "text-zinc-600 dark:text-zinc-400"}`}>
+                        Photo
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
+                        10 <PiCoinsFill className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOutputType("video")}
+                    className={`relative p-4 rounded-xl border-2 transition-all ${
+                      outputType === "video"
+                        ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-800"
+                        : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Video className={`w-6 h-6 ${outputType === "video" ? "text-zinc-900 dark:text-white" : "text-zinc-500"}`} />
+                      <span className={`text-sm font-medium ${outputType === "video" ? "text-zinc-900 dark:text-white" : "text-zinc-600 dark:text-zinc-400"}`}>
+                        Video
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
+                        25 <PiCoinsFill className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
         </div>
       </div>
 
@@ -355,23 +370,18 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={!canGenerate || isGenerating || isComplete}
-          className="flex items-center gap-2 px-5 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!canGenerate || isGenerating}
+          className="w-full px-4 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isGenerating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
-            </>
-          ) : outputType === "photo" ? (
-            <>
-              <Image className="w-4 h-4" />
-              Generate photo
+              Generating {outputType}...
             </>
           ) : (
             <>
-              <Video className="w-4 h-4" />
-              Generate video
+              {outputType === "photo" ? <Image className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+              Generate {outputType} | {outputType === "photo" ? "10" : "25"} <PiCoinsFill className="w-4 h-4 text-yellow-500" />
             </>
           )}
         </button>

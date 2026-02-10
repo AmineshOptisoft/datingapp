@@ -49,6 +49,25 @@ export async function POST(request: NextRequest) {
       ? `${sceneTitle}. ${prompt}`
       : prompt;
 
+    // Check wallet balance (25 coins for video)
+    const VIDEO_COST = 25;
+    const { WalletService } = await import("@/lib/walletService");
+    
+    const wallet = await WalletService.getWallet(decoded.userId);
+    
+    if (wallet.balance < VIDEO_COST) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "INSUFFICIENT_COINS",
+          required: VIDEO_COST,
+          balance: wallet.balance,
+          message: `You need ${VIDEO_COST - wallet.balance} more coins to generate a video`
+        },
+        { status: 402 } // Payment Required
+      );
+    }
+
     console.log("🎬 Generating video with Grok:", enhancedPrompt);
 
     // Call Grok Video Generation API
@@ -204,10 +223,21 @@ export async function GET(request: NextRequest) {
     // DEBUG: Log the full response to understand structure
     console.log("🔍 Full Grok response:", JSON.stringify(grokData, null, 2));
     
-    // Grok's video API: if video object exists, it's complete
+    // Determine status from Grok response
+    // Check for error/failed states first
+    const hasError = grokData.status === "failed" || grokData.status === "error" || !!grokData.error;
     const isComplete = !!grokData.video;
     const videoUrl = grokData.video?.url;
-    const status = isComplete ? "completed" : "pending";
+    
+    // Set status based on API response
+    let status: "completed" | "pending" | "failed" | "error";
+    if (hasError) {
+      status = grokData.status === "error" ? "error" : "failed";
+    } else if (isComplete) {
+      status = "completed";
+    } else {
+      status = "pending";
+    }
 
     console.log(`📊 Video status: ${status}`, videoUrl ? `| Video URL: ${videoUrl}` : "");
 
@@ -232,6 +262,19 @@ export async function GET(request: NextRequest) {
         });
 
         console.log("💾 Video scene saved to MongoDB:", savedScene._id);
+
+        // Deduct coins after successful video generation
+        const VIDEO_COST = 25;
+        const { WalletService: VideoWalletService } = await import("@/lib/walletService");
+        await VideoWalletService.deductCoins({
+          userId: requestData?.userId || decoded.userId,
+          amount: VIDEO_COST,
+          description: `Generated video: ${requestData?.sceneTitle || "Untitled Video"}`,
+          mediaType: 'video',
+          sceneId: savedScene._id.toString()
+        });
+
+        console.log(`💰 Deducted ${VIDEO_COST} coins for video generation`);
 
         return NextResponse.json({
           success: true,

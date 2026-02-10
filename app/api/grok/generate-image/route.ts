@@ -38,6 +38,25 @@ export async function POST(request: NextRequest) {
       ? `${sceneTitle}. ${prompt}`
       : prompt;
 
+    // Check wallet balance (10 coins for image)
+    const IMAGE_COST = 10;
+    const { WalletService } = await import("@/lib/walletService");
+    
+    const wallet = await WalletService.getWallet(decoded.userId);
+    
+    if (wallet.balance < IMAGE_COST) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "INSUFFICIENT_COINS",
+          required: IMAGE_COST,
+          balance: wallet.balance,
+          message: `You need ${IMAGE_COST - wallet.balance} more coins to generate an image`
+        },
+        { status: 402 } // Payment Required
+      );
+    }
+
     console.log("🎨 Generating image with Grok:", enhancedPrompt);
 
     // Call Grok Image Generation API
@@ -118,6 +137,17 @@ export async function POST(request: NextRequest) {
       });
 
       console.log("💾 Scene saved to MongoDB:", savedScene._id);
+
+      // Deduct coins after successful generation
+      await WalletService.deductCoins({
+        userId: decoded.userId,
+        amount: IMAGE_COST,
+        description: `Generated image: ${sceneTitle || "Untitled Scene"}`,
+        mediaType: 'image',
+        sceneId: savedScene._id.toString()
+      });
+
+      console.log(`💰 Deducted ${IMAGE_COST} coins for image generation`);
 
       return NextResponse.json({
         success: true,

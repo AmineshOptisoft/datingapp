@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import AuthModal from './AuthModal';
 import UserMenu from './UserMenu';
+import PurchaseCoinsModal from './PurchaseCoinsModal';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { FaBars, FaSun, FaMoon, FaMars, FaVenus } from 'react-icons/fa';
 import { MdAddCircle } from 'react-icons/md';
+import { PiCoinsFill } from 'react-icons/pi';
 import { Transgender } from 'lucide-react';
 
 interface HeaderProps {
@@ -18,10 +20,46 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle }: HeaderProps) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
+
+  // Fetch wallet balance
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      if (!isAuthenticated) {
+        setWalletBalance(null);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/wallet', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWalletBalance(data.balance);
+        }
+      } catch (error) {
+        console.error('Failed to fetch wallet balance:', error);
+      }
+    };
+
+    fetchWalletBalance();
+    
+    // Refresh balance every 10 seconds
+    const interval = setInterval(fetchWalletBalance, 10000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {
     setAuthMode(mode);
@@ -98,6 +136,23 @@ export default function Header({ onMenuToggle }: HeaderProps) {
               )}
             </button>
 
+            {/* Wallet Balance - Show only when authenticated */}
+            {isAuthenticated && walletBalance !== null && (
+              <div className="flex items-center gap-2 bg-zinc-900/10 dark:bg-white/10 px-3 py-1.5 rounded-full border border-zinc-300 dark:border-white/20">
+                <PiCoinsFill className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-bold text-zinc-900 dark:text-white">
+                  {walletBalance}
+                </span>
+                <button 
+                  onClick={() => setIsPurchaseModalOpen(true)}
+                  className="w-5 h-5 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-full hover:scale-110 transition-transform"
+                  aria-label="Purchase coins"
+                >
+                  <span className="text-white dark:text-zinc-900 font-bold text-sm leading-none">+</span>
+                </button>
+              </div>
+            )}
+
             {isAuthenticated && user ? (
               <UserMenu user={user} onLogout={handleLogout} />
             ) : (
@@ -161,6 +216,33 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authMode}
+      />
+
+      {/* Purchase Coins Modal */}
+      <PurchaseCoinsModal
+        isOpen={isPurchaseModalOpen}
+        onClose={() => setIsPurchaseModalOpen(false)}
+        onSuccess={() => {
+          // Refresh balance after successful purchase
+          const fetchBalance = async () => {
+            try {
+              const token = localStorage.getItem('token');
+              if (!token) return;
+
+              const response = await fetch('/api/wallet', {
+                headers: { 'Authorization': `Bearer ${token}` },
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                setWalletBalance(data.balance);
+              }
+            } catch (error) {
+              console.error('Failed to refresh balance:', error);
+            }
+          };
+          fetchBalance();
+        }}
       />
     </>
   );
