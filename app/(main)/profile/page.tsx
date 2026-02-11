@@ -226,7 +226,7 @@ export default function ProfilePage() {
     { id: "characters", label: "Characters", icon: Grid },
     { id: "liked", label: "Liked", icon: Heart },
     { id: "personas", label: "Personas", icon: User },
-    { id: "voices", label: "Voices", icon: Mic },
+    // { id: "voices", label: "Voices", icon: Mic },
     { id: "scenes", label: "Scenes", icon: FileText },
   ];
 

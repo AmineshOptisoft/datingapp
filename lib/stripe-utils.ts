@@ -380,7 +380,7 @@ export async function handleCheckoutCompleted(
 
         // **EXISTING: Handle subscription/lifetime purchases**
         if (!metadata.aiProfileId || !metadata.planType) {
-            console.error('Missing metadata in checkout session:', session.id);
+                console.error('Missing metadata in checkout session:', session.id);
             return;
         }
 

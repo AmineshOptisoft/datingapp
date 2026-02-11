@@ -133,10 +133,11 @@ export class WalletService {
       wallet.balance += amount;
       wallet.totalPurchased += amount;
 
-      // Check if this is a premium lifetime package
-      if (packageType === 'premium') {
+      // ALL coin packages are permanent/lifetime (Starter, Popular, Premium)
+      // Coins never expire - they stay in wallet until user spends them
+      if (packageType) {
         wallet.isLifetime = true;
-        wallet.lifetimeCoins = amount;
+        wallet.lifetimeCoins = (wallet.lifetimeCoins || 0) + amount;
       }
 
       await wallet.save({ session });
