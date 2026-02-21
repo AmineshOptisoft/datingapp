@@ -9,11 +9,17 @@ export const revalidate = 0;
 // Get conversation between two users
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    // Support both Cookie and Bearer token
+    let token = request.cookies.get("token")?.value;
+    
+    if (!token) {
+      const authHeader = request.headers.get("authorization");
+      token = authHeader?.replace("Bearer ", "");
+    }
 
     if (!token) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, message: "Unauthorized - No token provided" },
         { status: 401 }
       );
     }

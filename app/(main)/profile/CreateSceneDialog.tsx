@@ -55,7 +55,7 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           },
           body: JSON.stringify({
             sceneTitle,
-            prompt: sceneDescription,
+            sceneDescription,
           }),
         });
 
@@ -86,7 +86,7 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           },
           body: JSON.stringify({
             sceneTitle,
-            prompt: sceneDescription,
+            sceneDescription,
             duration: 10,
           }),
         });

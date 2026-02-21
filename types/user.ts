@@ -37,6 +37,7 @@ export interface IUser extends Document {
   characters?: ICharacter[];
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  authToken?: string;
 }
 
 export interface UserRegistrationData {

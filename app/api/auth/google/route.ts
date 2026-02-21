@@ -77,6 +77,21 @@ export async function POST(request: NextRequest) {
 
     const token = generateToken(user._id.toString());
 
+    // 💾 Save token to DB so it can be retrieved later
+    user.authToken = token;
+    await user.save();
+
+    // 🔐 Console log for testing
+    console.log("\n========================================");
+    console.log("✅ GOOGLE LOGIN SUCCESSFUL");
+    console.log("========================================");
+    console.log("📧 Email:", user.email);
+    console.log("👤 Name:", user.name);
+    console.log("🆔 User ID:", user._id.toString());
+    console.log("🔑 Token:", token);
+    console.log("📱 Profile Complete:", user.profileComplete);
+    console.log("========================================\n");
+
     return NextResponse.json({
       success: true,
       message: "Login successful",

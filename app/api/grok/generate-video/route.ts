@@ -35,19 +35,19 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { sceneTitle, prompt, duration = 10 } = body;
+    const { sceneTitle, sceneDescription, duration = 10 } = body;
 
-    if (!prompt || prompt.trim().length === 0) {
+    if (!sceneDescription || sceneDescription.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Prompt is required" },
+        { success: false, error: "Scene description is required" },
         { status: 400 }
       );
     }
 
     // Combine scene title and prompt for better context
     const enhancedPrompt = sceneTitle
-      ? `${sceneTitle}. ${prompt}`
-      : prompt;
+      ? `${sceneTitle}. ${sceneDescription}`
+      : sceneDescription;
 
     // Check wallet balance (25 coins for video)
     const VIDEO_COST = 25;
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       status: "processing",
       userId: decoded.userId,
       sceneTitle: sceneTitle || "Untitled Video",
-      sceneDescription: prompt
+      sceneDescription: sceneDescription,
     });
 
     return NextResponse.json({
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       requestId,
       status: "processing",
       sceneTitle,
-      prompt,
+      sceneDescription: sceneDescription,
     });
 
   } catch (error: any) {
@@ -281,6 +281,8 @@ export async function GET(request: NextRequest) {
           status: "completed",
           videoUrl,
           sceneId: savedScene._id.toString(),
+          sceneTitle: savedScene.sceneTitle,
+          sceneDescription: savedScene.sceneDescription,
         });
       } catch (dbError: any) {
         console.error("❌ Error saving video scene to MongoDB:", dbError);

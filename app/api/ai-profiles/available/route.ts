@@ -4,12 +4,22 @@ import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify user authentication
-    const token = request.cookies.get("token")?.value;
+    // Verify user authentication - support both Cookie and Bearer token
+    let token = request.cookies.get("token")?.value;
+    
+    // If no cookie token, check Authorization header (for mobile apps)
+    if (!token) {
+      const authHeader = request.headers.get("authorization");
+      token = authHeader?.replace("Bearer ", "");
+    }
+
+    console.log("🔍 Token from Cookie:", request.cookies.get("token")?.value);
+    console.log("🔍 Token from Bearer:", request.headers.get("authorization"));
+    console.log("✅ Final Token:", token);
     
     if (!token) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, message: "Unauthorized - No token provided" },
         { status: 401 }
       );
     }
@@ -69,11 +79,17 @@ export async function GET(request: NextRequest) {
 // Get specific AI profile details
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    // Support both Cookie and Bearer token
+    let token = request.cookies.get("token")?.value;
+    
+    if (!token) {
+      const authHeader = request.headers.get("authorization");
+      token = authHeader?.replace("Bearer ", "");
+    }
     
     if (!token) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, message: "Unauthorized - No token provided" },
         { status: 401 }
       );
     }

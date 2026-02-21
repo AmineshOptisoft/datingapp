@@ -3,17 +3,24 @@ import dbConnect from "@/lib/db";
 import Message from "@/models/Message";
 import User from "@/models/User";
 import { verifyToken } from "@/lib/auth";
+import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    // Support both Cookie and Bearer token
+    let token = request.cookies.get("token")?.value;
+    
+    if (!token) {
+      const authHeader = request.headers.get("authorization");
+      token = authHeader?.replace("Bearer ", "");
+    }
 
     if (!token) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, message: "Unauthorized - No token provided" },
         { status: 401 }
       );
     }
@@ -70,13 +77,36 @@ export async function GET(request: NextRequest) {
     // Populate user details
     const conversationsWithUsers = await Promise.all(
       conversations.map(async (conv) => {
-        const user = await User.findById(conv._id).select("name email");
+        let user = null;
+        let isAI = false;
+
+        // Check if ID is a valid MongoDB ObjectId (for Users)
+        if (mongoose.Types.ObjectId.isValid(conv._id)) {
+          user = await User.findById(conv._id).select("name email avatar");
+        } 
+        
+        // If not a valid ObjectId or User not found, treat as AI Profile
+        if (!user) {
+          isAI = true;
+          // In a real scenario, you might fetch from an AIProfile model here
+          // For now, we'll format it as an AI participant
+          user = {
+            _id: conv._id,
+            name: conv._id.startsWith("girl-") || conv._id.startsWith("boy-") 
+              ? `AI Companion (${conv._id})` 
+              : "Unknown User",
+            email: "ai@companion.com",
+            avatar: "/images/ai-avatar-placeholder.png" // Placeholder
+          };
+        }
+
         return {
           userId: conv._id,
           user,
           lastMessage: conv.lastMessage,
           lastMessageTime: conv.lastMessageTime,
           unreadCount: conv.unreadCount,
+          isAI
         };
       })
     );

@@ -155,6 +155,10 @@ const UserSchema = new Schema<IUser>(
       type: Date,
       default: undefined,
     },
+    authToken: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

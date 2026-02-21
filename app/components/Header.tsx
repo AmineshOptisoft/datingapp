@@ -57,8 +57,8 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     fetchWalletBalance();
     
     // Refresh balance every 10 seconds
-    const interval = setInterval(fetchWalletBalance, 10000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchWalletBalance, 10000);
+    // return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {

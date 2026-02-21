@@ -24,19 +24,19 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { sceneTitle, prompt } = body;
+    const { sceneTitle, sceneDescription } = body;
 
-    if (!prompt || prompt.trim().length === 0) {
+    if (!sceneDescription || sceneDescription.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Prompt is required" },
+        { success: false, error: "Scene description is required" },
         { status: 400 }
       );
     }
 
     // Combine scene title and prompt for better context
     const enhancedPrompt = sceneTitle
-      ? `${sceneTitle}. ${prompt}`
-      : prompt;
+      ? `${sceneTitle}. ${sceneDescription}`
+      : sceneDescription;
 
     // Check wallet balance (10 coins for image)
     const IMAGE_COST = 10;
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       const savedScene = await Scene.create({
         userId: decoded.userId,
         sceneTitle: sceneTitle || "Untitled Scene",
-        sceneDescription: prompt,
+        sceneDescription: sceneDescription,
         mediaType: "image",
         mediaUrl: imageUrl,
       });
@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
         success: true,
         imageUrl,
         sceneId: savedScene._id.toString(),
-        sceneTitle,
-        prompt,
+        sceneTitle: savedScene.sceneTitle,
+        sceneDescription: savedScene.sceneDescription,
       });
     } catch (dbError: any) {
       console.error("❌ Error saving scene to MongoDB:", dbError);
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
         success: true,
         imageUrl,
         sceneTitle,
-        prompt,
+        sceneDescription,
         warning: "Image generated but failed to save to database",
       });
     }
