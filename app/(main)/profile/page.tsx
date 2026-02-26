@@ -329,7 +329,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Tab Content Placeholder */}
-        <div className="w-full py-6 text-center">
+        <div className="w-full py-2 text-center">
           {activeTab === 'characters' && (
             <div>
               {/* Character Grid First */}
@@ -487,7 +487,7 @@ export default function ProfilePage() {
           )}
 
           {activeTab === 'personas' && (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
               {/* Personas List */}
               {loadingPersonas ? (
                 <div className="text-zinc-500">Loading personas...</div>
@@ -622,7 +622,7 @@ export default function ProfilePage() {
               )}
 
               {/* Create Persona Button */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 ">
                 <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create a persona</p>
                 <Dialog open={isCreatePersonaDialogOpen} onOpenChange={setIsCreatePersonaDialogOpen}>
                   <DialogTrigger asChild>
@@ -706,14 +706,14 @@ export default function ProfilePage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-4">
                   <p className="text-zinc-500 dark:text-zinc-400">No scenes created yet</p>
                   <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">Click "New" to create your first scene!</p>
                 </div>
               )}
 
               {/* Create New Button */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col mx-12 items-center gap-2">
                 <p className="text-zinc-900 dark:text-zinc-100 font-medium">Create an Imaginary Scene</p>
                 <Dialog open={isCreateSceneDialogOpen} onOpenChange={setIsCreateSceneDialogOpen}>
                   <DialogTrigger asChild>
