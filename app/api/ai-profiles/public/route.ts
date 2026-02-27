@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActiveAIProfiles } from "@/lib/ai-profiles-seeder";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
+    // Optional auth - support Bearer token for native apps
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "").trim();
+    if (token) {
+      const decoded = verifyToken(token);
+      if (!decoded) {
+        return NextResponse.json(
+          { success: false, message: "Invalid token" },
+          { status: 401 }
+        );
+      }
+    }
+
     const { searchParams } = new URL(request.url);
     const segment = searchParams.get("segment");
     const category = searchParams.get("category");
@@ -28,6 +42,10 @@ export async function GET(request: NextRequest) {
       interests: profile.interests,
       badgeHot: profile.badgeHot,
       badgePro: profile.badgePro,
+      age: profile.age,
+      personalityType: profile.personalityType,
+      likes: (profile as any).likes ?? 0,
+      commentsCount: (profile as any).commentsCount ?? 0,
     }));
 
     // Fetch user-created public characters based on segment
@@ -120,6 +138,19 @@ export async function GET(request: NextRequest) {
 // Get specific AI profile details (also public for initial browsing)
 export async function POST(request: NextRequest) {
   try {
+    // Optional auth - support Bearer token for native apps
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "").trim();
+    if (token) {
+      const decoded = verifyToken(token);
+      if (!decoded) {
+        return NextResponse.json(
+          { success: false, message: "Invalid token" },
+          { status: 401 }
+        );
+      }
+    }
+
     let body;
     try {
       body = await request.json();

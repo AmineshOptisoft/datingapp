@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Get all active AI profiles
     const aiProfiles = await getActiveAIProfiles({
       selectFields:
-        "_id profileId legacyId routePrefix audienceSegment name age profession location avatar bio tagline interests category monthlyPrice badgeHot badgePro",
+        "_id profileId legacyId routePrefix audienceSegment name age profession location avatar bio tagline interests category monthlyPrice badgeHot badgePro personalityType likes commentsCount cardTitle",
     });
     
     // Format profiles for user selection
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       _id: profile._id,
       id: profile.profileId,
       name: profile.name,
+      cardTitle: profile.cardTitle,
       age: profile.age,
       profession: profile.profession,
       location: profile.location,
@@ -57,6 +58,9 @@ export async function GET(request: NextRequest) {
       monthlyPrice: profile.monthlyPrice,
       badgeHot: profile.badgeHot,
       badgePro: profile.badgePro,
+      personalityType: profile.personalityType,
+      likes: profile.likes ?? 0,
+      commentsCount: profile.commentsCount ?? 0,
       profileType: 'ai'
     }));
     

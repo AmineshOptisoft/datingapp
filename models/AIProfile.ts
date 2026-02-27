@@ -123,6 +123,10 @@ export interface IAIProfile {
   }
 
 
+  // REELS / ENGAGEMENT
+  likes: number;
+  commentsCount: number;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -365,6 +369,16 @@ const AIProfileSchema = new Schema<IAIProfile>(
     pricing: {
       type: Object,
       default: null,
+    },
+
+    // REELS / ENGAGEMENT
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    commentsCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

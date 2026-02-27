@@ -21,10 +21,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify Google Token
+    // Verify Google Token - accept Web + Android (Firebase) Client IDs
+    const audiences = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_ANDROID_CLIENT_ID, // Firebase Android Client ID
+      process.env.GOOGLE_IOS_CLIENT_ID,     // Firebase iOS Client ID (if needed)
+    ].filter(Boolean) as string[];
+
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: audiences,
     });
 
     const payload = ticket.getPayload();
