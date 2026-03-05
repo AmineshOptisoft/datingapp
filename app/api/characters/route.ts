@@ -106,12 +106,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!scenario || scenario.trim() === "") {
-      return NextResponse.json(
-        { success: false, message: "Scenario is required" },
-        { status: 400 }
-      );
-    }
+    // scenario is optional
 
     if (!firstMessage || firstMessage.trim() === "") {
       return NextResponse.json(
@@ -171,7 +166,7 @@ export async function POST(request: NextRequest) {
       tags: tags || [],
       description,
       personality,
-      scenario,
+      scenario: scenario || "",
       firstMessage,
       visibility: visibility || "private",
     };

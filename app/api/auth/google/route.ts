@@ -69,6 +69,16 @@ export async function POST(request: NextRequest) {
         isEmailVerified: true, // Google emails are verified
         profileComplete: false, // You might prompt for more info
       });
+
+      // 🎁 Create wallet with 100 free coins for new Google user
+      try {
+        const { WalletService } = await import("@/lib/walletService");
+        await WalletService.getWallet(user._id.toString());
+        console.log(`✨ Wallet created for new Google user ${user._id} with 100 free coins`);
+      } catch (walletError) {
+        console.error("⚠️ Failed to create wallet for Google user:", walletError);
+        // Don't fail login if wallet creation fails
+      }
     } else {
         // If user exists but no googleId (legacy email user or first time google login with same email), update it
         if (!user.googleId) {
@@ -98,6 +108,16 @@ export async function POST(request: NextRequest) {
     console.log("📱 Profile Complete:", user.profileComplete);
     console.log("========================================\n");
 
+    // 💰 Fetch wallet balance to include in response
+    let walletBalance = 0;
+    try {
+      const { WalletService } = await import("@/lib/walletService");
+      const wallet = await WalletService.getWallet(user._id.toString());
+      walletBalance = wallet?.balance ?? 0;
+    } catch {
+      // wallet fetch fail hone pe 0 bhej do
+    }
+
     return NextResponse.json({
       success: true,
       message: "Login successful",
@@ -110,6 +130,9 @@ export async function POST(request: NextRequest) {
           avatar: user.avatar,
           profileComplete: user.profileComplete
         },
+        wallet: {
+          balance: walletBalance,  // ← 100 coins naye user ke liye
+        }
       },
     });
 

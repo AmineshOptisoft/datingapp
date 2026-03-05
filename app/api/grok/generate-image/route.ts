@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         "Authorization": `Bearer ${grokApiKey}`,
       },
       body: JSON.stringify({
-        model: "grok-2-image-1212",
+        model: "grok-imagine-image",
         prompt: enhancedPrompt,
         n: 1, // Generate 1 image
       }),
