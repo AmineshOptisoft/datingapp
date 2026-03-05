@@ -34,6 +34,9 @@ export default function ProfilePage() {
   const [isEditCharacterDialogOpen, setIsEditCharacterDialogOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<any>(null);
   const [openCharacterMenuId, setOpenCharacterMenuId] = useState<string | null>(null);
+  const [isDeleteCharacterConfirmOpen, setIsDeleteCharacterConfirmOpen] = useState(false);
+  const [characterToDelete, setCharacterToDelete] = useState<any>(null);
+  const [isDeletingCharacter, setIsDeletingCharacter] = useState(false);
   const [scenes, setScenes] = useState<any[]>([]);
   const [loadingScenes, setLoadingScenes] = useState(false);
   const [isDeleteSceneDialogOpen, setIsDeleteSceneDialogOpen] = useState(false);
@@ -140,6 +143,34 @@ export default function ProfilePage() {
       setIsDeleting(false);
       setIsDeleteConfirmOpen(false);
       setPersonaToDelete(null);
+    }
+  };
+
+  const handleDeleteCharacter = async () => {
+    if (!characterToDelete) return;
+    setIsDeletingCharacter(true);
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+      const userData = JSON.parse(storedUser);
+      const userId = userData._id || userData.id || userData.userId;
+      const response = await fetch(`/api/characters/${characterToDelete._id}?userId=${userId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Character deleted successfully!");
+        fetchCharacters();
+      } else {
+        toast.error(data.message || "Failed to delete character");
+      }
+    } catch (error) {
+      console.error("Error deleting character:", error);
+      toast.error("An error occurred");
+    } finally {
+      setIsDeletingCharacter(false);
+      setIsDeleteCharacterConfirmOpen(false);
+      setCharacterToDelete(null);
     }
   };
 
@@ -393,6 +424,19 @@ export default function ProfilePage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                   Edit
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setCharacterToDelete(character);
+                                    setIsDeleteCharacterConfirmOpen(true);
+                                    setOpenCharacterMenuId(null);
+                                  }}
+                                  className="w-full px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Delete
                                 </button>
                               </div>
                             </>
@@ -765,7 +809,39 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Character Confirmation Dialog */}
+      <Dialog open={isDeleteCharacterConfirmOpen} onOpenChange={setIsDeleteCharacterConfirmOpen}>
+        <DialogContent className="max-w-md p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Delete Character</h2>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Are you sure you want to delete <span className="font-semibold text-zinc-900 dark:text-white">{characterToDelete?.characterName}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsDeleteCharacterConfirmOpen(false);
+                  setCharacterToDelete(null);
+                }}
+                disabled={isDeletingCharacter}
+                className="px-5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteCharacter}
+                disabled={isDeletingCharacter}
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+              >
+                {isDeletingCharacter && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isDeletingCharacter ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Persona Confirmation Dialog */}
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent className="max-w-md p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
           <div className="space-y-4">

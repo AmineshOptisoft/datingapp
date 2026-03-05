@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, name, bio, email, phone, avatarBase64 } = body;
 
-    if (!userId || !name || !email || !phone) {
+    if (!userId || !name || !email) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
@@ -16,8 +16,9 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    // Email cannot be changed - only update name, bio, phone, and avatar
-    const updateData: any = { name, bio, phoneNumber: phone };
+    // Email cannot be changed - only update name, bio, and avatar (phone optional)
+    const updateData: any = { name, bio };
+    if (phone) updateData.phoneNumber = phone;
 
     if (avatarBase64) {
       // Here you need to save base64 image to storage or DB. For this example, save directly for demo:

@@ -177,7 +177,6 @@ export default function EditProfileForm({ user, onSuccess }: EditProfileFormProp
                             onChange={(e) => setPhone(e.target.value)}
                             className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-400"
                             placeholder="+1 234 567 8900"
-                            required
                         />
                     </div>
                 </div>

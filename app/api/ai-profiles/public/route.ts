@@ -48,38 +48,30 @@ export async function GET(request: NextRequest) {
       commentsCount: (profile as any).commentsCount ?? 0,
     }));
 
-    // Fetch user-created public characters based on segment
+    // Fetch ALL public user-created characters (no gender filter, show all on All page)
     let userCharacters: any[] = [];
-    if (segment === "for-men" || segment === "for-women") {
+    if (segment === "for-men" || segment === "for-women" || !segment) {
       try {
-        // For "for-men" show female characters, for "for-women" show male characters
-        const characterGender = segment === "for-men" ? "female" : "male";
-        
-        // Connect to database and fetch public characters directly
         await dbConnect();
         
         const users = await User.find({
           "characters.visibility": "public",
-          "characters.characterGender": characterGender,
         })
           .select("characters")
           .lean();
 
-        console.log(`🔍 Found ${users.length} users with public ${characterGender} characters`);
+        console.log(`🔍 Found ${users.length} users with public characters`);
 
-        // Extract and transform public characters
         users.forEach((user: any) => {
           user.characters?.forEach((char: any) => {
-            console.log(`🔎 Checking character: ${char.characterName}, visibility: "${char.visibility}", gender: "${char.characterGender}"`);
-            
-            if (char.visibility === "public" && char.characterGender === characterGender) {
+            if (char.visibility === "public") {
               console.log(`✅ Adding character: ${char.characterName} (${char.characterGender})`);
               userCharacters.push({
                 _id: char._id,
                 profileId: `character-${char._id}`,
                 legacyId: char._id,
                 routePrefix: `character`,
-                audienceSegment: segment,
+                audienceSegment: segment || "for-men",
                 name: char.characterName,
                 cardTitle: char.description || char.characterName,
                 category: "User Created",
@@ -91,9 +83,8 @@ export async function GET(request: NextRequest) {
                 interests: char.tags || [],
                 badgeHot: false,
                 badgePro: false,
+                characterGender: char.characterGender,
               });
-            } else {
-              console.log(`❌ Skipping character: ${char.characterName} (visibility: ${char.visibility}, expected: public)`);
             }
           });
         });
@@ -101,7 +92,6 @@ export async function GET(request: NextRequest) {
         console.log(`📊 Total user characters added: ${userCharacters.length}`);
       } catch (error) {
         console.error("Error fetching user characters:", error);
-        // Continue without user characters if fetch fails
       }
     }
 
