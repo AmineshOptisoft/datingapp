@@ -9,13 +9,13 @@ import { useProfiles } from '@/hooks/useProfiles';
 import type { AIProfileOverview } from '@/types/ai-profile';
 import ProfileCardSkeleton from '@/components/features/profile/ProfileCardSkeleton';
 
-const DEFAULT_SEGMENT = 'for-men' as const;
-
 function HomePageContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [activeCategory, setActiveCategory] = useState('All');
-  const { profiles, loading, error } = useProfiles(DEFAULT_SEGMENT);
+
+  // No segment = home page shows ALL profiles (male + female AI + all user characters)
+  const { profiles, loading, error } = useProfiles();
 
   useEffect(() => {
     if (categoryParam) {
@@ -27,7 +27,14 @@ function HomePageContent() {
     if (activeCategory === 'All') {
       return profiles;
     }
-    return profiles.filter((profile) => profile.category === activeCategory);
+    return profiles.filter((profile) => {
+      // User-created characters: filter by tags (interests array)
+      if (profile.routePrefix === 'character') {
+        return profile.interests?.includes(activeCategory) ?? false;
+      }
+      // AI profiles: filter by category
+      return profile.category === activeCategory;
+    });
   }, [profiles, activeCategory]);
 
   const groupedProfiles = useMemo(() => {

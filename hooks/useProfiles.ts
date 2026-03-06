@@ -9,7 +9,7 @@ interface UseProfilesResult {
   error: string | null;
 }
 
-export function useProfiles(segment: AudienceSegment): UseProfilesResult {
+export function useProfiles(segment?: string | null): UseProfilesResult {
   const [profiles, setProfiles] = useState<AIProfileOverview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +23,12 @@ export function useProfiles(segment: AudienceSegment): UseProfilesResult {
       setError(null);
 
       try {
-        const response = await fetch(
-          `/api/ai-profiles/public?segment=${segment}`,
-          { signal: controller.signal }
-        );
+        // segment nahi hai toh saare profiles fetch karo
+        const url = segment
+          ? `/api/ai-profiles/public?segment=${segment}`
+          : `/api/ai-profiles/public`;
+
+        const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error("Failed to load profiles");

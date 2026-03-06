@@ -48,15 +48,21 @@ export async function GET(request: NextRequest) {
       commentsCount: (profile as any).commentsCount ?? 0,
     }));
 
-    // Fetch ALL public user-created characters (no gender filter, show all on All page)
+    // Fetch user-created public characters based on segment (gender filter)
     let userCharacters: any[] = [];
     if (segment === "for-men" || segment === "for-women" || !segment) {
       try {
+        // for-men → show female characters, for-women → show male characters
+        const characterGender = segment === "for-men" ? "female" : segment === "for-women" ? "male" : null;
+
         await dbConnect();
-        
-        const users = await User.find({
-          "characters.visibility": "public",
-        })
+
+        const query: any = { "characters.visibility": "public" };
+        if (characterGender) {
+          query["characters.characterGender"] = characterGender;
+        }
+
+        const users = await User.find(query)
           .select("characters")
           .lean();
 
@@ -64,7 +70,8 @@ export async function GET(request: NextRequest) {
 
         users.forEach((user: any) => {
           user.characters?.forEach((char: any) => {
-            if (char.visibility === "public") {
+            const genderOk = !characterGender || char.characterGender === characterGender;
+            if (char.visibility === "public" && genderOk) {
               console.log(`✅ Adding character: ${char.characterName} (${char.characterGender})`);
               userCharacters.push({
                 _id: char._id,
@@ -88,7 +95,7 @@ export async function GET(request: NextRequest) {
             }
           });
         });
-        
+
         console.log(`📊 Total user characters added: ${userCharacters.length}`);
       } catch (error) {
         console.error("Error fetching user characters:", error);

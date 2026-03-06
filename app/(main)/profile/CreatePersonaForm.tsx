@@ -11,6 +11,7 @@ const TAG_CATEGORIES = {
     default: ["NSFW", "Monster Girl", "Worlds-End-Challenge"],
     "Character Type": ["Female", "Male", "Non-human", "Non-binary", "Object", "Myth", "Queer"],
     Genre: [
+        "Different Personalities", "Fantasy & Kinks", "Infidelity & Drama", "Nationalities & Cultures", "Relationship Stages",
         "Scenario", "Multiple", "Fictional", "RPG", "Romantic", "Magical", "Hentai", "Wholesome",
         "Anime", "Royalty", "Assistant", "Action", "Religion", "Historical", "Sci-Fi", "Horror",
         "Seinen", "Fandom", "Philosophy", "Politics", "Non-English", "Detective", "Manga"
