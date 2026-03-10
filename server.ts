@@ -896,8 +896,9 @@ app.prepare().then(async () => {
 
           } else {
              const aiProfile = await AIProfile.findOne({ profileId, isActive: true });
-             if (aiProfile && aiProfile.pricing) {
-                price = aiProfile.pricing.monthlyPrice || 4.99;
+             if (aiProfile) {
+                // Determine price: prefer top-level monthlyPrice from seeder, fallback to old nested pricing object, then 4.99
+                price = aiProfile.monthlyPrice ?? aiProfile.pricing?.monthlyPrice ?? 4.99;
                 restrictedName = aiProfile.name;
              }
           }

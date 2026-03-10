@@ -402,7 +402,16 @@ export async function POST(request: NextRequest) {
         voiceSimilarity: profile.voiceSimilarity,
         voiceStyle: profile.voiceStyle,
         voiceDescription: profile.voiceDescription,
-        pricing: profile.pricing,
+        pricing: {
+          // Always use top-level monthlyPrice (source of truth from seeder)
+          // Nested pricing object in DB may have stale/different values
+          monthlyPrice: profile.monthlyPrice,
+          annualPrice: profile.pricing?.annualPrice ?? parseFloat((profile.monthlyPrice * 10).toFixed(2)),
+          lifetimePrice: profile.pricing?.lifetimePrice ?? parseFloat((profile.monthlyPrice * 25).toFixed(2)),
+          monthlyPriceId: profile.pricing?.monthlyPriceId ?? '',
+          annualPriceId: profile.pricing?.annualPriceId ?? '',
+          lifetimePriceId: profile.pricing?.lifetimePriceId ?? '',
+        },
       }
     });
 

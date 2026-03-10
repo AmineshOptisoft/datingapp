@@ -182,27 +182,88 @@ export async function createCheckoutSession(
         } else {
             // AI Profile lookup
             const aiProfile = await AIProfile.findOne({ profileId });
-            if (!aiProfile || !aiProfile.pricing) {
-                throw new Error('AI Profile or pricing not found');
+            if (!aiProfile) {
+                throw new Error('AI Profile not found');
             }
 
             characterName = aiProfile.name;
 
-            switch (planType) {
-                case 'monthly':
-                    priceId = aiProfile.pricing.monthlyPriceId;
-                    amount = aiProfile.pricing.monthlyPrice;
-                    break;
-                case 'annual':
-                    priceId = aiProfile.pricing.annualPriceId;
-                    amount = aiProfile.pricing.annualPrice;
-                    break;
-                case 'lifetime':
-                    priceId = aiProfile.pricing.lifetimePriceId;
-                    amount = aiProfile.pricing.lifetimePrice;
-                    break;
-                default:
-                    throw new Error('Invalid plan type');
+            // Only use pre-configured Stripe price IDs if the nested pricing hasn't gone stale
+            // (i.e. its monthlyPrice still matches the top-level monthlyPrice source of truth)
+            const hasValidPricingObject = 
+                aiProfile.pricing && 
+                aiProfile.pricing.monthlyPrice === aiProfile.monthlyPrice &&
+                (aiProfile.pricing.monthlyPriceId || aiProfile.pricing.annualPriceId || aiProfile.pricing.lifetimePriceId);
+
+            if (hasValidPricingObject) {
+                // Profile has valid pre-configured Stripe price IDs — use them directly
+                switch (planType) {
+                    case 'monthly':
+                        priceId = aiProfile.pricing.monthlyPriceId;
+                        amount = aiProfile.pricing.monthlyPrice;
+                        break;
+                    case 'annual':
+                        priceId = aiProfile.pricing.annualPriceId;
+                        amount = aiProfile.pricing.annualPrice;
+                        break;
+                    case 'lifetime':
+                        priceId = aiProfile.pricing.lifetimePriceId;
+                        amount = aiProfile.pricing.lifetimePrice;
+                        break;
+                    default:
+                        throw new Error('Invalid plan type');
+                }
+            } else {
+                // No valid pre-configured price IDs — create dynamic Stripe price from top-level monthlyPrice
+                const baseMonthly = aiProfile.monthlyPrice;
+                if (!baseMonthly) {
+                    throw new Error('AI Profile pricing not configured');
+                }
+
+                let unitAmount: number;
+                let isRecurring = true;
+                let interval: 'month' | 'year' = 'month';
+                let productName = '';
+
+                switch (planType) {
+                    case 'monthly':
+                        unitAmount = Math.round(baseMonthly * 100);
+                        interval = 'month';
+                        productName = `${characterName} - Monthly Subscription`;
+                        break;
+                    case 'annual':
+                        unitAmount = Math.round(baseMonthly * 10 * 100);
+                        interval = 'year';
+                        productName = `${characterName} - Annual Subscription`;
+                        break;
+                    case 'lifetime':
+                        unitAmount = Math.round(baseMonthly * 25 * 100);
+                        isRecurring = false;
+                        productName = `${characterName} - Lifetime Access`;
+                        break;
+                    default:
+                        throw new Error('Invalid plan type');
+                }
+
+                amount = unitAmount;
+
+                const product = await stripe.products.create({
+                    name: productName,
+                    description: `Access to ${characterName}`,
+                });
+
+                const priceCreateParams: any = {
+                    product: product.id,
+                    unit_amount: unitAmount,
+                    currency: 'usd',
+                };
+
+                if (isRecurring) {
+                    priceCreateParams.recurring = { interval };
+                }
+
+                const dynamicPrice = await stripe.prices.create(priceCreateParams);
+                priceId = dynamicPrice.id;
             }
         }
 
