@@ -185,9 +185,15 @@ function ReelViewer({
   const posterName = reel.poster?.username || reel.poster?.name || "User";
 
   return (
-    <div ref={cardRef} className="flex items-center gap-4 w-full max-w-[540px]">
+    <div
+      ref={cardRef}
+      className="relative flex items-center justify-center w-full max-w-[540px]"
+    >
       {/* Reel Card */}
-      <div className="relative flex-1 rounded-2xl overflow-hidden bg-black shadow-2xl" style={{ aspectRatio: "9/16" }}>
+      <div
+        className="relative flex-1 rounded-2xl overflow-hidden bg-black shadow-[0_0_60px_rgba(0,0,0,0.75)] max-h-[85vh]"
+        style={{ aspectRatio: "9/16" }}
+      >
         {/* Media */}
         {reel.mediaType === "video" ? (
           <video
@@ -233,8 +239,8 @@ function ReelViewer({
         </div>
       </div>
 
-      {/* Right Action Column */}
-      <div className="flex flex-col items-center gap-5 ml-2">
+      {/* Right Action Column (overlay, Instagram-style) */}
+      <div className="absolute -right-20 top-1/2 -translate-y-1/2 flex flex-col items-center gap-5">
         {/* Like */}
         <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 border ${
@@ -460,7 +466,7 @@ export default function ReelsPage() {
 
   if (!loading && reels.length === 0) {
     return (
-      <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 pt-16">
+      <div className="max-h-screen h-screen bg-white dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 pt-16">
         <div className="text-center space-y-3 px-6">
           <div className="text-7xl mb-4">🎬</div>
           <h2 className="text-zinc-900 dark:text-white text-2xl font-bold">No Reels Yet</h2>
@@ -485,20 +491,9 @@ export default function ReelsPage() {
   const currentReel = reels[currentIndex];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-start pt-20 pb-10 transition-colors">
-      {/* Header */}
-      <div className="w-full max-w-xl px-4 mb-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition text-sm">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Link>
-        <h1 className="text-zinc-900 dark:text-white font-bold text-lg">Reels</h1>
-        <div className="text-zinc-400 dark:text-zinc-600 text-sm">
-          {currentIndex + 1} / {reels.length}
-        </div>
-      </div>
-
+    <div className="max-h-screen h-[calc(100vh-10vh)] bg-white dark:bg-zinc-950 flex items-center justify-center transition-colors">
       {/* Main Viewer */}
-      <div className="relative w-full max-w-xl px-4 flex flex-col items-center gap-4">
+      <div className="relative w-full max-w-5xl px-4 flex flex-col items-center gap-4">
         {/* Up / Down Navigation */}
         <div className="absolute -right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-10">
           <button
