@@ -13,6 +13,7 @@ import {
   FaChartLine,
   FaTimes,
   FaComments,
+  FaFilm,
 } from 'react-icons/fa';
 import { MdAddCircle } from 'react-icons/md';
 import {
@@ -41,6 +42,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: FaMars, label: 'For Male', id: 'male', href: '/for-men' },
     { icon: FaVenus, label: 'For Female', id: 'female', href: '/for-women' },
     { icon: MdAddCircle, label: 'For LGBTQ+', id: 'lgbtq', href: '/for-lgbtq' },
+    { icon: FaFilm, label: 'Reels', id: 'reels', href: '/reels' },
     { icon: FaDollarSign, label: 'Affiliate Program', id: 'affiliate', href: '/affiliate-program' },
     { icon: FaChartLine, label: 'Monetize Your Character', id: 'monetize', href: '/monetize' },
     { icon: FaComments, label: 'Messages', id: 'messages', href: '/messages' },

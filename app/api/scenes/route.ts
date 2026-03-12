@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import Scene from "@/models/Scene";
+import Reel from "@/models/Reel";
 import dbConnect from "@/lib/db";
 
 export async function GET(request: NextRequest) {
@@ -30,11 +31,31 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Enrich scenes with their reel's isPublic status
+    const reelIds = scenes
+      .filter((s: any) => s.reelId)
+      .map((s: any) => s.reelId);
+
+    let reelStatusMap: Record<string, boolean> = {};
+    if (reelIds.length > 0) {
+      const reels = await Reel.find({ _id: { $in: reelIds } })
+        .select("_id isPublic")
+        .lean();
+      reels.forEach((r: any) => {
+        reelStatusMap[r._id.toString()] = r.isPublic;
+      });
+    }
+
+    const enrichedScenes = scenes.map((scene: any) => ({
+      ...scene,
+      isReelPublic: scene.reelId ? (reelStatusMap[scene.reelId] ?? false) : false,
+    }));
+
     console.log(`📚 Fetched ${scenes.length} scenes for user ${decoded.userId}`);
 
     return NextResponse.json({
       success: true,
-      scenes,
+      scenes: enrichedScenes,
       count: scenes.length
     });
 

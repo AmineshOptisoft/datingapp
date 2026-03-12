@@ -197,18 +197,19 @@ export async function createCheckoutSession(
 
             if (hasValidPricingObject) {
                 // Profile has valid pre-configured Stripe price IDs — use them directly
+                const pricing = aiProfile.pricing!;
                 switch (planType) {
                     case 'monthly':
-                        priceId = aiProfile.pricing.monthlyPriceId;
-                        amount = aiProfile.pricing.monthlyPrice;
+                        priceId = pricing.monthlyPriceId;
+                        amount = pricing.monthlyPrice;
                         break;
                     case 'annual':
-                        priceId = aiProfile.pricing.annualPriceId;
-                        amount = aiProfile.pricing.annualPrice;
+                        priceId = pricing.annualPriceId;
+                        amount = pricing.annualPrice;
                         break;
                     case 'lifetime':
-                        priceId = aiProfile.pricing.lifetimePriceId;
-                        amount = aiProfile.pricing.lifetimePrice;
+                        priceId = pricing.lifetimePriceId;
+                        amount = pricing.lifetimePrice;
                         break;
                     default:
                         throw new Error('Invalid plan type');

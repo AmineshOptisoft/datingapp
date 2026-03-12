@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import Scene from "@/models/Scene";
+import Reel from "@/models/Reel";
+import ReelLike from "@/models/ReelLike";
+import ReelView from "@/models/ReelView";
 import dbConnect from "@/lib/db";
 
 export async function DELETE(
@@ -39,6 +42,14 @@ export async function DELETE(
         { success: false, error: "Scene not found or unauthorized" },
         { status: 404 }
       );
+    }
+
+    // Cascade delete the associated Reel if it exists
+    if (deleted.isPublishedAsReel && deleted.reelId) {
+      await Reel.findByIdAndDelete(deleted.reelId);
+      await ReelLike.deleteMany({ reelId: deleted.reelId });
+      await ReelView.deleteMany({ reelId: deleted.reelId });
+      console.log(`🗑️ Cascade deleted associated reel ${deleted.reelId}`);
     }
 
     console.log(`🗑️ Deleted scene ${params.id} for user ${decoded.userId}`);

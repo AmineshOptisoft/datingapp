@@ -12,7 +12,7 @@ import { useTheme } from '@/app/contexts/ThemeContext';
 import { FaBars, FaSun, FaMoon, FaMars, FaVenus } from 'react-icons/fa';
 import { MdAddCircle } from 'react-icons/md';
 import { PiCoinsFill } from 'react-icons/pi';
-import { Transgender } from 'lucide-react';
+import { Transgender, Film } from 'lucide-react';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -97,7 +97,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 }`}
             >
               <FaMars className="w-5 h-5 md:w-6 md:h-6 text-blue-500 dark:text-blue-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Male</span>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-Male</span>
             </Link>
             <Link
               href="/for-women"
@@ -107,7 +107,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 }`}
             >
               <FaVenus className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Female</span>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-Female</span>
             </Link>
             <Link
               href="/for-lgbtq"
@@ -117,7 +117,17 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 }`}
             >
               <Transgender className="w-5 h-5 md:w-6 md:h-6 text-purple-500 dark:text-purple-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-LGBTQ+</span>
+            </Link>
+            <Link
+              href="/reels"
+              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/reels'
+                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
+                  : ''
+                }`}
+            >
+              <Film className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
+              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Reels</span>
             </Link>
           </div>
 
@@ -207,6 +217,16 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           >
             <Transgender className="w-6 h-6 text-purple-500 dark:text-purple-400" />
             <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">LGBTQ+</span>
+          </Link>
+          <Link
+            href="/reels"
+            className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all active:scale-95 px-4 py-2 rounded-lg ${pathname === '/reels'
+                ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
+                : ''
+              }`}
+          >
+            <Film className="w-6 h-6 text-pink-500 dark:text-pink-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Reels</span>
           </Link>
         </div>
       </nav>

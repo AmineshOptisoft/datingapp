@@ -26,6 +26,14 @@ const SceneSchema = new Schema({
   mediaUrl: {
     type: String,
     required: true
+  },
+  isPublishedAsReel: {
+    type: Boolean,
+    default: false
+  },
+  reelId: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt

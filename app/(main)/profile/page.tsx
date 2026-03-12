@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2 } from "lucide-react";
+import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2, Film } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EditProfileForm from "./EditProfileForm";
 import CreatePersonaForm from "./CreatePersonaForm";
@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [isDeletingScene, setIsDeletingScene] = useState(false);
   const [viewingScene, setViewingScene] = useState<any>(null);
   const [isSceneViewOpen, setIsSceneViewOpen] = useState(false);
+  const [publishingReelId, setPublishingReelId] = useState<string | null>(null);
 
   const fetchCharacters = async () => {
     const controller = new AbortController();
@@ -211,7 +212,7 @@ export default function ProfilePage() {
 
       if (data.success) {
         toast.success("Scene deleted successfully");
-        fetchScenes(); // Refresh list
+        fetchScenes();
       } else {
         toast.error(data.error || "Failed to delete scene");
       }
@@ -222,6 +223,61 @@ export default function ProfilePage() {
       setIsDeletingScene(false);
       setIsDeleteSceneDialogOpen(false);
       setSceneToDelete(null);
+    }
+  };
+
+  const handlePostAsReel = async (scene: any) => {
+    const token = localStorage.getItem("token");
+    if (!token) { toast.error("Please login first"); return; }
+
+    setPublishingReelId(scene._id);
+    try {
+      const res = await fetch("/api/reels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          sceneId: scene._id,
+          mediaUrl: scene.mediaUrl,
+          mediaType: scene.mediaType,
+          caption: scene.sceneTitle,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Scene posted as Reel! 🎬");
+        fetchScenes();
+      } else {
+        toast.error(data.error || "Failed to post as reel");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setPublishingReelId(null);
+    }
+  };
+
+  const handleToggleReelPrivacy = async (scene: any, makePublic: boolean) => {
+    const token = localStorage.getItem("token");
+    if (!token || !scene.reelId) return;
+
+    setPublishingReelId(scene._id);
+    try {
+      const res = await fetch(`/api/reels/${scene.reelId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ isPublic: makePublic }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(makePublic ? "Reel is now public! 🎬" : "Reel made private. It still appears in your Scenes.");
+        fetchScenes();
+      } else {
+        toast.error(data.error || "Failed to update reel");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setPublishingReelId(null);
     }
   };
 
@@ -735,16 +791,74 @@ export default function ProfilePage() {
                           <span className="text-xs text-zinc-400 dark:text-zinc-500">
                             {scene.mediaType === 'image' ? '🎨 Image' : '🎬 Video'}
                           </span>
-                          <button
-                            onClick={() => {
-                              setSceneToDelete(scene);
-                              setIsDeleteSceneDialogOpen(true);
-                            }}
-                            className="px-3 py-1 text-xs text-red-600 cursor-pointer dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {/* 3 states: not posted / posted+public / posted+private */}
+                            {scene.isPublishedAsReel && scene.reelId ? (
+                              scene.isReelPublic ? (
+                                <button
+                                  onClick={() => handleToggleReelPrivacy(scene, false)}
+                                  disabled={publishingReelId === scene._id}
+                                  className="flex items-center gap-1 px-2.5 py-1 text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  {publishingReelId === scene._id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Film className="w-3 h-3" />
+                                  )}
+                                  Make Private
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleReelPrivacy(scene, true)}
+                                  disabled={publishingReelId === scene._id}
+                                  className="flex items-center gap-1 px-2.5 py-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  {publishingReelId === scene._id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Film className="w-3 h-3" />
+                                  )}
+                                  Make Public
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                onClick={() => handlePostAsReel(scene)}
+                                disabled={publishingReelId === scene._id}
+                                className="flex items-center gap-1 px-2.5 py-1 text-xs bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500/20 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {publishingReelId === scene._id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Film className="w-3 h-3" />
+                                )}
+                                Post as Reel
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setSceneToDelete(scene);
+                                setIsDeleteSceneDialogOpen(true);
+                              }}
+                              className="px-3 py-1 text-xs text-red-600 cursor-pointer dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
+                        {/* Reel published badge */}
+                        {scene.isPublishedAsReel && scene.reelId && (
+                          <div className="mt-2">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
+                              scene.isReelPublic
+                                ? 'bg-pink-500/10 text-pink-500 dark:text-pink-400'
+                                : 'bg-zinc-200/60 dark:bg-zinc-700/50 text-zinc-500 dark:text-zinc-400'
+                            }`}>
+                              <Film className="w-2.5 h-2.5" />
+                              {scene.isReelPublic ? 'Published (Public)' : 'Published (Private)'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

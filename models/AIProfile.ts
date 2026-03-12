@@ -124,8 +124,8 @@ export interface IAIProfile {
 
 
   // REELS / ENGAGEMENT
-  likes: number;
-  commentsCount: number;
+  likes?: number;
+  commentsCount?: number;
 
   createdAt: Date;
   updatedAt: Date;

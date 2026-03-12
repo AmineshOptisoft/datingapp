@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
                 name: char.characterName,
                 cardTitle: char.description || char.characterName,
                 category: "User Created",
-                monthlyPrice: 0,
+                monthlyPrice: parseFloat(process.env.NEXT_PUBLIC_USER_CHARACTER_PRICE || "2"),
                 avatar: char.characterImage || "/default-avatar.png",
                 bio: char.description,
                 tagline: char.personality,
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
                 languages: [char.language || "English"],
                 category: "User Character",
                 cardTitle: char.description || char.characterName, // As requested
-                monthlyPrice: 0,
+                monthlyPrice: parseFloat(process.env.NEXT_PUBLIC_USER_CHARACTER_PRICE || "2"),
                 badgeHot: false,
                 badgePro: false,
                 avatar: char.characterImage || "/default-avatar.png",

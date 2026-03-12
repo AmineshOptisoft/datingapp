@@ -44,6 +44,10 @@ export function useVoiceCall(profileId: string) {
             setState(prev => ({ ...prev, callState: 'connecting', error: null }))
 
             // 1. Request microphone permission
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Microphone access is not supported. Please ensure you are using a secure connection (HTTPS) or localhost.')
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,

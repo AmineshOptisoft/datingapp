@@ -11,8 +11,12 @@ export async function GET(request: NextRequest) {
         await dbConnect();
 
         // Check authentication
-        const authHeader = request.headers.get("authorization");
-        const token = authHeader?.replace("Bearer ", "");
+        let token = request.cookies.get("token")?.value;
+
+        if (!token) {
+            const authHeader = request.headers.get("authorization");
+            token = authHeader?.replace("Bearer ", "");
+        }
 
         if (!token) {
             return NextResponse.json(
