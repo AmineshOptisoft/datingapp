@@ -72,30 +72,38 @@ function ReelViewer({
 
   // Track view + autoplay using IntersectionObserver
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             videoRef.current?.play().catch(() => {});
             if (!viewTracked) {
-              setViewTracked(true);
-              fetch(`/api/reels/${reel._id}/view`, {
-                method: "POST",
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-              })
-                .then((r) => r.json())
-                .then((d) => { if (d.success) setViewsCount(d.viewsCount); })
-                .catch(() => {});
+              timer = setTimeout(() => {
+                setViewTracked(true);
+                fetch(`/api/reels/${reel._id}/view`, {
+                  method: "POST",
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                })
+                  .then((r) => r.json())
+                  .then((d) => { if (d.success) setViewsCount(d.viewsCount); })
+                  .catch(() => {});
+              }, 2000); // 2-second watch time requirement
             }
           } else {
             videoRef.current?.pause();
+            if (timer) clearTimeout(timer); // Cancel if they scroll away before 2s
           }
         });
       },
       { threshold: 0.5 }
     );
     if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
+    
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
   }, [reel._id, token, viewTracked]);
 
   // Real-time polling: DISABLED for now — uncomment when needed
