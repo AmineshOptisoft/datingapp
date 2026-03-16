@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Persona from "@/models/Persona";
+import { writeFile } from "fs/promises";
+import path from "path";
 
 // GET - Fetch single persona
 export async function GET(
@@ -37,32 +39,52 @@ export async function PUT(
   try {
     await dbConnect();
 
-    const body = await req.json();
-    const { displayName, background, avatar, makeDefault } = body;
+    const contentType = req.headers.get("content-type") || "";
+    let displayName: string | undefined, background: string | undefined, avatar: string | undefined, makeDefault: boolean | undefined;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      if (formData.has("displayName")) displayName = formData.get("displayName") as string;
+      if (formData.has("background")) background = formData.get("background") as string;
+      if (formData.has("makeDefault")) makeDefault = formData.get("makeDefault") === "true";
+
+      const avatarFile = formData.get("avatar") as File | null;
+      if (avatarFile && avatarFile.size > 0 && typeof avatarFile.arrayBuffer === 'function') {
+        const bytes = await avatarFile.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        
+        const timestamp = Date.now();
+        const randomString = Math.floor(Math.random() * 1000000000).toString();
+        const ext = avatarFile.name.split('.').pop() || "png";
+        const filename = `persona-${timestamp}-${randomString}.${ext}`;
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        const filepath = path.join(uploadDir, filename);
+        
+        await writeFile(filepath, buffer);
+        avatar = `/uploads/${filename}`;
+      } else if (typeof formData.get("avatar") === "string") {
+        avatar = formData.get("avatar") as string;
+      }
+    } else {
+      const body = await req.json();
+      displayName = body.displayName;
+      background = body.background;
+      avatar = body.avatar;
+      makeDefault = body.makeDefault;
+    }
 
     // Validation
     if (displayName && displayName.trim().length > 20) {
-      return NextResponse.json(
-        { error: "Display name cannot exceed 20 characters" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Display name cannot exceed 20 characters" }, { status: 400 });
     }
-
     if (background && background.length > 750) {
-      return NextResponse.json(
-        { error: "Background cannot exceed 750 characters" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Background cannot exceed 750 characters" }, { status: 400 });
     }
 
     // Get the persona to find userId
     const existingPersona = await Persona.findById(params.id);
-    
     if (!existingPersona) {
-      return NextResponse.json(
-        { error: "Persona not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Persona not found" }, { status: 404 });
     }
 
     // If makeDefault is true, set all other personas to false
@@ -88,10 +110,7 @@ export async function PUT(
     console.log("Persona updated successfully:", updatedPersona?._id);
 
     return NextResponse.json(
-      {
-        message: "Persona updated successfully",
-        persona: updatedPersona,
-      },
+      { message: "Persona updated successfully", persona: updatedPersona },
       { status: 200 }
     );
   } catch (error: any) {

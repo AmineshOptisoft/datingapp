@@ -41,22 +41,63 @@ export async function PUT(
   try {
     await connectToDatabase();
     const { id } = params;
-    const body = await request.json();
+    
+    // Support both FormData and JSON
+    const contentType = request.headers.get("content-type") || "";
+    
+    let userId: string, characterName: string, characterImage: string | null | undefined,
+      characterAge: number, characterGender: string, language: string,
+      tags: string[], description: string, personality: string,
+      scenario: string, firstMessage: string, visibility: string;
 
-    const {
-      userId,
-      characterName,
-      characterImage,
-      characterAge,
-      characterGender,
-      language,
-      tags,
-      description,
-      personality,
-      scenario,
-      firstMessage,
-      visibility,
-    } = body;
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+
+      userId        = formData.get("userId") as string;
+      characterName = formData.get("characterName") as string;
+      characterAge  = Number(formData.get("characterAge"));
+      characterGender = formData.get("characterGender") as string;
+      language      = (formData.get("language") as string) || "English";
+      description   = formData.get("description") as string;
+      personality   = formData.get("personality") as string;
+      scenario      = (formData.get("scenario") as string) || "";
+      firstMessage  = formData.get("firstMessage") as string;
+      visibility    = (formData.get("visibility") as string) || "private";
+
+      const rawTags = formData.get("tags") as string | null;
+      tags = rawTags
+        ? rawTags.startsWith("[") ? JSON.parse(rawTags) : rawTags.split(",").map(t => t.trim())
+        : [];
+
+      // Handle image file upload for updates
+      const imageFile = formData.get("characterImage") as File | null;
+      if (imageFile && imageFile.size > 0) {
+        const path = await import("path");
+        const fs   = await import("fs");
+
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+        const ext        = path.extname(imageFile.name) || ".jpg";
+        const uniqueName = `char-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const filePath   = path.join(uploadsDir, uniqueName);
+
+        const arrayBuffer = await imageFile.arrayBuffer();
+        fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
+
+        characterImage = `/uploads/${uniqueName}`;
+      } else {
+        characterImage = undefined; // Do not overwrite if no new image provided
+      }
+    } else {
+      const body = await request.json();
+      ({
+        userId, characterName, characterImage,
+        characterAge, characterGender, language,
+        tags, description, personality,
+        scenario, firstMessage, visibility,
+      } = body);
+    }
 
     console.log("📥 Received character update data:", { characterName, characterAge, characterGender, visibility });
 
@@ -106,24 +147,28 @@ export async function PUT(
       );
     }
 
+    // Prepare update object dynamically to not overwrite image if not provided
+    const setQuery: any = {
+      "characters.$.characterName": characterName.trim(),
+      "characters.$.characterAge": characterAge,
+      "characters.$.characterGender": characterGender,
+      "characters.$.language": language,
+      "characters.$.tags": tags || [],
+      "characters.$.description": description.trim(),
+      "characters.$.personality": personality.trim(),
+      "characters.$.scenario": scenario.trim(),
+      "characters.$.firstMessage": firstMessage.trim(),
+      "characters.$.visibility": visibility || "private",
+    };
+
+    if (characterImage !== undefined) {
+      setQuery["characters.$.characterImage"] = characterImage;
+    }
+
     // Update the character within the user's characters array
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId, "characters._id": id },
-      {
-        $set: {
-          "characters.$.characterName": characterName.trim(),
-          "characters.$.characterImage": characterImage,
-          "characters.$.characterAge": characterAge,
-          "characters.$.characterGender": characterGender,
-          "characters.$.language": language,
-          "characters.$.tags": tags || [],
-          "characters.$.description": description.trim(),
-          "characters.$.personality": personality.trim(),
-          "characters.$.scenario": scenario.trim(),
-          "characters.$.firstMessage": firstMessage.trim(),
-          "characters.$.visibility": visibility || "private",
-        },
-      },
+      { $set: setQuery },
       { new: true, runValidators: true }
     );
 

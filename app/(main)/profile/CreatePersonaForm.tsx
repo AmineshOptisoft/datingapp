@@ -35,7 +35,8 @@ const TAG_CATEGORIES = {
 
 export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: () => void; onClose?: () => void }) {
     const [name, setName] = useState("");
-    const [image, setImage] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [age, setAge] = useState("18");
     const [gender, setGender] = useState<"male" | "female" | "other">("female");
     const [language, setLanguage] = useState("English");
@@ -51,9 +52,8 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = () => setImage(reader.result as string);
-            reader.readAsDataURL(file);
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
@@ -108,31 +108,29 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
 
             setIsCreating(true);
 
-            // Prepare data
-            const characterData = {
-                userId,
-                characterName: name.trim(),
-                characterImage: image,
-                characterAge: ageNum,
-                characterGender: gender,
-                language: language,
-                tags: tags,
-                description: description.trim(),
-                personality: personality.trim(),
-                scenario: scenario.trim(),
-                firstMessage: firstMessage.trim(),
-                visibility: visibility.toLowerCase(),
-            };
+            const formData = new FormData();
+            formData.append("userId", userId);
+            formData.append("characterName", name.trim());
+            formData.append("characterAge", ageNum.toString());
+            formData.append("characterGender", gender);
+            formData.append("language", language);
+            formData.append("tags", JSON.stringify(tags));
+            formData.append("description", description.trim());
+            formData.append("personality", personality.trim());
+            formData.append("scenario", scenario.trim());
+            formData.append("firstMessage", firstMessage.trim());
+            formData.append("visibility", visibility.toLowerCase());
 
-            console.log("Sending character data:", characterData); // Debug
+            if (imageFile) {
+                formData.append("characterImage", imageFile);
+            }
+
+            console.log("Sending character data via FormData"); // Debug
 
             // Call API
             const response = await fetch("/api/characters", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(characterData),
+                body: formData,
             });
 
             const data = await response.json();
@@ -148,7 +146,8 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             
             // Reset form
             setName("");
-            setImage(null);
+            setImageFile(null);
+            setImagePreview(null);
             setAge("18");
             setLanguage("English");
             setTags([]);
@@ -194,8 +193,8 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                     {/* Character Image */}
                     <div className="flex gap-6">
                         <div className="shrink-0 w-32 h-44 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                            {image ? (
-                                <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                            {imagePreview ? (
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="flex flex-col items-center text-zinc-400">
                                     <ImageIcon className="w-8 h-8 opacity-50" />
@@ -214,7 +213,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                                         Choose file
                                         <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                                     </label>
-                                    <span className="text-zinc-500 text-sm">{image ? 'File chosen' : 'No file chosen'}</span>
+                                    <span className="text-zinc-500 text-sm">{imageFile ? imageFile.name : 'No file chosen'}</span>
                                 </div>
                                 <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                                     Upload or generate an image that represents your character. Make sure these images comply to <span className="text-blue-500 hover:underline cursor-pointer">our terms and community guidelines</span>.

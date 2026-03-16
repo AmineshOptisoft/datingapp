@@ -13,6 +13,7 @@ export default function EditPersonaDialog({ persona, onSuccess, onClose }: EditP
   const [background, setBackground] = useState(persona?.background || "");
   const [makeDefault, setMakeDefault] = useState(persona?.makeDefault || false);
   const [avatar, setAvatar] = useState<string | null>(persona?.avatar || null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,12 +24,14 @@ export default function EditPersonaDialog({ persona, onSuccess, onClose }: EditP
       setBackground(persona.background || "");
       setMakeDefault(persona.makeDefault || false);
       setAvatar(persona.avatar || null);
+      setAvatarFile(null); // reset file on persona change
     }
   }, [persona]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
@@ -52,19 +55,22 @@ export default function EditPersonaDialog({ persona, onSuccess, onClose }: EditP
 
       setIsSaving(true);
 
-      const personaData = {
-        displayName: displayName.trim(),
-        background: background.trim(),
-        makeDefault,
-        avatar,
-      };
+      const formData = new FormData();
+      formData.append("displayName", displayName.trim());
+      formData.append("background", background.trim());
+      formData.append("makeDefault", String(makeDefault));
+      
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      } else if (avatar) {
+        formData.append("avatar", avatar);
+      }
 
-      console.log("Updating persona:", personaData);
+      console.log("Updating persona...");
 
       const response = await fetch(`/api/personas/${persona._id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(personaData),
+        body: formData,
       });
 
       const data = await response.json();

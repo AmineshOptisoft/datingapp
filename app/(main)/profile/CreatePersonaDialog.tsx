@@ -12,12 +12,14 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
   const [background, setBackground] = useState("");
   const [makeDefault, setMakeDefault] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
@@ -59,20 +61,24 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
         return;
       }
 
-      const personaData = {
-        userId,
-        displayName: displayName.trim(),
-        background: background.trim(),
-        makeDefault,
-        avatar,
-      };
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("displayName", displayName.trim());
+      formData.append("background", background.trim());
+      formData.append("makeDefault", String(makeDefault));
+      
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      } else if (avatar) {
+        // Fallback for pre-existing avatars / gen AI urls
+        formData.append("avatar", avatar);
+      }
 
-      console.log("Saving persona:", personaData);
+      console.log("Saving persona...");
 
       const response = await fetch("/api/personas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(personaData),
+        body: formData,
       });
 
       const data = await response.json();

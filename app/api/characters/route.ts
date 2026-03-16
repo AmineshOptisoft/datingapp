@@ -52,23 +52,69 @@ export async function GET(request: NextRequest) {
 // POST - Create a new character
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log("Received character data:", body); // Debug logging
+    // Support both FormData (with file upload) and JSON (with URL)
+    const contentType = request.headers.get("content-type") || "";
     
-    const {
-      userId,
-      characterName,
-      characterImage,
-      characterAge,
-      characterGender,
-      language,
-      tags,
-      description,
-      personality,
-      scenario,
-      firstMessage,
-      visibility,
-    } = body;
+    let userId: string, characterName: string, characterImage: string | null,
+      characterAge: number, characterGender: string, language: string,
+      tags: string[], description: string, personality: string,
+      scenario: string, firstMessage: string, visibility: string;
+
+    if (contentType.includes("multipart/form-data")) {
+      // FormData path — file upload support
+      const formData = await request.formData();
+
+      userId        = formData.get("userId") as string;
+      characterName = formData.get("characterName") as string;
+      characterAge  = Number(formData.get("characterAge"));
+      characterGender = formData.get("characterGender") as string;
+      language      = (formData.get("language") as string) || "English";
+      description   = formData.get("description") as string;
+      personality   = formData.get("personality") as string;
+      scenario      = (formData.get("scenario") as string) || "";
+      firstMessage  = formData.get("firstMessage") as string;
+      visibility    = (formData.get("visibility") as string) || "private";
+
+      // tags may be sent as a comma-separated string or JSON array string
+      const rawTags = formData.get("tags") as string | null;
+      tags = rawTags
+        ? rawTags.startsWith("[") ? JSON.parse(rawTags) : rawTags.split(",").map(t => t.trim())
+        : [];
+
+      // Handle image file upload
+      const imageFile = formData.get("characterImage") as File | null;
+      if (imageFile && imageFile.size > 0) {
+        const path = await import("path");
+        const fs   = await import("fs");
+
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+        const ext        = path.extname(imageFile.name) || ".jpg";
+        const uniqueName = `char-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const filePath   = path.join(uploadsDir, uniqueName);
+
+        const arrayBuffer = await imageFile.arrayBuffer();
+        fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
+
+        characterImage = `/uploads/${uniqueName}`;
+      } else {
+        // Allow passing a URL string directly via FormData (optional)
+        characterImage = (formData.get("characterImageUrl") as string) || null;
+      }
+
+    } else {
+      // JSON path — accepts a pre-uploaded URL (not base64)
+      const body = await request.json();
+      console.log("Received character data:", body);
+
+      ({
+        userId, characterName, characterImage = null,
+        characterAge, characterGender, language,
+        tags, description, personality,
+        scenario, firstMessage, visibility,
+      } = body);
+    }
 
     // Detailed validation with specific error messages
     if (!userId) {
@@ -171,8 +217,7 @@ export async function POST(request: NextRequest) {
       visibility: visibility || "private",
     };
 
-    console.log("About to insert character:", JSON.stringify(newCharacter, null, 2));
-    console.log("For userId:", userId);
+    console.log("About to insert character for userId:", userId);
 
     const user = await User.findByIdAndUpdate(
       userId,
@@ -183,7 +228,6 @@ export async function POST(request: NextRequest) {
     console.log("Update result - User found:", !!user);
     if (user) {
       console.log("User characters count:", user.characters?.length || 0);
-      console.log("User characters:", JSON.stringify(user.characters, null, 2));
     }
 
     if (!user) {

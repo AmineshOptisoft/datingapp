@@ -11,7 +11,7 @@ interface EditProfileFormProps {
 
 export default function EditProfileForm({ user, onSuccess }: EditProfileFormProps) {
     const { updateUser } = useAuth();
-    const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(user?.avatar || null);
     const [name, setName] = useState(user?.name || "");
     const [bio, setBio] = useState(user?.bio || "");
@@ -23,13 +23,8 @@ export default function EditProfileForm({ user, onSuccess }: EditProfileFormProp
     const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const result = reader.result as string;
-                setAvatarBase64(result);
-                setPreview(result);
-            };
-            reader.readAsDataURL(file);
+            setAvatarFile(file);
+            setPreview(URL.createObjectURL(file));
         }
     };
 
@@ -39,17 +34,18 @@ export default function EditProfileForm({ user, onSuccess }: EditProfileFormProp
         setMessage("");
 
         try {
+            const formData = new FormData();
+            formData.append("userId", user.id);
+            formData.append("name", name);
+            formData.append("bio", bio);
+            formData.append("email", email);
+            formData.append("phone", phone);
+            if (avatarFile) formData.append("avatar", avatarFile);
+
             const res = await fetch("/api/profile", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: user.id,
-                    name,
-                    bio,
-                    email,
-                    phone,
-                    avatarBase64,
-                }),
+                // No Content-Type header — browser sets it automatically with boundary for FormData
+                body: formData,
             });
 
             const data = await res.json();
@@ -67,7 +63,7 @@ export default function EditProfileForm({ user, onSuccess }: EditProfileFormProp
                     phone: data.data.phoneNumber,
                 });
 
-                setAvatarBase64(null);
+                setAvatarFile(null);
                 if (onSuccess) onSuccess();
             } else {
                 setMessage(data.message || "Update failed");
