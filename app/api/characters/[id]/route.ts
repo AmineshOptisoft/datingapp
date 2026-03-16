@@ -43,16 +43,20 @@ export async function PUT(
     const { id } = params;
     
     // Support both FormData and JSON
-    const contentType = request.headers.get("content-type") || "";
+    // Always try FormData first, avoiding unreliable Content-Type header checks from React Native
+    let formData: FormData | null = null;
+    try {
+      formData = await request.formData();
+    } catch {
+      // JSON fallback will trigger below
+    }
     
     let userId: string, characterName: string, characterImage: string | null | undefined,
       characterAge: number, characterGender: string, language: string,
       tags: string[], description: string, personality: string,
       scenario: string, firstMessage: string, visibility: string;
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await request.formData();
-
+    if (formData) {
       userId        = formData.get("userId") as string;
       characterName = formData.get("characterName") as string;
       characterAge  = Number(formData.get("characterAge"));

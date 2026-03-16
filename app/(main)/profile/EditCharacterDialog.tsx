@@ -57,6 +57,7 @@ export default function EditCharacterDialog({
 }) {
     const [name, setName] = useState(character.characterName || "");
     const [image, setImage] = useState<string | null>(character.characterImage || null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [age, setAge] = useState(character.characterAge?.toString() || "18");
     const [gender, setGender] = useState<"male" | "female" | "other">(character.characterGender || "female");
     const [language, setLanguage] = useState(character.language || "English");
@@ -72,8 +73,9 @@ export default function EditCharacterDialog({
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setImageFile(file);
             const reader = new FileReader();
-            reader.onload = () => setImage(reader.result as string);
+            reader.onload = () => setImage(reader.result as string); // Only for preview
             reader.readAsDataURL(file);
         }
     };
@@ -121,29 +123,31 @@ export default function EditCharacterDialog({
 
             setIsSaving(true);
 
-            const characterData = {
-                userId,
-                characterName: name.trim(),
-                characterImage: image,
-                characterAge: ageNum,
-                characterGender: gender,
-                language,
-                tags,
-                description: description.trim(),
-                personality: personality.trim(),
-                scenario: scenario.trim(),
-                firstMessage: firstMessage.trim(),
-                visibility: visibility.toLowerCase(),
-            };
+            const formData = new FormData();
+            formData.append("userId", userId);
+            formData.append("characterName", name.trim());
+            formData.append("characterAge", String(ageNum));
+            formData.append("characterGender", gender);
+            formData.append("language", language);
+            formData.append("tags", JSON.stringify(tags));
+            formData.append("description", description.trim());
+            formData.append("personality", personality.trim());
+            formData.append("scenario", scenario.trim());
+            formData.append("firstMessage", firstMessage.trim());
+            formData.append("visibility", visibility.toLowerCase());
 
-            console.log("📤 Sending character data to API:", characterData);
+            // Only append file if user selected a NEW image
+            if (imageFile) {
+                formData.append("characterImage", imageFile);
+            } else if (image && !image.startsWith("data:")) {
+                // Keep existing URL (not base64)
+                formData.append("characterImageUrl", image);
+            }
 
             const response = await fetch(`/api/characters/${character._id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(characterData),
+                // No Content-Type header — browser sets it automatically with boundary
+                body: formData,
             });
 
             const data = await response.json();

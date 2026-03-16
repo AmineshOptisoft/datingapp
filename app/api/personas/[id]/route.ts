@@ -39,11 +39,17 @@ export async function PUT(
   try {
     await dbConnect();
 
-    const contentType = req.headers.get("content-type") || "";
     let displayName: string | undefined, background: string | undefined, avatar: string | undefined, makeDefault: boolean | undefined;
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await req.formData();
+    // Always try FormData first (handles React Native, Postman, and Web browsers)
+    let formData: FormData | null = null;
+    try {
+      formData = await req.formData();
+    } catch {
+      // not form-data, will try JSON below
+    }
+
+    if (formData) {
       if (formData.has("displayName")) displayName = formData.get("displayName") as string;
       if (formData.has("background")) background = formData.get("background") as string;
       if (formData.has("makeDefault")) makeDefault = formData.get("makeDefault") === "true";

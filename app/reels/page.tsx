@@ -225,16 +225,22 @@ function ReelViewer({
         <div className="absolute bottom-4 left-4 right-4 z-10 space-y-3">
           {/* Username + Follow */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <Link
+              href={`/user/${reel.poster?._id}`}
+              className="flex items-center gap-2 group/poster"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center flex-shrink-0 group-hover/poster:ring-2 group-hover/poster:ring-white/60 transition-all">
                 {reel.poster?.avatar ? (
                   <img src={reel.poster.avatar} alt={posterName} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white font-bold text-sm">{posterName[0]?.toUpperCase()}</span>
                 )}
               </div>
-              <span className="text-white font-semibold text-sm drop-shadow">@{posterName}</span>
-            </div>
+              <span className="text-white font-semibold text-sm drop-shadow group-hover/poster:underline underline-offset-2">
+                @{posterName}
+              </span>
+            </Link>
             <button className="px-4 py-1.5 border border-white rounded-lg text-white text-xs font-semibold hover:bg-white/20 transition">
               Follow
             </button>

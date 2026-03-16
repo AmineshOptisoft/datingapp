@@ -38,11 +38,18 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
 
-    const contentType = req.headers.get("content-type") || "";
     let userId: string, displayName: string, background: string, avatar: string | null = null, makeDefault: boolean = false;
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await req.formData();
+    // Always try FormData first (works with React Native, Postman, and Web browsers)
+    // This avoids the "No number after minus sign" error when express/next tries to JSON.parse multipart data
+    let formData: FormData | null = null;
+    try {
+      formData = await req.formData();
+    } catch {
+      // not form-data, will try JSON below
+    }
+
+    if (formData) {
       userId = formData.get("userId") as string;
       displayName = formData.get("displayName") as string;
       background = formData.get("background") as string;
@@ -64,11 +71,10 @@ export async function POST(req: NextRequest) {
         await writeFile(filepath, buffer);
         avatar = `/uploads/${filename}`;
       } else if (typeof formData.get("avatar") === "string") {
-        // allow strings (like prior URL values) just in case
         avatar = formData.get("avatar") as string;
       }
     } else {
-      // Fallback for JSON
+      // JSON fallback (when no file is being uploaded)
       const body = await req.json();
       userId = body.userId;
       displayName = body.displayName;
