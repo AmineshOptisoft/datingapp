@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Grid, Film, User, MessageSquare } from "lucide-react";
+import { ArrowLeft, Grid, Film, User, MessageSquare, Play } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,8 @@ interface Scene {
   mediaUrl: string;
   mediaType: "image" | "video";
   createdAt: string;
+  reelId?: string;
+  reelViewsCount?: number;
 }
 
 export default function PublicUserProfilePage() {
@@ -46,6 +48,17 @@ export default function PublicUserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"characters" | "scenes">("characters");
+
+  const formatViews = (count: number) => {
+    if (!count) return "0";
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return count.toString();
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -214,7 +227,7 @@ export default function PublicUserProfilePage() {
                       <div className="relative h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                         {character.characterImage ? (
                           <img
-                            src={character.characterImage}
+                            src={character.characterImage.startsWith('http') ? character.characterImage : character.characterImage}
                             alt={character.characterName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -297,9 +310,21 @@ export default function PublicUserProfilePage() {
                           />
                         )}
                         {/* Overlay */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                        
+                        {/* Reel Views Overlay */}
+                        {scene.reelId && (
+                          <>
+                            <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
+                            <div className="absolute top-2 left-2 flex items-center gap-1.5 text-white/95 text-[14px] font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 pointer-events-none">
+                              <Play className="w-5 h-5 fill-transparent stroke-white/95 stroke-[2]" />
+                              <span>{formatViews(scene.reelViewsCount || 0)}</span>
+                            </div>
+                          </>
+                        )}
+                        
                         {scene.mediaType === "video" && (
-                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full">
+                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full z-20">
                             🎬 Video
                           </div>
                         )}

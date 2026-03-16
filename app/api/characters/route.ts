@@ -82,8 +82,10 @@ export async function POST(request: NextRequest) {
         : [];
 
       // Handle image file upload
-      const imageFile = formData.get("characterImage") as File | null;
-      if (imageFile && imageFile.size > 0) {
+      const imageFile = formData.get("characterImage");
+      
+      // If imageFile is a File object with content
+      if (imageFile instanceof File && imageFile.size > 0) {
         const path = await import("path");
         const fs   = await import("fs");
 
@@ -98,6 +100,9 @@ export async function POST(request: NextRequest) {
         fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
 
         characterImage = `/uploads/${uniqueName}`;
+      } else if (typeof imageFile === 'string' && imageFile.startsWith('http')) {
+        // If the frontend passed a URL directly in the characterImage field
+        characterImage = imageFile;
       } else {
         // Allow passing a URL string directly via FormData (optional)
         characterImage = (formData.get("characterImageUrl") as string) || null;
@@ -121,6 +126,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "User ID is missing" },
         { status: 400 }
+        
       );
     }
 

@@ -41,9 +41,58 @@ export async function GET(
 
     // Fetch public scenes for this user
     const scenes = await Scene.find({ userId, isPublishedAsReel: true })
-      .select("_id sceneTitle sceneDescription mediaUrl mediaType createdAt")
+      .select("_id sceneTitle sceneDescription mediaUrl mediaType createdAt reelId")
       .sort({ createdAt: -1 })
       .lean();
+
+    // Fetch view counts for these scenes if they have reelIds
+    const sceneIds = scenes.map((s: any) => s._id.toString());
+    const validReelIdsOnScene = scenes.map((s: any) => s.reelId).filter(Boolean);
+
+    // Fetch reels associated with these scenes
+    const reelsReq = await dbConnect().then(async () => {
+      const Reel = require('@/models/Reel').default || require('@/models/Reel');
+      return Reel.find({
+        $or: [
+          { sceneId: { $in: sceneIds } },
+          { _id: { $in: validReelIdsOnScene } }
+        ]
+      }).select("_id sceneId").lean();
+    });
+
+    const matchedReelIds = reelsReq.map((r: any) => r._id);
+    const viewCounts: Record<string, number> = {};
+
+    if (matchedReelIds.length > 0) {
+      const viewsData = await dbConnect().then(async () => {
+        const ReelView = require('@/models/ReelView').default || require('@/models/ReelView');
+        return ReelView.aggregate([
+          { $match: { reelId: { $in: matchedReelIds } } },
+          { $group: { _id: "$reelId", count: { $sum: 1 } } }
+        ]);
+      });
+
+      viewsData.forEach((d: any) => viewCounts[d._id.toString()] = d.count);
+    }
+
+    // Create a map of sceneId -> reel -> views
+    const reelStatsMap: Record<string, number> = {};
+    reelsReq.forEach((r: any) => {
+      const views = viewCounts[r._id.toString()] || 0;
+      if (r.sceneId) reelStatsMap[`scene_${r.sceneId.toString()}`] = views;
+      reelStatsMap[`reel_${r._id.toString()}`] = views;
+    });
+
+    const enrichedScenes = scenes.map((scene: any) => {
+      const sceneIdStr = scene._id.toString();
+      const reelIdStr = scene.reelId?.toString();
+      const views = reelStatsMap[`scene_${sceneIdStr}`] ?? (reelIdStr ? reelStatsMap[`reel_${reelIdStr}`] : 0) ?? 0;
+      
+      return {
+        ...scene,
+        reelViewsCount: views,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -55,7 +104,7 @@ export async function GET(
         bio: typedUser.bio,
       },
       characters,
-      scenes,
+      scenes: enrichedScenes,
     });
   } catch (error: any) {
     console.error("Error fetching public user profile:", error);

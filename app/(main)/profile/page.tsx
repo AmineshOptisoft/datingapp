@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2, Film } from "lucide-react";
+import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2, Film, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EditProfileForm from "./EditProfileForm";
 import CreatePersonaForm from "./CreatePersonaForm";
@@ -281,6 +281,17 @@ export default function ProfilePage() {
     }
   };
 
+  const formatViews = (count: number) => {
+    if (!count) return "0";
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return count.toString();
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -433,7 +444,7 @@ export default function ProfilePage() {
                       <div className="relative h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                         {character.characterImage ? (
                           <img
-                            src={character.characterImage}
+                            src={character.characterImage.startsWith('http') ? character.characterImage : character.characterImage}
                             alt={character.characterName}
                             className="w-full h-full object-cover"
                           />
@@ -757,7 +768,7 @@ export default function ProfilePage() {
                     >
                       {/* Media */}
                       <div 
-                        className="aspect-square w-full bg-zinc-100 dark:bg-zinc-900 cursor-pointer"
+                        className="aspect-square w-full bg-zinc-100 dark:bg-zinc-900 cursor-pointer relative"
                         onClick={() => {
                           setViewingScene(scene);
                           setIsSceneViewOpen(true);
@@ -776,6 +787,17 @@ export default function ProfilePage() {
                             controls
                             preload="metadata"
                           />
+                        )}
+                        
+                        {/* Reel Views Overlay */}
+                        {scene.isPublishedAsReel && scene.reelId && (
+                          <>
+                            <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
+                            <div className="absolute top-2 left-2 flex items-center gap-1.5 text-white/95 text-[14px] font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20 pointer-events-none">
+                              <Play className="w-5 h-5 fill-transparent stroke-white/95 stroke-[2]" />
+                              <span>{formatViews(scene.reelViewsCount || 0)}</span>
+                            </div>
+                          </>
                         )}
                       </div>
 
