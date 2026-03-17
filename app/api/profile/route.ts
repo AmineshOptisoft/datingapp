@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(arrayBuffer);
       fs.writeFileSync(filePath, buffer);
 
-      // Store only the URL path in DB
-      updateData.avatar = `/uploads/${uniqueName}`;
+      // Store only the URL path in DB using the new API route
+      updateData.avatar = `/api/uploads/${uniqueName}`;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
