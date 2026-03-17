@@ -89,7 +89,7 @@ export async function PUT(
         const arrayBuffer = await imageFile.arrayBuffer();
         fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
 
-        characterImage = `/uploads/${uniqueName}`;
+        characterImage = `/api/uploads/${uniqueName}`;
       } else {
         characterImage = undefined; // Do not overwrite if no new image provided
       }

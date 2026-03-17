@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await imageFile.arrayBuffer();
         fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
 
-        characterImage = `/uploads/${uniqueName}`;
+        // Use the new dynamic upload API so Next.js doesn't 404 fresh files
+        characterImage = `/api/uploads/${uniqueName}`;
       } else {
         // Allow passing a URL string directly via FormData (optional)
         characterImage = (formData.get("characterImageUrl") as string) || null;
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "User ID is missing" },
         { status: 400 }
+        
       );
     }
 

@@ -67,7 +67,7 @@ export async function PUT(
         const filepath = path.join(uploadDir, filename);
         
         await writeFile(filepath, buffer);
-        avatar = `/uploads/${filename}`;
+        avatar = `/api/uploads/${filename}`;
       } else if (typeof formData.get("avatar") === "string") {
         avatar = formData.get("avatar") as string;
       }
