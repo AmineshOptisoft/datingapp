@@ -32,8 +32,11 @@ export async function POST(
       );
     }
 
-    // Find the user who owns this character
-    const ownerUser = await User.findOne({ "characters._id": id });
+    // Find the user who owns this character (optimized with lean and projection)
+    const ownerUser = await User.findOne(
+      { "characters._id": id },
+      { "characters._id": 1, "characters.likedBy": 1 }
+    ).lean();
 
     if (!ownerUser) {
       return NextResponse.json(
@@ -42,7 +45,7 @@ export async function POST(
       );
     }
 
-    const character = ownerUser.characters?.find(
+    const character = (ownerUser as any).characters?.find(
       (c: any) => c._id.toString() === id
     );
 
@@ -53,7 +56,7 @@ export async function POST(
       );
     }
 
-    const alreadyLiked = (character as any).likedBy?.includes(userId);
+    const alreadyLiked = character.likedBy?.includes(userId);
 
     let updatedUser;
     if (alreadyLiked) {
@@ -64,8 +67,8 @@ export async function POST(
           $pull: { "characters.$.likedBy": userId },
           $inc: { "characters.$.likes": -1 },
         },
-        { new: true }
-      );
+        { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
+      ).lean();
     } else {
       // Like: add userId to likedBy and increment likes
       updatedUser = await User.findOneAndUpdate(
@@ -74,8 +77,8 @@ export async function POST(
           $addToSet: { "characters.$.likedBy": userId },
           $inc: { "characters.$.likes": 1 },
         },
-        { new: true }
-      );
+        { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
+      ).lean();
     }
 
     if (!updatedUser) {
@@ -85,7 +88,7 @@ export async function POST(
       );
     }
 
-    const updatedChar = updatedUser.characters?.find(
+    const updatedChar = (updatedUser as any).characters?.find(
       (c: any) => c._id.toString() === id
     );
 

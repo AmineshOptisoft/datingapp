@@ -76,6 +76,10 @@ const CharacterSchema = new Schema<ICharacter>(
       type: [String],
       default: [],
     },
+    interactedBy: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );

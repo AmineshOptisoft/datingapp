@@ -32,17 +32,53 @@ export async function POST(
       );
     }
 
-    // Find and increment interactions for this character
-    const updatedUser = await User.findOneAndUpdate(
+    // Find user who owns this character
+    const ownerUser = await User.findOne({ "characters._id": id });
+
+    if (!ownerUser) {
+      return NextResponse.json(
+        { success: false, message: "Character not found" },
+        { status: 404 }
+      );
+    }
+
+    const character = ownerUser.characters?.find(
+      (c: any) => c._id.toString() === id
+    );
+
+    if (!character) {
+      return NextResponse.json(
+        { success: false, message: "Character not found" },
+        { status: 404 }
+      );
+    }
+
+    const alreadyInteracted = (character as any).interactedBy?.includes(userId);
+
+    let updatedUser;
+    
+    if (alreadyInteracted) {
+      // User already interacted, don't increment
+      return NextResponse.json({
+        success: true,
+        interactions: (character as any).interactions ?? 0,
+      });
+    }
+
+    // New interaction, increment and add user to interactedBy
+    updatedUser = await User.findOneAndUpdate(
       { "characters._id": id },
-      { $inc: { "characters.$.interactions": 1 } },
+      { 
+        $addToSet: { "characters.$.interactedBy": userId },
+        $inc: { "characters.$.interactions": 1 } 
+      },
       { new: true }
     );
 
     if (!updatedUser) {
       return NextResponse.json(
-        { success: false, message: "Character not found" },
-        { status: 404 }
+        { success: false, message: "Failed to interact" },
+        { status: 500 }
       );
     }
 
