@@ -13,6 +13,11 @@ interface UseProfileDetailResult {
 const profileCache = new Map<string, { data: AIProfileDetail; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Export cache invalidation function so pages can clear stale data after actions
+export function invalidateProfileCache(profileId: string) {
+  profileCache.delete(profileId);
+}
+
 export function useProfileDetail(
   routePrefix: RoutePrefix,
   legacyId: string | number | undefined
@@ -34,12 +39,17 @@ export function useProfileDetail(
     async function fetchProfile() {
       const profileId = `${routePrefix}-${legacyId}`;
       
-      // Check cache first
-      const cached = profileCache.get(profileId);
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        setProfile(cached.data);
-        setLoading(false);
-        return;
+      // Skip cache for user-created characters since likes/interactions change frequently
+      const isCharacter = routePrefix === 'character';
+      
+      // Check cache first (but not for character profiles)
+      if (!isCharacter) {
+        const cached = profileCache.get(profileId);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+          setProfile(cached.data);
+          setLoading(false);
+          return;
+        }
       }
 
       setLoading(true);
@@ -60,11 +70,13 @@ export function useProfileDetail(
         const payload = await response.json();
         if (!cancelled) {
           setProfile(payload.data);
-          // Cache the result
-          profileCache.set(profileId, {
-            data: payload.data,
-            timestamp: Date.now(),
-          });
+          // Cache the result (for non-character profiles)
+          if (!isCharacter) {
+            profileCache.set(profileId, {
+              data: payload.data,
+              timestamp: Date.now(),
+            });
+          }
         }
       } catch (err: any) {
         if (!cancelled && err.name !== 'AbortError') {

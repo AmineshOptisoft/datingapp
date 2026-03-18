@@ -91,6 +91,9 @@ export async function GET(request: NextRequest) {
                 badgeHot: false,
                 badgePro: false,
                 characterGender: char.characterGender,
+                likes: char.likes || 0,
+                interactions: char.interactions || 0,
+                likedBy: char.likedBy || [],
               });
             }
           });
@@ -181,11 +184,11 @@ export async function POST(request: NextRequest) {
              data: {
                 profileId: `character-${char._id}`,
                 legacyId: char._id,
-                routePrefix: 'character', // Use 'character' as route prefix
-                audienceSegment: 'for-men', // Default or should be derived? Maybe irrelevant for detail
+                routePrefix: 'character',
+                audienceSegment: 'for-men',
                 name: char.characterName,
                 age: char.characterAge,
-                profession: "Virtual Companion", // Default
+                profession: "Virtual Companion",
                 location: "Virtual World",
                 education: "Self-taught",
                 height: "N/A",
@@ -193,7 +196,7 @@ export async function POST(request: NextRequest) {
                 ethnicity: "N/A",
                 languages: [char.language || "English"],
                 category: "User Character",
-                cardTitle: char.description || char.characterName, // As requested
+                cardTitle: char.description || char.characterName,
                 monthlyPrice: parseFloat(process.env.NEXT_PUBLIC_USER_CHARACTER_PRICE || "2"),
                 badgeHot: false,
                 badgePro: false,
@@ -201,23 +204,16 @@ export async function POST(request: NextRequest) {
                 photos: [char.characterImage || "/default-avatar.png"],
                 eyeColor: "N/A",
                 hairColor: "N/A",
-                
-                // Use description as bio as requested
-                bio: char.description, 
+                bio: char.description,
                 tagline: char.personality,
-                
-                // Map other fields
                 personalityType: char.personality,
                 hobbies: char.tags || [],
                 topicPreferences: char.tags || [],
-                
-                // Fill required fields with defaults
                 interests: char.tags || [],
                 lookingFor: "Connection",
                 onlineStatus: "online",
                 lastSeen: new Date(),
                 responseDelay: 0,
-                
                 conversationStyle: "Engaging",
                 responsePatterns: ["Empathetic"],
                 emotionalIntelligence: "High",
@@ -227,7 +223,6 @@ export async function POST(request: NextRequest) {
                 backstoryElements: [char.scenario],
                 relationshipProgression: "Natural",
                 engagementLevel: "High",
-                
                 smokingHabits: "Non-smoker",
                 drinkingHabits: "Socially",
                 dietaryPreferences: "None",
@@ -243,7 +238,6 @@ export async function POST(request: NextRequest) {
                 outdoorActivities: "Walking",
                 indoorActivities: "Reading",
                 weekendStyle: "Relaxed",
-                
                 musicGenres: [],
                 movieGenres: [],
                 bookGenres: [],
@@ -257,7 +251,6 @@ export async function POST(request: NextRequest) {
                 conflictResolution: "Calm",
                 socialCircle: "Small",
                 creativityLevel: "High",
-                
                 relationshipGoals: "Companionship",
                 datingStyle: "Romantic",
                 idealDateType: "Virtual Date",
@@ -268,6 +261,10 @@ export async function POST(request: NextRequest) {
                 religionImportance: "None",
                 familyPlans: "None",
                 commitmentLevel: "Committed",
+                // Engagement fields
+                likes: char.likes ?? 0,
+                interactions: char.interactions ?? 0,
+                likedBy: char.likedBy ?? [],
              }
            });
          }

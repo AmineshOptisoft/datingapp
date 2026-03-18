@@ -861,11 +861,14 @@ app.prepare().then(async () => {
         return;
       }
 
-      // Check for restricted content
+      // Check for restricted content or message limit
       let hasRestrictedContent = false;
-      let restrictedContentData: { profileId: string; name: string; price: number } | null = null;
+      let restrictedContentData: { profileId: string; name: string; price: number; customMessage?: string } | null = null;
       
-      if (containsRestrictedWords(message)) {
+      const messageCount = await Message.countDocuments({ sender: userId, receiver: aiBotId });
+      const containsRestricted = containsRestrictedWords(message);
+      
+      if (containsRestricted || messageCount >= 10) {
         // Check for active subscription
         const activeSubscription = await UserSubscription.findOne({
           userId,
@@ -874,7 +877,7 @@ app.prepare().then(async () => {
         });
 
         if (!activeSubscription) {
-          console.log(`⚠️ Restricted content detected for user ${userId} with profile ${profileId} - will prompt after response`);
+          console.log(`⚠️ Restriction triggered for user ${userId} with profile ${profileId} (Restricted API/Limit)`);
           hasRestrictedContent = true;
           
           let price = 0;
@@ -908,6 +911,11 @@ app.prepare().then(async () => {
             name: restrictedName,
             price
           };
+
+          // Define a custom message if restricted because of the free limit
+          if (!containsRestricted && messageCount >= 10) {
+            restrictedContentData.customMessage = `You have reached your 10 free messages limit with ${restrictedName}. Please subscribe to continue chatting.`;
+          }
         }
       }
 
@@ -925,7 +933,7 @@ app.prepare().then(async () => {
           console.log(`🚫 Blocking AI response - prompting user to subscribe`);
           socket.emit("restricted_content", {
             ...restrictedContentData,
-            message: "To continue this type of conversation, please subscribe to unlock adult content."
+            message: restrictedContentData.customMessage || "To continue this type of conversation, please subscribe to unlock adult content."
           });
           return; // Exit early - no AI response
         }

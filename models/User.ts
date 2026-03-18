@@ -64,6 +64,22 @@ const CharacterSchema = new Schema<ICharacter>(
       enum: ["public", "private"],
       default: "private",
     },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    interactions: {
+      type: Number,
+      default: 0,
+    },
+    likedBy: {
+      type: [String],
+      default: [],
+    },
+    interactedBy: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );
