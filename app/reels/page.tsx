@@ -12,6 +12,8 @@ import {
   Bookmark,
   MoreHorizontal,
   ArrowLeft,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -57,6 +59,15 @@ function ReelViewer({
   onReelRemoved: (id: string) => void;
 }) {
   const [isLiked, setIsLiked] = useState(reel.isLiked);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted((prev) => !prev);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
+  };
   const [likesCount, setLikesCount] = useState(reel.likesCount);
   const [viewsCount, setViewsCount] = useState(reel.viewsCount);
   const [commentsCount, setCommentsCount] = useState(reel.commentsCount);
@@ -204,12 +215,21 @@ function ReelViewer({
       >
         {/* Media */}
         {reel.mediaType === "video" ? (
-          <video
-            ref={videoRef}
-            src={reel.mediaUrl}
-            className="absolute inset-0 w-full h-full object-cover"
-            loop muted playsInline
-          />
+          <div className="absolute inset-0 w-full h-full cursor-pointer" onClick={toggleMute}>
+            <video
+              ref={videoRef}
+              src={reel.mediaUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              loop muted={isMuted} playsInline
+            />
+            <div className="absolute top-4 right-4 z-20 bg-black/40 p-2 rounded-full backdrop-blur-sm transition-transform active:scale-95">
+              {isMuted ? (
+                <VolumeX className="w-5 h-5 text-white" />
+              ) : (
+                <Volume2 className="w-5 h-5 text-white" />
+              )}
+            </div>
+          </div>
         ) : (
           <img
             src={reel.mediaUrl}

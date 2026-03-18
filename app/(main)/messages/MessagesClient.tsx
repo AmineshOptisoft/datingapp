@@ -339,10 +339,20 @@ export default function MessagesClient() {
   const handleSendMessage = () => {
     const targetProfileId = selectedConv?.profileId || selectedProfileId;
 
+    console.log('🔍 handleSendMessage debug:', {
+      targetProfileId,
+      selectedConvProfileId: selectedConv?.profileId,
+      selectedProfileId,
+      hasSocket: !!socketRef.current,
+      isConnected,
+      messageText: messageText.trim().substring(0, 20),
+    });
+
     if (messageText.trim() && targetProfileId) {
       if (selectedPersonaId) {
         const selectedPersona = personas.find(p => p._id === selectedPersonaId);
         if (socketRef.current) {
+          console.log('📤 Emitting send_message with persona to:', targetProfileId);
           socketRef.current.emit("send_message", {
             message: messageText,
             profileId: targetProfileId,
@@ -354,6 +364,7 @@ export default function MessagesClient() {
           sendMessage(messageText, targetProfileId);
         }
       } else {
+        console.log('📤 Calling sendMessage to:', targetProfileId);
         sendMessage(messageText, targetProfileId);
       }
       setMessageText('');

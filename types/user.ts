@@ -13,6 +13,9 @@ export interface ICharacter {
   scenario: string;
   firstMessage: string;
   visibility: 'public' | 'private';
+  likes?: number;
+  interactions?: number;
+  likedBy?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

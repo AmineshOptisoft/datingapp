@@ -44,7 +44,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const [userId, setUserId] = useState("");
-  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [selectedProfileId, _setSelectedProfileId] = useState("");
+  const selectedProfileIdRef = useRef("");
+
+  const setSelectedProfileId = (profileId: string) => {
+    selectedProfileIdRef.current = profileId;
+    _setSelectedProfileId(profileId);
+  };
   const [isAITyping, setIsAITyping] = useState(false);
   const { user } = useAuth();
 
@@ -78,19 +84,29 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const socket = io(process.env.NEXT_PUBLIC_APP_URL, { auth: { userId } });
 
     socket.on("connect", () => {
+      console.log('🟢 Socket connected, socket id:', socket.id);
       setIsConnected(true);
-      if (selectedProfileId) {
-        socket.emit("get_conversation", selectedProfileId);
-      }
+      // Wait a tick to allow components to register their selectedProfileId if needed
+      setTimeout(() => {
+        if (selectedProfileIdRef.current) {
+          console.log('📡 Auto-fetching conversation for:', selectedProfileIdRef.current);
+          socket.emit("get_conversation", selectedProfileIdRef.current);
+        }
+      }, 100);
     });
 
-    socket.on("disconnect", () => setIsConnected(false));
+    socket.on("disconnect", () => {
+      console.log('🔴 Socket disconnected');
+      setIsConnected(false);
+    });
 
     socket.on("receive_message", (msg: Message) => {
+      console.log('📩 receive_message:', msg);
       setMessages((prev) => [...prev, msg]);
     });
 
     socket.on("conversation", (msgs: Message[]) => {
+      console.log('📜 conversation loaded:', msgs.length, 'messages');
       setMessages(msgs);
     });
 
