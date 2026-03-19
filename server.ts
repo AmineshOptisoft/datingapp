@@ -842,7 +842,7 @@ app.prepare().then(async () => {
     console.log(`🔌 User connected: ${socket.data.userId}`);
 
     socket.on("send_message", async (data) => {
-      const { message, profileId, personaId, personaContext } = data;
+      const { message, profileId, personaId, personaContext, isGift, giftId, giftPrice } = data;
       if (!message) return;
       const userId = socket.data.userId;
       const aiBotId = profileId || "ai_bot";
@@ -927,6 +927,27 @@ app.prepare().then(async () => {
           receiver: aiBotId,
           message,
         });
+
+        // Add robust gift tracking to the database
+        console.log(`🔍 Gift check: isGift=${isGift}, giftId=${giftId}, giftPrice=${giftPrice}`);
+        if (isGift && giftId && giftPrice) {
+          try {
+            const GiftTransaction = (await import('./models/GiftTransaction')).default;
+            const giftNameMatch = message.match(/🎁 Sent (.+) \(\d+ coins\)/i);
+            const giftName = giftNameMatch ? giftNameMatch[1] : `Gift #${giftId}`;
+            
+            await GiftTransaction.create({
+              sender: userId,
+              receiver: aiBotId,
+              giftId: giftId,
+              giftName: giftName,
+              price: giftPrice
+            });
+            console.log(`🎁 GiftTransaction reliably saved: ${giftName} to ${aiBotId}`);
+          } catch (giftErr) {
+            console.error("Error saving GiftTransaction:", giftErr);
+          }
+        }
 
         // If restricted content detected, show modal immediately and DON'T call AI
         if (hasRestrictedContent && restrictedContentData) {

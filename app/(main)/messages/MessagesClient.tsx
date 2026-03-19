@@ -30,35 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const GIFTS = [
-  { id: 1, name: "Star", image: "/gifts-reactions/star.png", price: 3 },
-  { id: 2, name: "Happy Star", image: "/gifts-reactions/happy-start.png", price: 5 },
-  { id: 3, name: "Sunflower", image: "/gifts-reactions/sunflower.png", price: 7 },
-  { id: 4, name: "Joy Ride", image: "/gifts-reactions/joy-ride.png", price: 9 },
-  { id: 5, name: "Rainbow", image: "/gifts-reactions/rainbow.png", price: 5 },
-  { id: 6, name: "Target", image: "/gifts-reactions/target-locked.png", price: 11 },
-  { id: 7, name: "Heart Box", image: "/gifts-reactions/hearts.png", price: 19 },
-  { id: 8, name: "Sun", image: "/gifts-reactions/sunny.png", price: 5 },
-  { id: 9, name: "Clap", image: "/gifts-reactions/applaud.png", price: 39 },
-  { id: 10, name: "Bear Hi", image: "/gifts-reactions/hi.png", price: 79 },
-  { id: 11, name: "Hamster", image: "/gifts-reactions/blush.png", price: 49 },
-  { id: 12, name: "Bear", image: "/gifts-reactions/love-from-this-side.png", price: 89 },
-  { id: 13, name: "Cheers", image: "/gifts-reactions/cheers.png", price: 129 },
-  { id: 14, name: "Bunny", image: "/gifts-reactions/bunny.png", price: 229 },
-  { id: 15, name: "Fire", image: "/gifts-reactions/fire.png", price: 99 },
-  { id: 16, name: "Fireworks", image: "/gifts-reactions/sparkles.png", price: 199 },
-  { id: 17, name: "Lips", image: "/gifts-reactions/kiss.png", price: 279 },
-  { id: 18, name: "Rose", image: "/gifts-reactions/rose.png", price: 359 },
-  { id: 19, name: "Aww", image: "/gifts-reactions/awww.png", price: 99 },
-  { id: 20, name: "Laugh", image: "/gifts-reactions/laughing.png", price: 99 },
-  { id: 21, name: "In Love", image: "/gifts-reactions/in-love.png", price: 99 },
-  { id: 22, name: "Kiss", image: "/gifts-reactions/warm-kiss.png", price: 99 },
-  { id: 23, name: "Heart", image: "/gifts-reactions/packed-heart.png", price: 8 },
-  { id: 24, name: "Chocolaty", image: "/gifts-reactions/chocolaty.png", price: 59 },
-  { id: 25, name: "Double Kisses", image: "/gifts-reactions/double-kisses.png", price: 79 },
-  { id: 26, name: "Roses", image: "/gifts-reactions/rosees.png", price: 99 },
-  { id: 27, name: "Flower Pot", image: "/gifts-reactions/flower-pot.png", price: 1499 },
-];
+import { GIFTS } from '@/lib/constants/gifts';
 
 interface Conversation {
   id: number;
@@ -349,24 +321,17 @@ export default function MessagesClient() {
     });
 
     if (messageText.trim() && targetProfileId) {
-      if (selectedPersonaId) {
-        const selectedPersona = personas.find(p => p._id === selectedPersonaId);
-        if (socketRef.current) {
-          console.log('📤 Emitting send_message with persona to:', targetProfileId);
-          socketRef.current.emit("send_message", {
-            message: messageText,
-            profileId: targetProfileId,
-            personaId: selectedPersonaId,
-            personaContext: selectedPersona?.background || ''
-          });
-        } else {
-          console.error('❌ Socket not available, falling back to sendMessage');
-          sendMessage(messageText, targetProfileId);
-        }
-      } else {
-        console.log('📤 Calling sendMessage to:', targetProfileId);
-        sendMessage(messageText, targetProfileId);
-      }
+      const selectedPersona = selectedPersonaId ? personas.find(p => p._id === selectedPersonaId) : null;
+      console.log('📤 Sending message to:', targetProfileId);
+      sendMessage(
+        messageText, 
+        targetProfileId, 
+        false, 
+        undefined, 
+        undefined, 
+        selectedPersonaId || undefined, 
+        selectedPersona?.background || ''
+      );
       setMessageText('');
       setShowEmojiPicker(false);
     } else {
@@ -384,23 +349,16 @@ export default function MessagesClient() {
       // For fallback/logging
       const giftMessage = `🎁 Sent ${gift.name} (${gift.price} coins)`;
 
-      const giftData = {
-        message: giftMessage,
-        profileId: targetProfileId,
-        personaId: selectedPersonaId,
-        isGift: true,
-        giftId: gift.id,
-        giftImage: gift.image,
-        giftPrice: gift.price,
-        personaContext: selectedPersonaId ? personas.find(p => p._id === selectedPersonaId)?.background || '' : ''
-      };
-
-      if (socketRef.current) {
-        socketRef.current.emit("send_message", giftData);
-      } else {
-        // Fallback to basic sendMessage if socket emit fails
-        sendMessage(giftMessage, targetProfileId);
-      }
+      const personaBackground = selectedPersonaId ? personas.find(p => p._id === selectedPersonaId)?.background || '' : '';
+      sendMessage(
+        giftMessage, 
+        targetProfileId, 
+        true, 
+        gift.id, 
+        gift.price, 
+        selectedPersonaId || undefined, 
+        personaBackground
+      );
     }
   };
 

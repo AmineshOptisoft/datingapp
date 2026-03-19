@@ -26,7 +26,7 @@ interface Message {
 interface SocketContextType {
   socket: Socket | null;
   messages: Message[];
-  sendMessage: (msg: string, profileId?: string) => void;
+  sendMessage: (msg: string, profileId?: string, isGift?: boolean, giftId?: number, giftPrice?: number, personaId?: string, personaContext?: string) => void;
   userId: string;
   isConnected: boolean;
   selectedProfileId: string;
@@ -138,10 +138,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  const sendMessage = (msg: string, profileId?: string) => {
+  const sendMessage = (msg: string, profileId?: string, isGift?: boolean, giftId?: number, giftPrice?: number, personaId?: string, personaContext?: string) => {
     if (!socketRef.current) return;
     const targetProfileId = profileId || selectedProfileId;
-    socketRef.current.emit("send_message", { message: msg, profileId: targetProfileId });
+    socketRef.current.emit("send_message", { 
+      message: msg, 
+      profileId: targetProfileId,
+      isGift,
+      giftId,
+      giftPrice,
+      personaId,
+      personaContext
+    });
   };
 
   const fetchConversation = (profileId: string) => {
