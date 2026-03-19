@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Footer from '../../components/Footer';
 import PricingModal from '../../components/PricingModal';
 import { FaPlay } from 'react-icons/fa';
 import { useProfileDetail } from '@/hooks/useProfileDetail';
 import { extractLegacyIdFromSlug } from '@/lib/url-helpers';
+import { GIFTS } from '@/lib/constants/gifts';
+import { PiCoinsFill } from 'react-icons/pi';
 
 export default function GirlDetailPage() {
   const params = useParams();
@@ -21,6 +23,24 @@ export default function GirlDetailPage() {
 
   const [activeTab, setActiveTab] = useState<'bio' | 'features' | 'pricing'>('bio');
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  const [gifts, setGifts] = useState<any[]>([]);
+
+  // Fetch gifts for this AI profile
+  useEffect(() => {
+    if (profile) {
+      const pid = (profile as any).profileId;
+      if (pid) {
+        fetch(`/api/characters/${pid}/gifts`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.gifts) {
+              setGifts(data.gifts);
+            }
+          })
+          .catch(console.error);
+      }
+    }
+  }, [profile]);
 
   const highlightCards = useMemo(() => {
     if (!profile) return [];
@@ -256,6 +276,34 @@ export default function GirlDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Gifts Received Section */}
+      {gifts.length > 0 && (
+        <section className="mb-8">
+          <div className="bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-2xl p-4">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Gifts Received</h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+              {gifts.map((gift, idx) => {
+                const giftRef = GIFTS.find(g => g.name === gift.giftName);
+                if (!giftRef) return null;
+                return (
+                  <div key={idx} className="relative flex flex-col items-center min-w-[120px] p-4 rounded-xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-white/5 shadow-sm snap-center hover:scale-105 transition-transform cursor-pointer">
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md flex items-center gap-0.5 z-10">
+                      <PiCoinsFill className="w-3 h-3" />
+                      {giftRef.price}
+                    </div>
+                    <img src={giftRef.image} alt={gift.giftName} className="w-16 h-16 object-contain mb-3 drop-shadow-md" />
+                    <div className="flex flex-col items-center gap-1 w-full justify-center mt-auto">
+                      <img src={gift.sender.avatar} alt={gift.sender.name} className="w-6 h-6 rounded-full object-cover ring-2 ring-purple-500/50" />
+                      <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-300 truncate max-w-[90px]" title={gift.sender.name}>{gift.sender.name}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Description Section */}
       <section className="mb-8">

@@ -43,6 +43,7 @@ function HomePageContent() {
         acc[profile.category] = [];
       }
       acc[profile.category].push(profile);
+      console.log(acc);
       return acc;
     }, {});
   }, [filteredProfiles]);
