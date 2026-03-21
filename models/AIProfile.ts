@@ -125,6 +125,9 @@ export interface IAIProfile {
 
   // REELS / ENGAGEMENT
   likes?: number;
+  likedBy?: string[];
+  interactions?: number;
+  interactedBy?: string[];
   commentsCount?: number;
 
   createdAt: Date;
@@ -375,6 +378,18 @@ const AIProfileSchema = new Schema<IAIProfile>(
     likes: {
       type: Number,
       default: 0,
+    },
+    likedBy: {
+      type: [String],
+      default: [],
+    },
+    interactions: {
+      type: Number,
+      default: 0,
+    },
+    interactedBy: {
+      type: [String],
+      default: [],
     },
     commentsCount: {
       type: Number,

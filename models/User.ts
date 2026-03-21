@@ -179,6 +179,9 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
+// Index for fast character subdocument lookups (like, interact, gifts APIs)
+UserSchema.index({ "characters._id": 1 });
+
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 

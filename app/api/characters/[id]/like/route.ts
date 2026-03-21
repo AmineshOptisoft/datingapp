@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
+import AIProfile from "@/models/AIProfile";
 
-// POST - Like or Unlike a character
+// POST - Like or Unlike a character or AI profile
 // Body: { userId: string }
-// If userId is already in likedBy → unlike (remove), else → like (add)
+// Uses atomic conditional updates to prevent race conditions
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -32,76 +33,104 @@ export async function POST(
       );
     }
 
-    // Find the user who owns this character (optimized with lean and projection)
-    const ownerUser = await User.findOne(
-      { "characters._id": id },
-      { "characters._id": 1, "characters.likedBy": 1 }
+    // ── Try AIProfile FIRST (fast _id index lookup) ──
+    // ATOMIC unlike: only matches if userId IS in likedBy
+    const aiUnlike = await AIProfile.findOneAndUpdate(
+      { _id: id, likedBy: userId },
+      {
+        $pull: { likedBy: userId },
+        $inc: { likes: -1 },
+      },
+      { new: true, select: { likes: 1 } }
     ).lean();
 
-    if (!ownerUser) {
-      return NextResponse.json(
-        { success: false, message: "Character not found" },
-        { status: 404 }
-      );
+    if (aiUnlike) {
+      return NextResponse.json({
+        success: true,
+        liked: false,
+        likes: (aiUnlike as any)?.likes ?? 0,
+      });
     }
 
-    const character = (ownerUser as any).characters?.find(
-      (c: any) => c._id.toString() === id
+    // ATOMIC like: only matches if userId is NOT in likedBy
+    const aiLike = await AIProfile.findOneAndUpdate(
+      { _id: id, likedBy: { $ne: userId } },
+      {
+        $push: { likedBy: userId },
+        $inc: { likes: 1 },
+      },
+      { new: true, select: { likes: 1 } }
+    ).lean();
+
+    if (aiLike) {
+      return NextResponse.json({
+        success: true,
+        liked: true,
+        likes: (aiLike as any)?.likes ?? 0,
+      });
+    }
+
+    // ── Fallback: try User.characters (subdocument scan) ──
+    // ATOMIC unlike
+    const charUnlike = await User.findOneAndUpdate(
+      {
+        "characters._id": id,
+        "characters.likedBy": userId,
+      },
+      {
+        $pull: { "characters.$.likedBy": userId },
+        $inc: { "characters.$.likes": -1 },
+      },
+      { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
+    ).lean();
+
+    if (charUnlike) {
+      const updatedChar = (charUnlike as any).characters?.find(
+        (c: any) => c._id.toString() === id
+      );
+      return NextResponse.json({
+        success: true,
+        liked: false,
+        likes: (updatedChar as any)?.likes ?? 0,
+      });
+    }
+
+    // ATOMIC like
+    const charLike = await User.findOneAndUpdate(
+      {
+        "characters._id": id,
+        "characters.likedBy": { $ne: userId },
+      },
+      {
+        $push: { "characters.$.likedBy": userId },
+        $inc: { "characters.$.likes": 1 },
+      },
+      { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
+    ).lean();
+
+    if (charLike) {
+      const updatedChar = (charLike as any).characters?.find(
+        (c: any) => c._id.toString() === id
+      );
+      return NextResponse.json({
+        success: true,
+        liked: true,
+        likes: (updatedChar as any)?.likes ?? 0,
+      });
+    }
+
+    // Nothing matched — profile not found
+    return NextResponse.json(
+      { success: false, message: "Profile not found" },
+      { status: 404 }
     );
-
-    if (!character) {
-      return NextResponse.json(
-        { success: false, message: "Character not found" },
-        { status: 404 }
-      );
-    }
-
-    const alreadyLiked = character.likedBy?.includes(userId);
-
-    let updatedUser;
-    if (alreadyLiked) {
-      // Unlike: remove userId from likedBy and decrement likes
-      updatedUser = await User.findOneAndUpdate(
-        { "characters._id": id },
-        {
-          $pull: { "characters.$.likedBy": userId },
-          $inc: { "characters.$.likes": -1 },
-        },
-        { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
-      ).lean();
-    } else {
-      // Like: add userId to likedBy and increment likes
-      updatedUser = await User.findOneAndUpdate(
-        { "characters._id": id },
-        {
-          $addToSet: { "characters.$.likedBy": userId },
-          $inc: { "characters.$.likes": 1 },
-        },
-        { new: true, select: { "characters._id": 1, "characters.likes": 1 } }
-      ).lean();
-    }
-
-    if (!updatedUser) {
-      return NextResponse.json(
-        { success: false, message: "Failed to update like" },
-        { status: 500 }
-      );
-    }
-
-    const updatedChar = (updatedUser as any).characters?.find(
-      (c: any) => c._id.toString() === id
-    );
-
-    return NextResponse.json({
-      success: true,
-      liked: !alreadyLiked,
-      likes: (updatedChar as any)?.likes ?? 0,
-    });
   } catch (error) {
-    console.error("Like/Unlike character error:", error);
+    console.error("Like/Unlike error:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }
     );
   }
 }
+
+

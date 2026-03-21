@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
       age: profile.age,
       personalityType: profile.personalityType,
       likes: (profile as any).likes ?? 0,
+      interactions: (profile as any).interactions ?? 0,
+      likedBy: (profile as any).likedBy ?? [],
       commentsCount: (profile as any).commentsCount ?? 0,
     }));
 
@@ -298,6 +300,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        _id: profile._id,
         profileId: profile.profileId,
         legacyId: profile.legacyId,
         routePrefix: profile.routePrefix,
@@ -409,6 +412,11 @@ export async function POST(request: NextRequest) {
           annualPriceId: profile.pricing?.annualPriceId ?? '',
           lifetimePriceId: profile.pricing?.lifetimePriceId ?? '',
         },
+
+        // Engagement
+        likes: (profile as any).likes ?? 0,
+        interactions: (profile as any).interactions ?? 0,
+        likedBy: (profile as any).likedBy ?? [],
       }
     });
 
