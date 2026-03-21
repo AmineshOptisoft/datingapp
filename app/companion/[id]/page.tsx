@@ -1,13 +1,14 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Footer from '../../components/Footer';
 import PricingModal from '../../components/PricingModal';
 import VoiceChatPanel from '../../components/VoiceChatPanel';
 import { FaPlay } from 'react-icons/fa';
 import { useProfileDetail } from '@/hooks/useProfileDetail';
 import { extractLegacyIdFromSlug } from '@/lib/url-helpers';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function CompanionDetailPage() {
   const params = useParams();
@@ -15,10 +16,29 @@ export default function CompanionDetailPage() {
   const extractedId = slug ? extractLegacyIdFromSlug(slug) : null;
   const legacyId = extractedId || undefined;
   const { profile, loading, error } = useProfileDetail('companion', legacyId);
+  const { user } = useAuth();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<'bio' | 'features' | 'pricing'>('bio');
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+
+  // Engagement state
+  const [likes, setLikes] = useState(0);
+  const [interactions, setInteractions] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  // Sync engagement counts from profile once loaded
+  useEffect(() => {
+    if (profile) {
+      const p = profile as any;
+      setLikes(p.likes ?? 0);
+      setInteractions(p.interactions ?? 0);
+      if (user && Array.isArray(p.likedBy)) {
+        setLiked(p.likedBy.includes(user.id));
+      }
+    }
+  }, [profile, user]);
 
   const highlightCards = useMemo(() => {
     if (!profile) return [];
@@ -35,7 +55,36 @@ export default function CompanionDetailPage() {
     }));
   }, [profile]);
 
-  const handleStartChat = () => {
+  const handleLike = useCallback(async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    if (!profile || likeLoading) return;
+
+    const aiId = (profile as any)._id;
+    if (!aiId) return;
+
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`/api/characters/${aiId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLiked(data.liked);
+        setLikes(data.likes);
+      }
+    } catch (e) {
+      console.error('Like failed:', e);
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [user, profile, likeLoading, router]);
+
+  const handleStartChat = useCallback(() => {
     if (!profile) return;
     try {
       if (typeof window !== 'undefined') {
@@ -45,8 +94,23 @@ export default function CompanionDetailPage() {
       console.error('Failed to persist selected AI profile for chat:', error);
     }
 
+    // Fire-and-forget interaction increment
+    const aiId = (profile as any)._id;
+    if (aiId && user) {
+      fetch(`/api/characters/${aiId}/interact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success) setInteractions(d.interactions);
+        })
+        .catch(() => {});
+    }
+
     router.push(`/messages?ai=${profile.profileId}`);
-  };
+  }, [profile, user, router]);
 
   if (loading) {
     return (
@@ -138,6 +202,27 @@ export default function CompanionDetailPage() {
             </div>
           </div>
 
+          {/* ── Engagement Stats ── */}
+          <div className="flex items-center gap-6 mb-6">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-zinc-900 dark:text-white">
+                {interactions >= 1000 ? `${(interactions / 1000).toFixed(1).replace(/\.0$/, '')}k` : interactions}
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 tracking-wide uppercase">
+                Interactions
+              </span>
+            </div>
+            <div className="w-px h-10 bg-zinc-200 dark:bg-white/10"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-zinc-900 dark:text-white">
+                {likes >= 1000 ? `${(likes / 1000).toFixed(1).replace(/\.0$/, '')}k` : likes}
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 tracking-wide uppercase">
+                Likes
+              </span>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6 items-center sm:items-stretch">
             {/* <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm md:text-base">
@@ -150,6 +235,34 @@ export default function CompanionDetailPage() {
             >
               Connect Now
             </button>
+
+            {/* Like Button */}
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all text-sm md:text-base w-full sm:w-auto border-2 ${
+                liked
+                  ? 'bg-pink-500 border-pink-500 text-white hover:bg-pink-600 hover:border-pink-600'
+                  : 'bg-transparent border-zinc-300 dark:border-white/20 text-zinc-700 dark:text-zinc-300 hover:border-pink-400 hover:text-pink-500 dark:hover:border-pink-400 dark:hover:text-pink-400'
+              } ${likeLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill={liked ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth={2}
+                className={`w-5 h-5 transition-transform ${liked ? 'scale-110' : ''}`}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                />
+              </svg>
+              {liked ? 'Liked' : 'Like'}
+            </button>
+
             <button
               onClick={() => setIsPricingModalOpen(true)}
               className="bg-pink-600 hover:bg-pink-700 text-white px-6 md:px-8 py-3 rounded-xl font-semibold transition-all text-sm md:text-base"
