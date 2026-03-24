@@ -23,19 +23,22 @@ function HomePageContent() {
     }
   }, [categoryParam]);
 
+  // On the main screen, show ONLY character profiles (hide AI profiles).
+  // AI profiles still appear on /for-men, /for-women, /for-lgbtq pages.
+  const characterOnly = useMemo(
+    () => profiles.filter((p) => p.routePrefix === 'character'),
+    [profiles]
+  );
+
   const filteredProfiles = useMemo(() => {
     if (activeCategory === 'All') {
-      return profiles;
+      return characterOnly;
     }
-    return profiles.filter((profile) => {
+    return characterOnly.filter((profile) => {
       // User-created characters: filter by tags (interests array)
-      if (profile.routePrefix === 'character') {
-        return profile.interests?.includes(activeCategory) ?? false;
-      }
-      // AI profiles: filter by category
-      return profile.category === activeCategory;
+      return profile.interests?.includes(activeCategory) ?? false;
     });
-  }, [profiles, activeCategory]);
+  }, [characterOnly, activeCategory]);
 
   const groupedProfiles = useMemo(() => {
     return filteredProfiles.reduce<Record<string, AIProfileOverview[]>>((acc, profile) => {

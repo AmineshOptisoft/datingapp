@@ -17,6 +17,7 @@ export interface ICharacter {
   interactions?: number;
   likedBy?: string[];
   interactedBy?: string[];
+  generatedImages?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

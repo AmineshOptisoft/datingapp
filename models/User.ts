@@ -80,6 +80,10 @@ const CharacterSchema = new Schema<ICharacter>(
       type: [String],
       default: [],
     },
+    generatedImages: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );

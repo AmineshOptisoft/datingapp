@@ -203,7 +203,11 @@ export async function POST(request: NextRequest) {
                 badgeHot: false,
                 badgePro: false,
                 avatar: char.characterImage || "/default-avatar.png",
-                photos: [char.characterImage || "/default-avatar.png"],
+                photos: [
+                  char.characterImage || "/default-avatar.png",
+                  ...(char.generatedImages || []),
+                ],
+                generatedImages: char.generatedImages || [],
                 eyeColor: "N/A",
                 hairColor: "N/A",
                 bio: char.description,

@@ -239,6 +239,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fire-and-forget: generate 5 AI images for this character in the background
+    import("@/lib/generateCharacterImages")
+      .then(({ generateCharacterImages }) => {
+        generateCharacterImages(userId, newCharacter._id.toString(), {
+          characterName,
+          characterAge,
+          characterGender,
+          personality,
+          description,
+        }).catch((err: any) =>
+          console.error("❌ Background image generation failed:", err)
+        );
+      })
+      .catch((err: any) =>
+        console.error("❌ Failed to import generateCharacterImages:", err)
+      );
+
     return NextResponse.json({
       success: true,
       message: "Character created successfully",
