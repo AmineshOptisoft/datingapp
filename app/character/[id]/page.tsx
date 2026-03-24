@@ -47,6 +47,14 @@ export default function CharacterDetailPage() {
 
   const [gifts, setGifts] = useState<any[]>([]);
 
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.photos?.[0]) {
+      setSelectedPhoto(profile.photos[0]);
+    }
+  }, [profile]);
+
   // Extract the raw MongoDB character ID from profileId
   const characterId = useMemo(() => {
     if (!profile) return null;
@@ -177,17 +185,36 @@ export default function CharacterDetailPage() {
     );
   }
 
-  const primaryPhoto = profile.photos?.[0] ?? profile.avatar;
+  const primaryPhoto = selectedPhoto ?? profile.avatar;
+  const galleryPhotos = profile.photos || [];
 
   return (
     <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
       {/* Hero Section */}
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
-        {/* Image */}
-        <div className="relative mx-auto lg:mx-0">
-          <div className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10">
-            <img src={primaryPhoto} alt={profile.name} className="w-full h-full object-cover" />
+        <div className="relative mx-auto lg:mx-0 space-y-4">
+          <div className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-xl">
+            <img src={primaryPhoto} alt={profile.name} className="w-full h-full object-cover transition-opacity duration-300" />
           </div>
+
+          {/* Thumbnail Gallery */}
+          {galleryPhotos.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar no-scrollbar">
+              {galleryPhotos.map((photo: string, idx: number) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedPhoto(photo)}
+                  className={`relative flex-shrink-0 w-20 aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                    primaryPhoto === photo
+                      ? 'border-purple-500 scale-105 shadow-md'
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={photo} alt={`${profile.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}

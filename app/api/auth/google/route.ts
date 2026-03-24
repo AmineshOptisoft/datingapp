@@ -79,6 +79,14 @@ export async function POST(request: NextRequest) {
         console.error("⚠️ Failed to create wallet for Google user:", walletError);
         // Don't fail login if wallet creation fails
       }
+
+      // 👋 Send default welcome messages from random characters
+      try {
+        const { sendWelcomeMessages } = await import("@/lib/welcomeMessages");
+        await sendWelcomeMessages(user._id.toString());
+      } catch (welcomeError) {
+        console.error("⚠️ Failed to send welcome messages:", welcomeError);
+      }
     } else {
         // If user exists but no googleId (legacy email user or first time google login with same email), update it
         if (!user.googleId) {

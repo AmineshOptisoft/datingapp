@@ -37,6 +37,14 @@ export async function POST(request: NextRequest) {
       isPhoneVerified: false,
     }).save();
 
+    // 👋 Send default welcome messages from random characters
+    try {
+      const { sendWelcomeMessages } = await import("@/lib/welcomeMessages");
+      await sendWelcomeMessages(user._id.toString());
+    } catch (welcomeError) {
+      console.error("⚠️ Failed to send welcome messages:", welcomeError);
+    }
+
     // Generate single OTP for both channels
     const otp = generateOTP();
     await storeOTP(`user:${user._id}`, otp, 10);

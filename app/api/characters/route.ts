@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
         generateCharacterImages(userId, newCharacter._id.toString(), {
           characterName,
           characterAge,
-          characterGender,
+          characterGender: characterGender as any,
           personality,
           description,
         }).catch((err: any) =>
