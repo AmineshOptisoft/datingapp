@@ -25,28 +25,31 @@ function buildPrompts(attrs: CharacterAttrs): string[] {
 
   const genderWord =
     characterGender === "male"
-      ? "man"
+      ? "handsome man"
       : characterGender === "female"
-      ? "woman"
-      : "person";
+      ? "gorgeous attractive woman"
+      : "attractive person";
 
-  const base = `A ${characterAge}-year-old ${genderWord} named ${characterName}. ${description}. Personality: ${personality}.`;
+  // Base setup focusing on hyper-realism and attractiveness
+  const base = `Hyper-realistic photography of a highly attractive ${characterAge}-year-old ${genderWord}. Description: ${description}. Personality: ${personality}.`;
+  
+  const style = "Photorealistic, DSLR camera, 8k resolution, highly detailed, lifelike skin texture, natural lighting, masterpiece, definitely not a cartoon or illustration.";
 
   return [
     // 1 — Portrait / Close-up
-    `${base} A stunning close-up portrait photograph, soft studio lighting, shallow depth of field, expressive eyes, photorealistic, high quality.`,
+    `${base} A stunning alluring close-up portrait photograph, soft studio lighting, shallow depth of field, expressive eyes. ${style}`,
 
     // 2 — Lifestyle / Casual
-    `${base} Casual lifestyle photograph in a cozy café setting, warm natural lighting, relaxed candid pose, photorealistic, high quality.`,
+    `${base} Casual lifestyle photograph in a cozy luxurious setting, warm natural lighting, relaxed captivating candid pose. ${style}`,
 
     // 3 — Fashion / Full-body
-    `${base} Full-body fashion photograph, stylish modern outfit that matches their personality, urban street background, photorealistic, high quality.`,
+    `${base} Full-body fashion photograph, stylish beautiful form-fitting outfit that matches their personality, urban street background. ${style}`,
 
     // 4 — Mood / Emotional
-    `${base} Emotional portrait expressing their personality, cinematic lighting, dramatic mood, depth of field, photorealistic, high quality.`,
+    `${base} Intimate emotional portrait, cinematic lighting, dramatic mood, depth of field. ${style}`,
 
     // 5 — Activity / Scene
-    `${base} Engaged in an activity that reflects their personality and interests, dynamic composition, natural environment, photorealistic, high quality.`,
+    `${base} Engaged in an activity that reflects their interests, dynamic composition, natural environment, highly aesthetic. ${style}`,
   ];
 }
 
