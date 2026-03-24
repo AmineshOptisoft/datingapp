@@ -44,12 +44,28 @@ export async function DELETE(
       );
     }
 
-    // Cascade delete the associated Reel if it exists
-    if (deleted.isPublishedAsReel && deleted.reelId) {
-      await Reel.findByIdAndDelete(deleted.reelId);
-      await ReelLike.deleteMany({ reelId: deleted.reelId });
-      await ReelView.deleteMany({ reelId: deleted.reelId });
-      console.log(`🗑️ Cascade deleted associated reel ${deleted.reelId}`);
+    // Cascade delete ALL associated Reels (match by reelId OR by sceneId)
+    const reelIdsToDelete: string[] = [];
+
+    // 1) The reelId stored on the scene itself
+    if (deleted.reelId) {
+      reelIdsToDelete.push(deleted.reelId);
+    }
+
+    // 2) Any reel that references this scene via sceneId (covers edge cases)
+    const reelsByScene = await Reel.find({ sceneId: params.id }).select("_id").lean();
+    reelsByScene.forEach((r: any) => {
+      const rid = r._id.toString();
+      if (!reelIdsToDelete.includes(rid)) reelIdsToDelete.push(rid);
+    });
+
+    if (reelIdsToDelete.length > 0) {
+      await Promise.all([
+        Reel.deleteMany({ _id: { $in: reelIdsToDelete } }),
+        ReelLike.deleteMany({ reelId: { $in: reelIdsToDelete } }),
+        ReelView.deleteMany({ reelId: { $in: reelIdsToDelete } }),
+      ]);
+      console.log(`🗑️ Cascade deleted ${reelIdsToDelete.length} reel(s) for scene ${params.id}`);
     }
 
     console.log(`🗑️ Deleted scene ${params.id} for user ${decoded.userId}`);

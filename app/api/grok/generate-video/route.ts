@@ -244,7 +244,40 @@ export async function GET(request: NextRequest) {
     // Update in-memory storage
     if (isComplete && videoUrl) {
       const requestData = videoRequests.get(requestId);
-      videoRequests.set(requestId, { status: "completed", videoUrl });
+      
+      let finalVideoUrl = videoUrl;
+
+      // Download the video to local storage before saving
+      try {
+        console.log("📥 Downloading generated video from Grok API...");
+        const videoResponse = await fetch(videoUrl);
+        if (videoResponse.ok) {
+          const arrayBuffer = await videoResponse.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          
+          const fs = await import("fs");
+          const path = await import("path");
+          
+          const uploadsDir = path.join(process.cwd(), "public", "uploads");
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+
+          const uniqueName = `grok-vid-${Date.now()}-${Math.round(Math.random() * 1e9)}.mp4`;
+          const filePath = path.join(uploadsDir, uniqueName);
+          
+          fs.writeFileSync(filePath, buffer);
+          finalVideoUrl = `/uploads/${uniqueName}`;
+          console.log(`✅ Video saved locally: ${filePath}`);
+        } else {
+          console.error("❌ Failed to download Grok video. Using original URL.", videoResponse.statusText);
+        }
+      } catch (downloadError) {
+        console.error("❌ Error downloading Grok video:", downloadError);
+        // Continues with the original Grok URL as a fallback
+      }
+
+      videoRequests.set(requestId, { status: "completed", videoUrl: finalVideoUrl });
       
       // Save to MongoDB
       try {
@@ -258,7 +291,7 @@ export async function GET(request: NextRequest) {
           sceneTitle: requestData?.sceneTitle || "Untitled Video",
           sceneDescription: requestData?.sceneDescription || "Generated video",
           mediaType: "video",
-          mediaUrl: videoUrl,
+          mediaUrl: finalVideoUrl,
         });
 
         console.log("💾 Video scene saved to MongoDB:", savedScene._id);
@@ -279,7 +312,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           success: true,
           status: "completed",
-          videoUrl,
+          videoUrl: finalVideoUrl,
           sceneId: savedScene._id.toString(),
           sceneTitle: savedScene.sceneTitle,
           sceneDescription: savedScene.sceneDescription,
@@ -290,7 +323,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           success: true,
           status: "completed",
-          videoUrl,
+          videoUrl: finalVideoUrl,
           warning: "Video generated but failed to save to database",
         });
       }

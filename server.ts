@@ -921,17 +921,26 @@ app.prepare().then(async () => {
 
 
       try {
-        await Message.create({ sender: userId, receiver: aiBotId, message });
-        socket.emit("receive_message", {
-          sender: userId,
-          receiver: aiBotId,
-          message,
-        });
-
-        // Add robust gift tracking to the database
+        // Add robust gift tracking and wallet deduction before saving message
         console.log(`🔍 Gift check: isGift=${isGift}, giftId=${giftId}, giftPrice=${giftPrice}`);
         if (isGift && giftId && giftPrice) {
           try {
+            const Wallet = (await import('./models/Wallet')).default;
+            const userWallet = await Wallet.findOne({ userId });
+            
+            if (!userWallet || userWallet.balance < giftPrice) {
+              console.log(`⚠️ User ${userId} has insufficient coins for gift ${giftId} (${giftPrice} coins)`);
+              socket.emit("gift_error", { message: "Insufficient coins to send this gift." });
+              return; // Stop processing message
+            }
+            
+            // Deduct coins
+            userWallet.balance -= giftPrice;
+            await userWallet.save();
+            
+            // Emit updated wallet balance
+            socket.emit("wallet_updated", { balance: userWallet.balance });
+
             const GiftTransaction = (await import('./models/GiftTransaction')).default;
             const giftNameMatch = message.match(/🎁 Sent (.+) \(\d+ coins\)/i);
             const giftName = giftNameMatch ? giftNameMatch[1] : `Gift #${giftId}`;
@@ -943,11 +952,20 @@ app.prepare().then(async () => {
               giftName: giftName,
               price: giftPrice
             });
-            console.log(`🎁 GiftTransaction reliably saved: ${giftName} to ${aiBotId}`);
+            console.log(`🎁 GiftTransaction reliably saved: ${giftName} to ${aiBotId}. Wallet deducted.`);
           } catch (giftErr) {
-            console.error("Error saving GiftTransaction:", giftErr);
+            console.error("Error saving GiftTransaction or deducting wallet:", giftErr);
+            socket.emit("gift_error", { message: "An error occurred while sending the gift." });
+            return;
           }
         }
+
+        await Message.create({ sender: userId, receiver: aiBotId, message });
+        socket.emit("receive_message", {
+          sender: userId,
+          receiver: aiBotId,
+          message,
+        });
 
         // If restricted content detected, show modal immediately and DON'T call AI
         if (hasRestrictedContent && restrictedContentData) {

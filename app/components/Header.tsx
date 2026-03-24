@@ -56,9 +56,19 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
     fetchWalletBalance();
     
-    // Refresh balance every 10 seconds
-    // const interval = setInterval(fetchWalletBalance, 10000);
-    // return () => clearInterval(interval);
+    // Listen for custom wallet updates from other components (like Messages)
+    const handleWalletUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && typeof customEvent.detail.balance === 'number') {
+        setWalletBalance(customEvent.detail.balance);
+      }
+    };
+    
+    window.addEventListener('wallet_updated', handleWalletUpdated);
+
+    return () => {
+      window.removeEventListener('wallet_updated', handleWalletUpdated);
+    };
   }, [isAuthenticated]);
 
   const openAuthModal = (mode: 'login' | 'signup' | 'forgot') => {

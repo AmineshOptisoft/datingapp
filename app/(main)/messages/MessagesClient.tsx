@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
 import { PiCoinsFill } from "react-icons/pi";
 import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video } from 'lucide-react';
@@ -82,7 +83,7 @@ export default function MessagesClient() {
     avatar?: string;
   } | null>(null);
 
-  // Socket listener for restricted content
+  // Socket listener for restricted content and wallet updates
   useEffect(() => {
     if (!socket) return;
     
@@ -103,13 +104,54 @@ export default function MessagesClient() {
       });
       setRestrictedModalOpen(true);
     };
+
+    const handleWalletUpdated = (data: any) => {
+      if (typeof data.balance === 'number') {
+        setWalletBalance(data.balance);
+        window.dispatchEvent(new CustomEvent('wallet_updated', { detail: { balance: data.balance } }));
+      }
+    };
+
+    const handleGiftError = (data: any) => {
+      alert(data.message || "Failed to send gift.");
+    };
     
     socket.on('restricted_content', handleRestrictedContent);
+    socket.on('wallet_updated', handleWalletUpdated);
+    socket.on('gift_error', handleGiftError);
     
     return () => {
       socket.off('restricted_content', handleRestrictedContent);
+      socket.off('wallet_updated', handleWalletUpdated);
+      socket.off('gift_error', handleGiftError);
     };
   }, [socket, conversations]);
+
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/wallet', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWalletBalance(data.balance);
+        }
+      } catch (error) {
+        console.error('Failed to fetch wallet balance:', error);
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [personas, setPersonas] = useState<any[]>([]);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
@@ -343,6 +385,18 @@ export default function MessagesClient() {
   };
 
   const handleSendGift = (gift: any) => {
+    if (walletBalance !== null && walletBalance < gift.price) {
+      alert("Insufficient coins to send this gift. Please purchase more coins.");
+      return;
+    }
+
+    // Optimistic UI update for immediate feedback
+    if (walletBalance !== null) {
+      const newBalance = walletBalance - gift.price;
+      setWalletBalance(newBalance);
+      window.dispatchEvent(new CustomEvent('wallet_updated', { detail: { balance: newBalance } }));
+    }
+
     const targetProfileId = selectedConv?.profileId || selectedProfileId;
 
     if (targetProfileId) {
@@ -731,15 +785,15 @@ export default function MessagesClient() {
                 </PopoverTrigger>
                 <PopoverContent side="top" align="end" className="w-[320px] p-0 bg-white dark:bg-[#1a1a1a] border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                   {/* Gift Popup Header */}
-                  <div className="p-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
-                    <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 rounded-full">
-                      <PiCoinsFill className="w-4 h-4 text-yellow-500" />
-                      <span className="text-sm font-bold text-zinc-900 dark:text-white">0</span>
-                      <button className="ml-1 w-5 h-5 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-full">
-                        <span className="text-white dark:text-zinc-900 font-bold text-lg leading-none">+</span>
-                      </button>
-                    </div>
-                  </div>
+                  {/* <div className="p-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800"> */}
+                    {/* <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 rounded-full"> */}
+                      {/* <PiCoinsFill className="w-4 h-4 text-yellow-500" /> */}
+                      {/* <span className="text-sm font-bold text-zinc-900 dark:text-white">{walletBalance !== null ? walletBalance : '...'}</span> */}
+                      {/* <Link href="/wallet" className="ml-1 w-5 h-5 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-full"> */}
+                        {/* <span className="text-white dark:text-zinc-900 font-bold text-lg leading-none">+</span> */}
+                      {/* </Link> */}
+                    {/* </div> */}
+                  {/* </div> */}
 
                   {/* Gift Selection Grid */}
                   <div className="h-[400px] overflow-y-auto p-4 custom-scrollbar">

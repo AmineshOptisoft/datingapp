@@ -227,7 +227,7 @@ export default function PublicUserProfilePage() {
                       <div className="relative h-48 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                         {character.characterImage ? (
                           <img
-                            src={character.characterImage}
+                            src={character.characterImage.startsWith('http') ? character.characterImage : character.characterImage}
                             alt={character.characterName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />

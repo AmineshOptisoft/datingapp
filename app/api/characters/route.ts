@@ -82,8 +82,10 @@ export async function POST(request: NextRequest) {
         : [];
 
       // Handle image file upload
-      const imageFile = formData.get("characterImage") as File | null;
-      if (imageFile && imageFile.size > 0) {
+      const imageFile = formData.get("characterImage");
+      
+      // If imageFile is a File object with content
+      if (imageFile instanceof File && imageFile.size > 0) {
         const path = await import("path");
         const fs   = await import("fs");
 
