@@ -121,6 +121,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let finalImageUrl = imageUrl;
+
+    // Download the generated image to local storage
+    try {
+      console.log("📥 Downloading generated image from Grok API...");
+      const imageResponse = await fetch(imageUrl);
+      if (imageResponse.ok) {
+        const arrayBuffer = await imageResponse.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        const fs = await import("fs");
+        const path = await import("path");
+        
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const uniqueName = `grok-img-${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`;
+        const filePath = path.join(uploadsDir, uniqueName);
+        
+        fs.writeFileSync(filePath, buffer);
+        finalImageUrl = `/uploads/${uniqueName}`;
+        console.log(`✅ Image saved locally: ${filePath}`);
+      } else {
+        console.error("❌ Failed to download Grok image. Using original URL.", imageResponse.statusText);
+      }
+    } catch (downloadError) {
+      console.error("❌ Error downloading Grok image:", downloadError);
+    }
+
     // Save to MongoDB
     try {
       const dbConnect = (await import("@/lib/db")).default;
@@ -133,7 +164,7 @@ export async function POST(request: NextRequest) {
         sceneTitle: sceneTitle || "Untitled Scene",
         sceneDescription: sceneDescription,
         mediaType: "image",
-        mediaUrl: imageUrl,
+        mediaUrl: finalImageUrl,
       });
 
       console.log("💾 Scene saved to MongoDB:", savedScene._id);
@@ -151,7 +182,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        imageUrl,
+        imageUrl: finalImageUrl,
         sceneId: savedScene._id.toString(),
         sceneTitle: savedScene.sceneTitle,
         sceneDescription: savedScene.sceneDescription,
@@ -161,7 +192,7 @@ export async function POST(request: NextRequest) {
       // Still return the image URL even if DB save fails
       return NextResponse.json({
         success: true,
-        imageUrl,
+        imageUrl: finalImageUrl,
         sceneTitle,
         sceneDescription,
         warning: "Image generated but failed to save to database",

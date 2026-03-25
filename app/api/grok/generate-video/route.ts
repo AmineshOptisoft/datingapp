@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
           const filePath = path.join(uploadsDir, uniqueName);
           
           fs.writeFileSync(filePath, buffer);
-          finalVideoUrl = `/api/media/uploads/${uniqueName}`;
+          finalVideoUrl = `/uploads/${uniqueName}`;
           console.log(`✅ Video saved locally: ${filePath}`);
         } else {
           console.error("❌ Failed to download Grok video. Using original URL.", videoResponse.statusText);

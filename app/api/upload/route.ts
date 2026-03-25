@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(filePath, buffer);
 
-    const fileUrl = `/api/media/uploads/${uniqueName}`;
+    const fileUrl = `/uploads/${uniqueName}`;
 
     return NextResponse.json({
       success: true,
