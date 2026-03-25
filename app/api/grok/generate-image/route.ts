@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         const filePath = path.join(uploadsDir, uniqueName);
         
         fs.writeFileSync(filePath, buffer);
-        finalImageUrl = `/uploads/${uniqueName}`;
+        finalImageUrl = `/api/media/uploads/${uniqueName}`;
         console.log(`✅ Image saved locally: ${filePath}`);
       } else {
         console.error("❌ Failed to download Grok image. Using original URL.", imageResponse.statusText);
