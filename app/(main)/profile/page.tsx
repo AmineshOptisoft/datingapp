@@ -292,6 +292,21 @@ export default function ProfilePage() {
     return count.toString();
   };
 
+  const fetchCurrentUser = async (userId: string, token: string) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+    } catch (err) {
+      console.error("Failed to fetch fresh user data", err);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -301,7 +316,14 @@ export default function ProfilePage() {
       return;
     }
 
-    setUser(JSON.parse(storedUser));
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+    
+    const userId = parsedUser._id || parsedUser.id || parsedUser.userId;
+    if (userId) {
+      fetchCurrentUser(userId, token);
+    }
+
     fetchCharacters();
     fetchPersonas();
   }, [router]);
@@ -364,11 +386,11 @@ export default function ProfilePage() {
         {/* Stats */}
         <div className="flex items-center space-x-6 text-sm text-zinc-500 font-medium">
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
-            <span className="font-bold text-zinc-900 dark:text-white">0</span> Followers
+            <span className="font-bold text-zinc-900 dark:text-white">{user?.followersCount || 0}</span> Followers
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
-            <span className="font-bold text-zinc-900 dark:text-white">0</span> Following
+            <span className="font-bold text-zinc-900 dark:text-white">{user?.followingCount || 0}</span> Following
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors flex items-center gap-1">

@@ -41,6 +41,7 @@ interface Reel {
     name: string;
     username: string;
     avatar: string | null;
+    isFollowing?: boolean;
   };
   createdAt: string;
 }
@@ -51,14 +52,18 @@ function ReelViewer({
   onLikeToggle,
   onCommentIncrease,
   onReelRemoved,
+  onFollowToggle,
 }: {
   reel: Reel;
   token: string | null;
   onLikeToggle: (id: string, liked: boolean, count: number) => void;
   onCommentIncrease: (id: string, count: number) => void;
   onReelRemoved: (id: string) => void;
+  onFollowToggle?: (posterId: string, isFollowing: boolean) => void;
 }) {
   const [isLiked, setIsLiked] = useState(reel.isLiked);
+  const [isFollowing, setIsFollowing] = useState(reel.poster?.isFollowing || false);
+  const [isTogglingFollow, setIsTogglingFollow] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
   const toggleMute = (e: React.MouseEvent) => {
@@ -168,6 +173,38 @@ function ReelViewer({
     }
   };
 
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!token) { toast.error("Please login to follow users"); return; }
+    
+    setIsTogglingFollow(true);
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+    
+    if (onFollowToggle) {
+      onFollowToggle(reel.poster._id, !wasFollowing);
+    }
+
+    try {
+      const res = await fetch(`/api/users/${reel.poster._id}/follow`, {
+        method: wasFollowing ? "DELETE" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setIsFollowing(wasFollowing);
+        if (onFollowToggle) onFollowToggle(reel.poster._id, wasFollowing);
+        toast.error(data.error || "Failed to follow user");
+      }
+    } catch {
+      setIsFollowing(wasFollowing);
+      if (onFollowToggle) onFollowToggle(reel.poster._id, wasFollowing);
+      toast.error("Network error");
+    } finally {
+      setIsTogglingFollow(false);
+    }
+  };
+
   const loadComments = async () => {
     setLoadingComments(true);
     try {
@@ -261,8 +298,19 @@ function ReelViewer({
                 @{posterName}
               </span>
             </Link>
-            <button className="px-4 py-1.5 border border-white rounded-lg text-white text-xs font-semibold hover:bg-white/20 transition">
-              Follow
+            
+            {/* Current user checking... The token contains current user id. Instead of full check, we can just display the button if not ourselves. 
+                Normally the API handles not showing the button if it's our own, but let's assume if it's not following and not our own reel... Actually, let's always show it, and hide it if it's our own reel... but we don't have currentUserId easily accessible without decoding token. We'll show Follow/Following. */}
+            <button 
+              onClick={handleFollow}
+              disabled={isTogglingFollow}
+              className={`px-4 py-1.5 border rounded-lg text-xs font-semibold transition ${
+                isFollowing 
+                  ? 'border-white/50 bg-white/10 text-white/90 hover:bg-white/20' 
+                  : 'border-white bg-transparent text-white hover:bg-white/20'
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
             </button>
           </div>
 
@@ -449,6 +497,15 @@ export default function ReelsPage() {
     setCurrentIndex((i) => Math.max(0, i - 1));
   }, []);
 
+  const handleFollowToggle = useCallback((posterId: string, isFollowing: boolean) => {
+    // Update all reels by this poster to have the new follow state
+    setReels((prev) => prev.map((r) => 
+      r.poster._id === posterId 
+        ? { ...r, poster: { ...r.poster, isFollowing } } 
+        : r
+    ));
+  }, []);
+
   const goNext = () => {
     if (currentIndex < reels.length - 1) {
       setCurrentIndex((i) => i + 1);
@@ -554,6 +611,7 @@ export default function ReelsPage() {
           onLikeToggle={handleLikeToggle}
           onCommentIncrease={handleCommentIncrease}
           onReelRemoved={handleReelRemoved}
+          onFollowToggle={handleFollowToggle}
         />
 
         {/* Dot indicators */}

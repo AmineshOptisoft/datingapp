@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
+import { verifyToken } from "@/lib/auth";
 import User from "@/models/User";
 import Scene from "@/models/Scene";
+import Follow from "@/models/Follow";
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +16,7 @@ export async function GET(
 
     // Fetch user public info (no password, no email, no sensitive fields)
     const user = await User.findById(userId)
-      .select("_id name username avatar bio characters")
+      .select("_id name username avatar bio characters followersCount followingCount")
       .lean();
 
     if (!user) {
@@ -94,7 +96,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       user: {
         _id: typedUser._id,
@@ -102,10 +104,29 @@ export async function GET(
         username: typedUser.username,
         avatar: typedUser.avatar,
         bio: typedUser.bio,
+        followersCount: typedUser.followersCount || 0,
+        followingCount: typedUser.followingCount || 0,
       },
+      isFollowing: false, // We will calculate this below
       characters,
       scenes: enrichedScenes,
-    });
+    };
+
+    // Check if the current user is following this profile
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded && decoded.userId) {
+        const followDoc = await Follow.findOne({
+          followerId: decoded.userId,
+          followingId: userId,
+        });
+        responseData.isFollowing = !!followDoc;
+      }
+    }
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
     console.error("Error fetching public user profile:", error);
     return NextResponse.json(

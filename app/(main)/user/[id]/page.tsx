@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Grid, Film, User, MessageSquare, Play } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface PublicUser {
   _id: string;
@@ -48,6 +49,11 @@ export default function PublicUserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"characters" | "scenes">("characters");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isTogglingFollow, setIsTogglingFollow] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const formatViews = (count: number) => {
     if (!count) return "0";
@@ -62,13 +68,24 @@ export default function PublicUserProfilePage() {
 
   useEffect(() => {
     if (!userId) return;
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+         const parsedUser = JSON.parse(storedUser);
+         const cid = parsedUser._id || parsedUser.id || parsedUser.userId;
+         if (cid) setCurrentUserId(cid);
+      } catch (e) {}
+    }
     fetchProfile();
   }, [userId]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/users/${userId}`);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/users/${userId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json();
 
       if (!data.success) {
@@ -77,12 +94,51 @@ export default function PublicUserProfilePage() {
       }
 
       setProfileUser(data.user);
+      setFollowersCount(data.user.followersCount || 0);
+      setFollowingCount(data.user.followingCount || 0);
+      setIsFollowing(data.isFollowing || false);
       setCharacters(data.characters || []);
       setScenes(data.scenes || []);
     } catch {
       setError("Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast?.error?.("Please login to follow users") || alert("Please login to follow users");
+      return;
+    }
+
+    setIsTogglingFollow(true);
+    const wasFollowing = isFollowing;
+    
+    // Optimistic UI update
+    setIsFollowing(!wasFollowing);
+    setFollowersCount((prev) => wasFollowing ? prev - 1 : prev + 1);
+
+    try {
+      const res = await fetch(`/api/users/${userId}/follow`, {
+        method: wasFollowing ? "DELETE" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!data.success) {
+        // Revert on failure
+        setIsFollowing(wasFollowing);
+        setFollowersCount((prev) => wasFollowing ? prev + 1 : prev - 1);
+        toast?.error?.(data.error || "Failed to update follow status") || alert("Failed to update follow status");
+      }
+    } catch {
+      // Revert on error
+      setIsFollowing(wasFollowing);
+      setFollowersCount((prev) => wasFollowing ? prev + 1 : prev - 1);
+      toast?.error?.("Network error") || alert("Network error");
+    } finally {
+      setIsTogglingFollow(false);
     }
   };
 
@@ -153,27 +209,44 @@ export default function PublicUserProfilePage() {
           </div>
         </div>
 
-        {/* Name */}
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{profileUser.name}</h1>
-          {profileUser.username && (
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">@{profileUser.username}</p>
-          )}
-          {profileUser.bio && (
-            <p className="text-zinc-600 dark:text-zinc-300 text-sm max-w-sm mx-auto mt-1 leading-relaxed">
-              {profileUser.bio}
-            </p>
-          )}
+        {/* Description & Action */}
+        <div className="text-center space-y-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{profileUser.name}</h1>
+            {profileUser.username && (
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm">@{profileUser.username}</p>
+            )}
+            {profileUser.bio && (
+              <p className="text-zinc-600 dark:text-zinc-300 text-sm max-w-sm mx-auto mt-1 leading-relaxed">
+                {profileUser.bio}
+              </p>
+            )}
+          </div>
+          
+          {currentUserId !== userId && (
+             <button
+               onClick={handleFollowToggle}
+               disabled={isTogglingFollow}
+               className={cn(
+                 "px-6 py-2 rounded-full font-semibold text-sm transition-all mx-auto",
+                 isFollowing
+                   ? "bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-700"
+                   : "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90 shadow-md shadow-pink-500/20"
+               )}
+             >
+               {isFollowing ? "Following" : "Follow"}
+             </button>
+           )}
         </div>
 
         {/* Stats */}
         <div className="flex items-center space-x-6 text-sm text-zinc-500 font-medium">
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
-            <span className="font-bold text-zinc-900 dark:text-white">0</span> Followers
+            <span className="font-bold text-zinc-900 dark:text-white">{followersCount}</span> Followers
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors">
-            <span className="font-bold text-zinc-900 dark:text-white">0</span> Following
+            <span className="font-bold text-zinc-900 dark:text-white">{followingCount}</span> Following
           </div>
           <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <div className="hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer transition-colors flex items-center gap-1">

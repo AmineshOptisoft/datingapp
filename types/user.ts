@@ -43,6 +43,8 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   authToken?: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface UserRegistrationData {

@@ -5,6 +5,7 @@ import ReelLike from "@/models/ReelLike";
 import ReelView from "@/models/ReelView";
 import Scene from "@/models/Scene";
 import User from "@/models/User";
+import Follow from "@/models/Follow";
 import dbConnect from "@/lib/db";
 
 // GET /api/reels — fetch all public reels for the feed
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     const reelIds = reels.map((r: any) => r._id);
 
     // Fetch view counts, like counts, and user's likes in parallel
-    const [viewsData, likesData, userLikesData] = await Promise.all([
+    const [viewsData, likesData, userLikesData, userFollowsData] = await Promise.all([
       ReelView.aggregate([
         { $match: { reelId: { $in: reelIds } } },
         { $group: { _id: "$reelId", count: { $sum: 1 } } }
@@ -48,7 +49,9 @@ export async function GET(request: NextRequest) {
         { $match: { reelId: { $in: reelIds } } },
         { $group: { _id: "$reelId", count: { $sum: 1 } } }
       ]),
-      currentUserId ? ReelLike.find({ reelId: { $in: reelIds }, userId: currentUserId }).lean() : Promise.resolve([])
+      currentUserId ? ReelLike.find({ reelId: { $in: reelIds }, userId: currentUserId }).lean() : Promise.resolve([]),
+      // Look up follows
+      currentUserId ? Follow.find({ followerId: currentUserId }).lean() : Promise.resolve([])
     ]);
 
     const viewCounts: Record<string, number> = {};
@@ -58,6 +61,7 @@ export async function GET(request: NextRequest) {
     likesData.forEach((d: any) => likeCounts[d._id.toString()] = d.count);
 
     const userLikedSet = new Set(userLikesData.map((d: any) => d.reelId.toString()));
+    const userFollowedSet = new Set((userFollowsData as any[]).map((d: any) => d.followingId.toString()));
 
     // Attach poster info
     const userIds = [...new Set(reels.map((r: any) => r.userId.toString()))];
@@ -70,12 +74,14 @@ export async function GET(request: NextRequest) {
     const enrichedReels = reels.map((reel: any) => {
       const poster = userMap[reel.userId.toString()] || {};
       const idStr = reel._id.toString();
+      const posterIdStr = reel.userId.toString();
 
       // Ensure we use legacy views/likes as a fallback during migration
       const viewsCount = viewCounts[idStr] !== undefined ? viewCounts[idStr] : (reel.views?.length || 0);
       const likesCount = likeCounts[idStr] !== undefined ? likeCounts[idStr] : (reel.likes?.length || 0);
       
       const isLiked = currentUserId ? userLikedSet.has(idStr) : false;
+      const isFollowing = currentUserId ? userFollowedSet.has(posterIdStr) : false;
 
       return {
         _id: reel._id,
@@ -92,6 +98,7 @@ export async function GET(request: NextRequest) {
           name: poster.name,
           username: poster.username,
           avatar: poster.avatar,
+          isFollowing,
         },
         createdAt: reel.createdAt,
       };
