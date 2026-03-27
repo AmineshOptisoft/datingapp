@@ -27,6 +27,12 @@ const SceneSchema = new Schema({
     type: String,
     required: true
   },
+  characterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    default: null,
+    index: true
+  },
   isPublishedAsReel: {
     type: Boolean,
     default: false

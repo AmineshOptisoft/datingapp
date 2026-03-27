@@ -8,33 +8,43 @@ import dbConnect from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
+    const { searchParams } = new URL(request.url);
+    const queryUserId  = searchParams.get("userId");
+    const characterId  = searchParams.get("characterId");
 
-    if (!token) {
+    // ── Auth ──────────────────────────────────────────────────────────────
+    // Public access is allowed when fetching scenes for a specific character.
+    // A valid token is required only when fetching a user's own scene list.
+    const authHeader = request.headers.get("authorization");
+    const token      = authHeader?.replace("Bearer ", "") ?? null;
+    let decoded: any = null;
+
+    if (token) {
+      decoded = verifyToken(token);
+    }
+
+    if (!characterId && !decoded) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, error: "Invalid token" },
-        { status: 401 }
-      );
-    }
+    // ──────────────────────────────────────────────────────────────────────
 
     await dbConnect();
 
-    // Support fetching a specific user's scenes via query param, default to logged-in user
-    const { searchParams } = new URL(request.url);
-    const queryUserId = searchParams.get("userId");
-    const targetUserId = queryUserId || decoded.userId;
+    // Build the Mongoose query
+    const sceneQuery: Record<string, any> = {};
+    if (characterId) {
+      // Public: return all scenes tagged to that character
+      sceneQuery.characterId = characterId;
+    } else {
+      // Private: return scenes owned by the requesting user
+      sceneQuery.userId = queryUserId || decoded.userId;
+    }
 
-    // Get all scenes for this user, sorted by newest first
-    const scenes = await Scene.find({ userId: targetUserId })
+    // Get scenes sorted newest-first
+    const scenes = await Scene.find(sceneQuery)
       .sort({ createdAt: -1 })
       .lean();
 
@@ -97,7 +107,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    console.log(`📚 Fetched ${scenes.length} scenes for user ${decoded.userId}`);
+    console.log(`📚 Fetched ${scenes.length} scenes — characterId: ${characterId ?? 'n/a'}, userId: ${decoded?.userId ?? 'n/a'}`);
 
     return NextResponse.json({
       success: true,

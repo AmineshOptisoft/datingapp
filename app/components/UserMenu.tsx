@@ -114,6 +114,15 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
               </svg>
               Settings
             </button>
+            <Link
+              href="/settings/blocked"
+              className="w-full p-2 text-left text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white transition-colors flex items-center gap-3"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              Blocked List
+            </Link>
           </div>
 
           {/* Logout */}

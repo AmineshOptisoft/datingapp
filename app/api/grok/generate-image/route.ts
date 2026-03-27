@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { sceneTitle, sceneDescription } = body;
+    const { sceneTitle, sceneDescription, characterId } = body;
 
     if (!sceneDescription || sceneDescription.trim().length === 0) {
       return NextResponse.json(
@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
         sceneDescription: sceneDescription,
         mediaType: "image",
         mediaUrl: finalImageUrl,
+        characterId: characterId || null,
       });
 
       console.log("💾 Scene saved to MongoDB:", savedScene._id);

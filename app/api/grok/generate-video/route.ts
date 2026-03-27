@@ -10,6 +10,7 @@ const videoRequests = new Map<string, {
   userId?: string;
   sceneTitle?: string;
   sceneDescription?: string;
+  characterId?: string;
 }>();
 
 export async function POST(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { sceneTitle, sceneDescription, duration = 10 } = body;
+    const { sceneTitle, sceneDescription, characterId, duration = 10 } = body;
 
     if (!sceneDescription || sceneDescription.trim().length === 0) {
       return NextResponse.json(
@@ -138,6 +139,7 @@ export async function POST(request: NextRequest) {
       userId: decoded.userId,
       sceneTitle: sceneTitle || "Untitled Video",
       sceneDescription: sceneDescription,
+      characterId: characterId,
     });
 
     return NextResponse.json({
@@ -292,6 +294,7 @@ export async function GET(request: NextRequest) {
           sceneDescription: requestData?.sceneDescription || "Generated video",
           mediaType: "video",
           mediaUrl: finalVideoUrl,
+          characterId: requestData?.characterId || null,
         });
 
         console.log("💾 Video scene saved to MongoDB:", savedScene._id);

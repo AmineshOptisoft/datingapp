@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Message from '@/models/Message';
 import AIProfile from '@/models/AIProfile';
 import User from '@/models/User';
+import Block from '@/models/Block';
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -74,6 +75,20 @@ export async function GET(request: NextRequest) {
             }).select('characters.$').lean();
 
             if (userWithChar && userWithChar.characters && userWithChar.characters.length > 0) {
+              // Check for block
+              const charOwnerId = (userWithChar as any)._id.toString();
+              if (charOwnerId !== userId) {
+                 const blockDoc = await Block.findOne({
+                   $or: [
+                     { blockerId: userId, blockedId: charOwnerId },
+                     { blockerId: charOwnerId, blockedId: userId }
+                   ]
+                 });
+                 if (blockDoc) {
+                   return null; // Skip this conversation if blocked
+                 }
+              }
+
               const character = userWithChar.characters[0];
               
               // Format timestamp

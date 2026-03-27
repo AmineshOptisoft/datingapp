@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     // Optional auth - support Bearer token for native apps
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "").trim();
+    let currentUserId: string | null = null;
     if (token) {
       const decoded = verifyToken(token);
       if (!decoded) {
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
           { status: 401 }
         );
       }
+      currentUserId = decoded.userId;
     }
 
     const { searchParams } = new URL(request.url);
@@ -62,6 +64,20 @@ export async function GET(request: NextRequest) {
         const query: any = { "characters.visibility": "public" };
         if (characterGender) {
           query["characters.characterGender"] = characterGender;
+        }
+
+        if (currentUserId) {
+          const Block = (await import("@/models/Block")).default;
+          const blocks = await Block.find({
+            $or: [{ blockerId: currentUserId }, { blockedId: currentUserId }]
+          }).lean();
+          
+          if (blocks.length > 0) {
+            const blockedUserIds = blocks.map((b: any) => 
+              b.blockerId.toString() === currentUserId ? b.blockedId.toString() : b.blockerId.toString()
+            );
+            query._id = { $nin: blockedUserIds };
+          }
         }
 
         const users = await User.find(query)

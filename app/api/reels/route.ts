@@ -6,6 +6,7 @@ import ReelView from "@/models/ReelView";
 import Scene from "@/models/Scene";
 import User from "@/models/User";
 import Follow from "@/models/Follow";
+import Block from "@/models/Block";
 import dbConnect from "@/lib/db";
 
 // GET /api/reels — fetch all public reels for the feed
@@ -29,6 +30,19 @@ export async function GET(request: NextRequest) {
     let query: any = { isPublic: true };
     if (cursor) {
       query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    if (currentUserId) {
+      const blocks = await Block.find({
+        $or: [{ blockerId: currentUserId }, { blockedId: currentUserId }]
+      }).lean();
+      
+      if (blocks.length > 0) {
+        const blockedUserIds = blocks.map((b: any) => 
+          b.blockerId.toString() === currentUserId ? b.blockedId : b.blockerId
+        );
+        query.userId = { $nin: blockedUserIds };
+      }
     }
 
     // Fetch reels sorted newest first with limit

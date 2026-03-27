@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import Block from "@/models/Block";
 import { ICharacter } from "@/types/user";
+import { verifyToken } from "@/lib/auth";
 
 // GET - Retrieve public characters filtered by gender
 export async function GET(request: NextRequest) {
@@ -18,13 +20,41 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    let currentUserId: string | null = null;
+
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded) currentUserId = decoded.userId;
+    }
+
+    let blockedUserIds: string[] = [];
+    if (currentUserId) {
+      const blocks = await Block.find({
+        $or: [{ blockerId: currentUserId }, { blockedId: currentUserId }]
+      }).lean();
+      
+      if (blocks.length > 0) {
+        blockedUserIds = blocks.map((b: any) => 
+          b.blockerId.toString() === currentUserId ? b.blockedId.toString() : b.blockerId.toString()
+        );
+      }
+    }
+
     // Find all users with public characters matching the requested gender
     // For "For Man" section: show female characters (gender=female)
     // For "For Female" section: show male characters (gender=male)
-    const users = await User.find({
+    const query: any = {
       "characters.visibility": "public",
       "characters.characterGender": gender,
-    })
+    };
+
+    if (blockedUserIds.length > 0) {
+      query._id = { $nin: blockedUserIds };
+    }
+
+    const users = await User.find(query)
       .select("characters")
       .lean();
 

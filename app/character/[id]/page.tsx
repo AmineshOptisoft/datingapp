@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Film, Play, User } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { useProfileDetail } from '@/hooks/useProfileDetail';
 import { extractLegacyIdFromSlug } from '@/lib/url-helpers';
@@ -48,6 +49,8 @@ export default function CharacterDetailPage() {
   const [gifts, setGifts] = useState<any[]>([]);
 
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [characterScenes, setCharacterScenes] = useState<any[]>([]);
+  const [loadingScenes, setLoadingScenes] = useState(false);
 
   useEffect(() => {
     if (profile?.photos?.[0]) {
@@ -73,6 +76,27 @@ export default function CharacterDetailPage() {
           }
         })
         .catch(console.error);
+    }
+  }, [characterId]);
+
+  // Fetch scenes for this character
+  useEffect(() => {
+    if (characterId) {
+      const fetchScenes = async () => {
+        try {
+          setLoadingScenes(true);
+          const res = await fetch(`/api/scenes?characterId=${characterId}`);
+          const data = await res.json();
+          if (data.success) {
+            setCharacterScenes(data.scenes || []);
+          }
+        } catch (error) {
+          console.error("Error fetching character scenes:", error);
+        } finally {
+          setLoadingScenes(false);
+        }
+      };
+      fetchScenes();
     }
   }, [characterId]);
 
@@ -395,6 +419,83 @@ export default function CharacterDetailPage() {
               })}
             </div>
           </div>
+        </section>
+      )}
+
+      {/* Featured Scenes & Reels Section */}
+      {(characterScenes.length > 0 || loadingScenes) && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+               <Film className="w-6 h-6 text-purple-500" />
+               Featured Scenes & Reels
+            </h2>
+            {characterScenes.length > 0 && (
+              <span className="text-zinc-500 text-sm font-medium">{characterScenes.length} moments</span>
+            )}
+          </div>
+
+          {loadingScenes ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+               {[1, 2, 3, 4].map((i) => (
+                 <div key={i} className="aspect-[3/4] rounded-2xl bg-zinc-200 dark:bg-zinc-800/50 animate-pulse" />
+               ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {characterScenes.map((scene) => (
+                <div
+                  key={scene._id}
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/30 backdrop-blur-md shadow-lg hover:shadow-2xl transition-all cursor-pointer"
+                  onClick={() => {
+                    // Logic to view individual scene could go here
+                  }}
+                >
+                  {scene.mediaType === "image" ? (
+                    <img
+                      src={scene.mediaUrl}
+                      alt={scene.sceneTitle}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                  ) : (
+                    <video
+                      src={scene.mediaUrl}
+                      className="w-full h-full object-cover"
+                      preload="metadata"
+                      muted
+                      onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                      onMouseOut={(e) => {
+                        const v = e.currentTarget as HTMLVideoElement;
+                        v.pause();
+                        v.currentTime = 0;
+                      }}
+                    />
+                  )}
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                    <p className="text-white text-sm font-bold truncate">{scene.sceneTitle}</p>
+                    <div className="flex items-center gap-1 text-white/70 text-[10px] sm:text-xs mt-1">
+                       {scene.reelId ? (
+                         <>
+                           <Play className="w-3 h-3 fill-white/70" />
+                           <span>{formatCount(scene.reelViewsCount || 0)} views</span>
+                         </>
+                       ) : (
+                         <span>{scene.mediaType === "video" ? "Original Video" : "AI Photo"}</span>
+                       )}
+                    </div>
+                  </div>
+
+                  {scene.mediaType === "video" && (
+                    <div className="absolute top-3 right-3 p-1.5 bg-black/40 backdrop-blur-md rounded-lg">
+                      <Film className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

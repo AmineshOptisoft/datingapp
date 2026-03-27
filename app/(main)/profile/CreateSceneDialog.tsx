@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Image, Video, Loader2 } from "lucide-react";
+import { Image, Video, Loader2, User } from "lucide-react";
 import { PiCoinsFill } from "react-icons/pi";
 import { toast } from "sonner";
 
 interface CreateSceneDialogProps {
   onSuccess: () => void;
   onClose: () => void;
+  characters?: any[];
 }
 
-export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDialogProps) {
-  const [unlockedStep, setUnlockedStep] = useState(1);
+export default function CreateSceneDialog({ onSuccess, onClose, characters }: CreateSceneDialogProps) {
+  const [unlockedStep, setUnlockedStep] = useState(0); // Start at step 0: character selection
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [sceneTitle, setSceneTitle] = useState("");
   const [sceneDescription, setSceneDescription] = useState("");
   const [outputType, setOutputType] = useState<"photo" | "video">("photo");
@@ -56,6 +58,7 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           body: JSON.stringify({
             sceneTitle,
             sceneDescription,
+            characterId: selectedCharacterId,
           }),
         });
 
@@ -87,6 +90,7 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           body: JSON.stringify({
             sceneTitle,
             sceneDescription,
+            characterId: selectedCharacterId,
             duration: 10,
           }),
         });
@@ -231,8 +235,77 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
           </div>
         )}
 
+        {/* Step 0: Character Selection (Optional) */}
+        {!isComplete && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Which character is this for? (Optional)
+              </p>
+              {unlockedStep === 0 && (
+                <button
+                  onClick={() => {
+                    setSelectedCharacterId(null);
+                    setUnlockedStep(1);
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white underline"
+                >
+                  Skip
+                </button>
+              )}
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+              {characters?.map((char: any) => (
+                <button
+                  key={char._id}
+                  onClick={() => {
+                    setSelectedCharacterId(char._id);
+                    setUnlockedStep(1);
+                  }}
+                  className={`flex-shrink-0 flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all ${
+                    selectedCharacterId === char._id
+                      ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-800"
+                      : "border-transparent hover:border-zinc-200 dark:hover:border-zinc-800"
+                  }`}
+                >
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                    {char.characterImage ? (
+                      <img src={char.characterImage} alt={char.characterName} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-6 h-6 text-zinc-400 m-4" />
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium truncate w-16 text-center">
+                    {char.characterName}
+                  </span>
+                </button>
+              ))}
+              
+              <button
+                onClick={() => {
+                  setSelectedCharacterId(null);
+                  setUnlockedStep(1);
+                }}
+                className={`flex-shrink-0 flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all ${
+                  unlockedStep > 0 && !selectedCharacterId
+                    ? "border-zinc-900 dark:border-white bg-zinc-50 dark:bg-zinc-800"
+                    : "border-transparent hover:border-zinc-200 dark:hover:border-zinc-800"
+                }`}
+              >
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-dotted border-zinc-400 dark:border-zinc-600 flex items-center justify-center">
+                  <span className="text-zinc-400 text-xs">None</span>
+                </div>
+                <span className="text-[10px] font-medium text-center">No Character</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 1. What scene are you thinking of? */}
-        <div className="space-y-3">
+        <div className={`space-y-3 transition-all duration-200 ${
+          unlockedStep < 1 && !isComplete ? "pointer-events-none select-none opacity-60 blur-[2px]" : ""
+        }`}>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             What scene are you thinking of?
           </p>
@@ -352,7 +425,7 @@ export default function CreateSceneDialog({ onSuccess, onClose }: CreateSceneDia
         <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-zinc-900 dark:bg-white rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
+            style={{ width: `${((unlockedStep + (unlockedStep > 0 ? 0 : 0)) / 3) * 100}%` }}
           />
         </div>
       </div>

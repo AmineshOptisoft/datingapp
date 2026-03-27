@@ -28,7 +28,16 @@ export function useProfiles(segment?: string | null): UseProfilesResult {
           ? `/api/ai-profiles/public?segment=${segment}`
           : `/api/ai-profiles/public`;
 
-        const response = await fetch(url, { signal: controller.signal });
+        const headers: HeadersInit = {};
+        const token = localStorage.getItem("token");
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { 
+          signal: controller.signal,
+          headers
+        });
 
         if (!response.ok) {
           throw new Error("Failed to load profiles");

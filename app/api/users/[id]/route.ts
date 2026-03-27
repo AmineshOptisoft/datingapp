@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/auth";
 import User from "@/models/User";
 import Scene from "@/models/Scene";
 import Follow from "@/models/Follow";
+import Block from "@/models/Block";
 
 export async function GET(
   request: NextRequest,
@@ -96,6 +97,12 @@ export async function GET(
       };
     });
 
+    // Calculate total interactions across all characters
+    const totalInteractions = (typedUser.characters || []).reduce(
+      (sum: number, c: any) => sum + (c.interactions || 0),
+      0
+    );
+
     const responseData = {
       success: true,
       user: {
@@ -106,10 +113,12 @@ export async function GET(
         bio: typedUser.bio,
         followersCount: typedUser.followersCount || 0,
         followingCount: typedUser.followingCount || 0,
+        totalInteractions,
       },
       isFollowing: false, // We will calculate this below
       characters,
       scenes: enrichedScenes,
+      isBlocked: false,
     };
 
     // Check if the current user is following this profile
@@ -118,11 +127,25 @@ export async function GET(
     if (token) {
       const decoded = verifyToken(token);
       if (decoded && decoded.userId) {
-        const followDoc = await Follow.findOne({
-          followerId: decoded.userId,
-          followingId: userId,
-        });
+        const [followDoc, blockDoc] = await Promise.all([
+          Follow.findOne({
+            followerId: decoded.userId,
+            followingId: userId,
+          }),
+          Block.findOne({
+            $or: [
+              { blockerId: decoded.userId, blockedId: userId },
+              { blockerId: userId, blockedId: decoded.userId }
+            ]
+          }),
+        ]);
         responseData.isFollowing = !!followDoc;
+        responseData.isBlocked = blockDoc ? blockDoc.blockerId.toString() === decoded.userId : false;
+        
+        if (blockDoc) {
+          responseData.characters = [];
+          responseData.scenes = [];
+        }
       }
     }
 

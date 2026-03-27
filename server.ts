@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import Message from "./models/Message";
 import AIProfile from "./models/AIProfile";
 import User from "./models/User";
+import Block from "./models/Block";
 import VoiceSession from "./models/VoiceSession";
 import { buildEnhancedPersona } from "./lib/voice-persona-enhanced";
 import {
@@ -851,6 +852,31 @@ app.prepare().then(async () => {
         `📨 send_message event received: "${message}" from user ${userId}${personaContext ? ` (Persona: ${personaContext.substring(0, 30)}...)` : ''}`
       );
 
+      // Block Check for user-generated characters
+      if (profileId && profileId.startsWith('character-')) {
+        try {
+          const charId = profileId.replace('character-', '');
+          const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+          if (userWithChar) {
+            const charOwnerId = (userWithChar as any)._id.toString();
+            if (charOwnerId !== userId) {
+               const blockDoc = await Block.findOne({
+                 $or: [
+                   { blockerId: userId, blockedId: charOwnerId },
+                   { blockerId: charOwnerId, blockedId: userId }
+                 ]
+               });
+               if (blockDoc) {
+                 socket.emit("message_error", { message: "You cannot interact with this character." });
+                 return;
+               }
+            }
+          }
+        } catch (e) {
+          console.error("Error checking block status:", e);
+        }
+      }
+
       // Check rate limit to prevent spam and control API costs
       if (!checkRateLimit(userId)) {
         console.log(`⚠️ Rate limit exceeded for user ${userId}`);
@@ -1233,6 +1259,31 @@ app.prepare().then(async () => {
         const userId = socket.data.userId;
         console.log(`📞 Starting call: User ${userId} → Profile ${profileId}`);
         
+        // Block Check for user-generated characters
+        if (profileId && profileId.startsWith('character-')) {
+          try {
+            const charId = profileId.replace('character-', '');
+            const userWithChar = await User.findOne({ "characters._id": charId }).lean();
+            if (userWithChar) {
+              const charOwnerId = (userWithChar as any)._id.toString();
+              if (charOwnerId !== userId) {
+                 const blockDoc = await Block.findOne({
+                   $or: [
+                     { blockerId: userId, blockedId: charOwnerId },
+                     { blockerId: charOwnerId, blockedId: userId }
+                   ]
+                 });
+                 if (blockDoc) {
+                   socket.emit("voice:error", { message: "You cannot interact with this character." });
+                   return;
+                 }
+              }
+            }
+          } catch (e) {
+            console.error("Error checking block status for voice:", e);
+          }
+        }
+
         let profile: any = null;
         
         if (profileId && profileId.startsWith('character-')) {
