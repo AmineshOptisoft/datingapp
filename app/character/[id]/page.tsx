@@ -450,6 +450,17 @@ export default function CharacterDetailPage() {
                   onClick={() => {
                     // Logic to view individual scene could go here
                   }}
+                  onMouseEnter={(e) => {
+                    const video = e.currentTarget.querySelector('video');
+                    if (video) video.play().catch(() => {});
+                  }}
+                  onMouseLeave={(e) => {
+                    const video = e.currentTarget.querySelector('video');
+                    if (video) {
+                      video.pause();
+                      video.currentTime = 0;
+                    }
+                  }}
                 >
                   {scene.mediaType === "image" ? (
                     <img
@@ -463,27 +474,47 @@ export default function CharacterDetailPage() {
                       className="w-full h-full object-cover"
                       preload="metadata"
                       muted
-                      onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
-                      onMouseOut={(e) => {
-                        const v = e.currentTarget as HTMLVideoElement;
-                        v.pause();
-                        v.currentTime = 0;
-                      }}
+                      playsInline
                     />
                   )}
                   
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 pointer-events-none transition-opacity flex flex-col justify-end p-4">
                     <p className="text-white text-sm font-bold truncate">{scene.sceneTitle}</p>
-                    <div className="flex items-center gap-1 text-white/70 text-[10px] sm:text-xs mt-1">
-                       {scene.reelId ? (
-                         <>
-                           <Play className="w-3 h-3 fill-white/70" />
-                           <span>{formatCount(scene.reelViewsCount || 0)} views</span>
-                         </>
-                       ) : (
-                         <span>{scene.mediaType === "video" ? "Original Video" : "AI Photo"}</span>
-                       )}
+                    <div className="flex flex-col gap-0.5 text-white/80 text-[10px] mt-0.5">
+                      {scene.reelId ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Play className="w-3 h-3 fill-white/80" />
+                              <span>{formatCount(scene.reelViewsCount || 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-pink-500">
+                                <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001Z" />
+                              </svg>
+                              <span>{formatCount(scene.reelLikesCount || 0)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-white/60 italic">
+                            {scene.userAvatar ? (
+                              <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                            ) : (
+                              <User className="w-3.5 h-3.5" />
+                            )}
+                            <span>By {scene.userName || 'Unknown'}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-white/60 italic">
+                          {scene.userAvatar ? (
+                            <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                          ) : (
+                            <User className="w-3.5 h-3.5" />
+                          )}
+                          <span>By {scene.userName || 'Unknown'}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

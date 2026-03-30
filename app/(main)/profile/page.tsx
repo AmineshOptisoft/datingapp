@@ -1344,10 +1344,29 @@ export default function ProfilePage() {
                       {/* Overlay Info */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
                         <p className="text-white text-xs font-bold truncate">{scene.sceneTitle}</p>
-                        {scene.isPublishedAsReel && scene.reelId && (
-                          <div className="flex items-center gap-1 text-white/80 text-[10px] mt-0.5">
-                             <Play className="w-3 h-3 fill-white/80" />
-                             <span>{formatViews(scene.reelViewsCount || 0)}</span>
+                        {scene.reelId ? (
+                          <div className="flex flex-col gap-0.5 text-white/80 text-[10px] mt-0.5">
+                             <div className="flex items-center gap-1">
+                               <Play className="w-3 h-3 fill-white/80" />
+                               <span>{formatViews(scene.reelViewsCount || 0)}</span>
+                             </div>
+                             <div className="flex items-center gap-1.5 text-white/60 italic">
+                               {scene.userAvatar ? (
+                                 <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                               ) : (
+                                 <User className="w-3.5 h-3.5" />
+                               )}
+                               <span>By {scene.userName || 'Unknown'}</span>
+                             </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-white/60 text-[9px] mt-0.5 italic">
+                            {scene.userAvatar ? (
+                              <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                            ) : (
+                              <User className="w-3.5 h-3.5" />
+                            )}
+                            <span>By {scene.userName || 'Unknown'}</span>
                           </div>
                         )}
                       </div>

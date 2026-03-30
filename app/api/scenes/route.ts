@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import Scene from "@/models/Scene";
+import User from "@/models/User";
 import Reel from "@/models/Reel";
 import ReelLike from "@/models/ReelLike";
 import ReelView from "@/models/ReelView";
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Get scenes sorted newest-first
     const scenes = await Scene.find(sceneQuery)
+      .populate("userId", "name avatar")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -98,8 +100,16 @@ export async function GET(request: NextRequest) {
       const reelIdStr = scene.reelId?.toString();
       const reelStats = reelStatsMap[`scene_${sceneIdStr}`] || (reelIdStr ? reelStatsMap[`reel_${reelIdStr}`] : null);
       
+      const userObj = scene.userId;
+      const userId = userObj?._id || userObj;
+      const userName = userObj?.name || "Unknown User";
+      const userAvatar = userObj?.avatar || null;
+
       return {
         ...scene,
+        userId,
+        userName,
+        userAvatar,
         isReelPublic: reelStats?.isPublic ?? false,
         reelViewsCount: reelStats?.viewsCount ?? 0,
         reelLikesCount: reelStats?.likesCount ?? 0,

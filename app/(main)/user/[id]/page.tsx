@@ -36,6 +36,9 @@ interface Scene {
   createdAt: string;
   reelId?: string;
   reelViewsCount?: number;
+  reelLikesCount?: number;
+  userName?: string;
+  userAvatar?: string | null;
 }
 
 export default function PublicUserProfilePage() {
@@ -61,6 +64,8 @@ export default function PublicUserProfilePage() {
   const [characterScenes, setCharacterScenes] = useState<Scene[]>([]);
   const [loadingCharacterScenes, setLoadingCharacterScenes] = useState(false);
   const [isCharacterScenesOpen, setIsCharacterScenesOpen] = useState(false);
+  const [viewingScene, setViewingScene] = useState<Scene | null>(null);
+  const [isSceneViewOpen, setIsSceneViewOpen] = useState(false);
 
   const formatViews = (count: number) => {
     if (!count) return "0";
@@ -579,7 +584,22 @@ export default function PublicUserProfilePage() {
                   {characterScenes.map((scene) => (
                     <div
                       key={scene._id}
-                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950"
+                      className="group relative aspect-square rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 cursor-pointer"
+                      onClick={() => {
+                        setViewingScene(scene);
+                        setIsSceneViewOpen(true);
+                      }}
+                      onMouseEnter={(e) => {
+                        const video = e.currentTarget.querySelector('video');
+                        if (video) video.play().catch(() => {});
+                      }}
+                      onMouseLeave={(e) => {
+                        const video = e.currentTarget.querySelector('video');
+                        if (video) {
+                          video.pause();
+                          video.currentTime = 0;
+                        }
+                      }}
                     >
                       {scene.mediaType === "image" ? (
                         <img
@@ -593,18 +613,46 @@ export default function PublicUserProfilePage() {
                           className="w-full h-full object-cover"
                           preload="metadata"
                           muted
+                          playsInline
                         />
                       )}
                       
                       {/* Overlay Info */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 pointer-events-none transition-opacity flex flex-col justify-end p-3">
                         <p className="text-white text-xs font-bold truncate">{scene.sceneTitle}</p>
-                        {scene.reelId && (
-                          <div className="flex items-center gap-1 text-white/80 text-[10px] mt-0.5">
-                             <Play className="w-3 h-3 fill-white/80" />
-                             <span>{formatViews(scene.reelViewsCount || 0)}</span>
-                          </div>
-                        )}
+                        {scene.reelId ? (
+                           <div className="flex flex-col gap-0.5 text-white/80 text-[10px] mt-0.5">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <Play className="w-3 h-3 fill-white/80" />
+                                  <span>{formatViews(scene.reelViewsCount || 0)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-pink-500">
+                                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001Z" />
+                                  </svg>
+                                  <span>{formatViews(scene.reelLikesCount || 0)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-white/60 italic">
+                                {scene.userAvatar ? (
+                                  <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                ) : (
+                                  <User className="w-3.5 h-3.5" />
+                                )}
+                                <span>By {scene.userName || 'Unknown'}</span>
+                              </div>
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-1.5 text-white/60 text-[9px] mt-0.5 italic">
+                             {scene.userAvatar ? (
+                               <img src={scene.userAvatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                             ) : (
+                               <User className="w-3.5 h-3.5" />
+                             )}
+                             <span>By {scene.userName || 'Unknown'}</span>
+                           </div>
+                         )}
                       </div>
 
                       {scene.mediaType === "video" && !scene.reelId && (
@@ -633,6 +681,66 @@ export default function PublicUserProfilePage() {
                 className="px-8 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full font-bold text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all"
               >
                 Close View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scene Viewer Modal */}
+      {isSceneViewOpen && viewingScene && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => { setIsSceneViewOpen(false); setViewingScene(null); }}
+          />
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-zinc-900 dark:text-white">{viewingScene.sceneTitle}</h2>
+                {viewingScene.sceneDescription && (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{viewingScene.sceneDescription}</p>
+                )}
+              </div>
+              <button
+                onClick={() => { setIsSceneViewOpen(false); setViewingScene(null); }}
+                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Media */}
+            <div className="flex-1 flex items-center justify-center bg-zinc-100 dark:bg-zinc-950 p-4 overflow-hidden">
+              {viewingScene.mediaType === 'image' ? (
+                <img
+                  src={viewingScene.mediaUrl}
+                  alt={viewingScene.sceneTitle}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                />
+              ) : (
+                <video
+                  src={viewingScene.mediaUrl}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[70vh] rounded-lg"
+                />
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                {viewingScene.mediaType === 'image' ? '🎨 Image' : '🎬 Video'}
+              </span>
+              <button
+                onClick={() => { setIsSceneViewOpen(false); setViewingScene(null); }}
+                className="px-6 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full font-bold text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all"
+              >
+                Close
               </button>
             </div>
           </div>

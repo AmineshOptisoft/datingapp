@@ -5,8 +5,8 @@ const MONGODB_URI = 'mongodb+srv://nihal:nihal@cluster0.oz0lft4.mongodb.net/dati
 // ───────────────────────────────────────────────
 // Config
 // Zara-Knight
-const CHARACTER_ID = '69c28709dc6338c9787e607a';
-const VIDEO_URL    = 'https://imagine-public.x.ai/imagine-public/share-videos/b46b1052-2dc3-422d-980f-0b7202a89c45_hd.mp4';
+const CHARACTER_ID = '69c280f20e9d7b38c80263b4';
+const VIDEO_URL    = 'https://videos.pexels.com/video-files/10264824/10264824-uhd_1440_2732_25fps.mp4';
 // ───────────────────────────────────────────────
 
 const client = new MongoClient(MONGODB_URI);

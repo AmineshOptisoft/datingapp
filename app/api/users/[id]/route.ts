@@ -60,40 +60,55 @@ export async function GET(
           { sceneId: { $in: sceneIds } },
           { _id: { $in: validReelIdsOnScene } }
         ]
-      }).select("_id sceneId").lean();
+      }).select("_id sceneId comments").lean();
     });
 
     const matchedReelIds = reelsReq.map((r: any) => r._id);
     const viewCounts: Record<string, number> = {};
+    const likeCounts: Record<string, number> = {};
 
     if (matchedReelIds.length > 0) {
-      const viewsData = await dbConnect().then(async () => {
+      const [viewsData, likesData] = await dbConnect().then(async () => {
         const ReelView = require('@/models/ReelView').default || require('@/models/ReelView');
-        return ReelView.aggregate([
-          { $match: { reelId: { $in: matchedReelIds } } },
-          { $group: { _id: "$reelId", count: { $sum: 1 } } }
+        const ReelLike = require('@/models/ReelLike').default || require('@/models/ReelLike');
+        return Promise.all([
+          ReelView.aggregate([
+            { $match: { reelId: { $in: matchedReelIds } } },
+            { $group: { _id: "$reelId", count: { $sum: 1 } } }
+          ]),
+          ReelLike.aggregate([
+            { $match: { reelId: { $in: matchedReelIds } } },
+            { $group: { _id: "$reelId", count: { $sum: 1 } } }
+          ])
         ]);
       });
 
       viewsData.forEach((d: any) => viewCounts[d._id.toString()] = d.count);
+      likesData.forEach((d: any) => likeCounts[d._id.toString()] = d.count);
     }
 
-    // Create a map of sceneId -> reel -> views
-    const reelStatsMap: Record<string, number> = {};
+    // Create a map of sceneId -> reel -> stats
+    const reelStatsMap: Record<string, { views: number, likes: number, comments: number }> = {};
     reelsReq.forEach((r: any) => {
       const views = viewCounts[r._id.toString()] || 0;
-      if (r.sceneId) reelStatsMap[`scene_${r.sceneId.toString()}`] = views;
-      reelStatsMap[`reel_${r._id.toString()}`] = views;
+      const likes = likeCounts[r._id.toString()] || 0;
+      const commentsCount = r.comments?.length || 0;
+      const stats = { views, likes, comments: commentsCount };
+
+      if (r.sceneId) reelStatsMap[`scene_${r.sceneId.toString()}`] = stats;
+      reelStatsMap[`reel_${r._id.toString()}`] = stats;
     });
 
     const enrichedScenes = scenes.map((scene: any) => {
       const sceneIdStr = scene._id.toString();
       const reelIdStr = scene.reelId?.toString();
-      const views = reelStatsMap[`scene_${sceneIdStr}`] ?? (reelIdStr ? reelStatsMap[`reel_${reelIdStr}`] : 0) ?? 0;
+      const stats = reelStatsMap[`scene_${sceneIdStr}`] ?? (reelIdStr ? reelStatsMap[`reel_${reelIdStr}`] : null);
       
       return {
         ...scene,
-        reelViewsCount: views,
+        reelViewsCount: stats?.views || 0,
+        reelLikesCount: stats?.likes || 0,
+        reelCommentsCount: stats?.comments || 0,
       };
     });
 

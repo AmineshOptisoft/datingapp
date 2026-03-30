@@ -241,22 +241,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fire-and-forget: generate 5 AI images for this character in the background
-    import("@/lib/generateCharacterImages")
-      .then(({ generateCharacterImages }) => {
-        generateCharacterImages(userId, newCharacter._id.toString(), {
-          characterName,
-          characterAge,
-          characterGender: characterGender as any,
-          personality,
-          description,
-        }).catch((err: any) =>
-          console.error("❌ Background image generation failed:", err)
-        );
-      })
-      .catch((err: any) =>
-        console.error("❌ Failed to import generateCharacterImages:", err)
-      );
+    // Note: Automatic 5 image generation via Grok was removed per user request.
 
     return NextResponse.json({
       success: true,
