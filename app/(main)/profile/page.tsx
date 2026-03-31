@@ -558,9 +558,13 @@ export default function ProfilePage() {
                               />
                               
                               {/* Menu */}
-                              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden z-20">
+                              <div 
+                                className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden z-20"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setSelectedCharacter(character);
                                     setIsEditCharacterDialogOpen(true);
                                     setOpenCharacterMenuId(null);
@@ -573,7 +577,8 @@ export default function ProfilePage() {
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setCharacterToDelete(character);
                                     setIsDeleteCharacterConfirmOpen(true);
                                     setOpenCharacterMenuId(null);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { videoGenerationLimiter } from "@/lib/rateLimit";
 
 // In-memory storage for video generation requests (for demo purposes)
 // In production, use Redis or database
@@ -31,6 +32,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Unauthorized - Invalid token" },
         { status: 401 }
+      );
+    }
+
+    // Rate Limit Check (Phase 4 Security)
+    if (!videoGenerationLimiter.isAllowed(decoded.userId)) {
+      console.log(`⚠️ Rate limit hit for video generation: User ${decoded.userId}`);
+      return NextResponse.json(
+        { success: false, error: "Rate limit exceeded. Maximum 3 videos per minute." },
+        { status: 429 }
       );
     }
 

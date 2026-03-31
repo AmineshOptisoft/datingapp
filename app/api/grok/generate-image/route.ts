@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { imageGenerationLimiter } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Unauthorized - Invalid token" },
         { status: 401 }
+      );
+    }
+
+    // Rate Limit Check (Phase 4 Security)
+    if (!imageGenerationLimiter.isAllowed(decoded.userId)) {
+      console.log(`⚠️ Rate limit hit for image generation: User ${decoded.userId}`);
+      return NextResponse.json(
+        { success: false, error: "Rate limit exceeded. Maximum 5 images per minute." },
+        { status: 429 }
       );
     }
 

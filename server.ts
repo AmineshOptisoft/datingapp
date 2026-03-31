@@ -20,6 +20,7 @@ import {
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
 import { containsRestrictedWords } from "./lib/restricted_words";
 import UserSubscription from "./models/UserSubscriptions";
+import { chatMessageLimiter } from "./lib/rateLimit";
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -80,29 +81,15 @@ const MONGO_URI =
 // ==================== CONSTANTS ====================
 
 const CALL_TIMEOUT_MS = 30 * 60 * 1000;
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 20;
 
 // ==================== STATE MANAGEMENT ====================
 
 const activeCalls = new Map<string, ActiveCall>();
-const rateLimitMap = new Map<string, number[]>();
 
 // ==================== HELPER FUNCTIONS ====================
 
 function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const userRequests = rateLimitMap.get(userId) || [];
-  const recentRequests = userRequests.filter(
-    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS
-  );
-  rateLimitMap.set(userId, recentRequests);
-  if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-  recentRequests.push(now);
-  rateLimitMap.set(userId, recentRequests);
-  return true;
+  return chatMessageLimiter.isAllowed(userId);
 }
 
 function setupCallTimeout(

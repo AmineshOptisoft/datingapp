@@ -2,15 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { Types } from "mongoose";
+import { verifyToken } from "@/lib/auth";
+
+// Helper: extract and verify JWT from cookie or Bearer header
+function authenticate(request: NextRequest) {
+  let token = request.cookies.get("token")?.value;
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    token = authHeader?.replace("Bearer ", "");
+  }
+  if (!token) return null;
+  return verifyToken(token);
+}
 
 // GET - Retrieve all characters for a user
 export async function GET(request: NextRequest) {
   try {
+    const decoded = authenticate(request);
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const requestedUserId = searchParams.get("userId");
     const lite = searchParams.get("lite");
 
-    if (!userId) {
+    if (!requestedUserId) {
       return NextResponse.json(
         { success: false, message: "User ID is required" },
         { status: 400 }
@@ -21,7 +34,10 @@ export async function GET(request: NextRequest) {
 
     const isLite = lite === "1" || lite === "true";
 
-    const user = await User.findById(userId)
+    // Determine if the requester is the owner
+    const isOwner = decoded && decoded.userId === requestedUserId;
+
+    const user = await User.findById(requestedUserId)
       .select(
         isLite
           ? "characters._id characters.characterName characters.characterAge characters.language characters.tags characters.description characters.visibility"
@@ -36,9 +52,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    let characters = (user as any).characters || [];
+
+    // Security: Filter characters based on visibility if not the owner
+    if (!isOwner) {
+      characters = characters.filter((char: any) => char.visibility === "public");
+    }
+
     return NextResponse.json({
       success: true,
-      data: (user as any).characters || [],
+      data: characters,
     });
   } catch (error) {
     console.error("Get characters error:", error);
@@ -52,6 +75,15 @@ export async function GET(request: NextRequest) {
 // POST - Create a new character
 export async function POST(request: NextRequest) {
   try {
+    // 🔐 Verify authentication
+    const decoded = authenticate(request);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized - No valid token" },
+        { status: 401 }
+      );
+    }
+
     // Support both FormData (with file upload) and JSON (with URL)
     const contentType = request.headers.get("content-type") || "";
     
@@ -64,7 +96,7 @@ export async function POST(request: NextRequest) {
       // FormData path — file upload support
       const formData = await request.formData();
 
-      userId        = formData.get("userId") as string;
+      userId        = decoded.userId;
       characterName = formData.get("characterName") as string;
       characterAge  = Number(formData.get("characterAge"));
       characterGender = formData.get("characterGender") as string;
@@ -109,24 +141,17 @@ export async function POST(request: NextRequest) {
     } else {
       // JSON path — accepts a pre-uploaded URL (not base64)
       const body = await request.json();
-      console.log("Received character data:", body);
 
       ({
-        userId, characterName, characterImage = null,
+        characterName, characterImage = null,
         characterAge, characterGender, language,
         tags, description, personality,
         scenario, firstMessage, visibility,
       } = body);
+      userId = decoded.userId;
     }
 
-    // Detailed validation with specific error messages
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "User ID is missing" },
-        { status: 400 }
-        
-      );
-    }
+    // userId is always set from the JWT token at this point
 
     if (!characterName || characterName.trim() === "") {
       return NextResponse.json(

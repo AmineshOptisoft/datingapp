@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const token = generateToken(user._id.toString());
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Login successful",
       token,
@@ -58,6 +58,17 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // 🍪 Set the token in an HttpOnly cookie
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       { success: false, message: "Login failed" },

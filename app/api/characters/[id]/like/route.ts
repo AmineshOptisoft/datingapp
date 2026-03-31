@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
 import AIProfile from "@/models/AIProfile";
+import { verifyToken } from "@/lib/auth";
+
+// Helper: extract and verify JWT from cookie or Bearer header
+function authenticate(request: NextRequest) {
+  let token = request.cookies.get("token")?.value;
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    token = authHeader?.replace("Bearer ", "");
+  }
+  if (!token) return null;
+  return verifyToken(token);
+}
 
 // POST - Like or Unlike a character or AI profile
 // Body: { userId: string }
@@ -11,27 +23,18 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    // 🔐 Verify authentication
+    const decoded = authenticate(request);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized - No valid token" },
+        { status: 401 }
+      );
+    }
+
     await connectToDatabase();
     const { id } = params;
-
-    let body: { userId?: string };
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { success: false, message: "Invalid request body" },
-        { status: 400 }
-      );
-    }
-
-    const { userId } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    const userId = decoded.userId;
 
     // ── Try AIProfile FIRST (fast _id index lookup) ──
     // ATOMIC unlike: only matches if userId IS in likedBy

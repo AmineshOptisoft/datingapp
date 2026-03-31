@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
+import { verifyToken } from "@/lib/auth";
+
+// Helper: extract and verify JWT from cookie or Bearer header
+function authenticate(request: NextRequest) {
+  let token = request.cookies.get("token")?.value;
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    token = authHeader?.replace("Bearer ", "");
+  }
+  if (!token) return null;
+  return verifyToken(token);
+}
 
 // GET - Fetch single character by ID
 export async function GET(
@@ -8,6 +20,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const decoded = authenticate(request);
     await connectToDatabase();
     const { id } = params;
 
@@ -22,6 +35,22 @@ export async function GET(
     }
 
     const character = (user as any).characters.find((c: any) => c._id.toString() === id);
+
+    if (!character) {
+      return NextResponse.json(
+        { success: false, message: "Character not found" },
+        { status: 404 }
+      );
+    }
+
+    // Security: If character is private, only owner can view
+    const isOwner = decoded && decoded.userId === user._id.toString();
+    if (character.visibility === "private" && !isOwner) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized - This character is private" },
+        { status: 403 }
+      );
+    }
 
     return NextResponse.json({ success: true, character });
   } catch (error) {
@@ -39,6 +68,15 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // 🔐 Verify authentication
+    const decoded = authenticate(request);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized - No valid token" },
+        { status: 401 }
+      );
+    }
+
     await connectToDatabase();
     const { id } = params;
     
@@ -57,7 +95,7 @@ export async function PUT(
       scenario: string, firstMessage: string, visibility: string;
 
     if (formData) {
-      userId        = formData.get("userId") as string;
+      userId        = decoded.userId;
       characterName = formData.get("characterName") as string;
       characterAge  = Number(formData.get("characterAge"));
       characterGender = formData.get("characterGender") as string;
@@ -96,22 +134,17 @@ export async function PUT(
     } else {
       const body = await request.json();
       ({
-        userId, characterName, characterImage,
+        characterName, characterImage,
         characterAge, characterGender, language,
         tags, description, personality,
         scenario, firstMessage, visibility,
       } = body);
+      userId = decoded.userId;
     }
 
     console.log("📥 Received character update data:", { characterName, characterAge, characterGender, visibility });
 
-    // Validation
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    // userId is always derived from JWT token
 
     if (!characterName || characterName.trim().length === 0) {
       return NextResponse.json(
@@ -206,17 +239,19 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDatabase();
-    const { id } = params;
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
+    // 🔐 Verify authentication
+    const decoded = authenticate(request);
+    if (!decoded) {
       return NextResponse.json(
-        { success: false, message: "User ID is required" },
-        { status: 400 }
+        { success: false, message: "Unauthorized - No valid token" },
+        { status: 401 }
       );
     }
+
+    await connectToDatabase();
+    const { id } = params;
+    const userId = decoded.userId;
+
 
     // Find user with the character and verify ownership
     const user = await User.findOne({ _id: userId, "characters._id": id });

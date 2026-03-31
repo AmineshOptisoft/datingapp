@@ -1,0 +1,35 @@
+# API Security Hardening Tasks
+
+## Phase 1: Critical Auth Fixes (IDOR vulnerabilities)
+- `[x]` `/api/characters` (GET, POST)
+- `[x]` `/api/characters/[id]` (GET, PUT, DELETE)
+- `[x]` `/api/characters/[id]/like`
+- `[x]` `/api/characters/[id]/interact`
+- `[ ]` `/api/profile`
+- `[ ]` `/api/conversations`
+- `[ ]` `/api/personas` (GET, POST)
+- `[ ]` `/api/personas/[id]` (GET, PUT, DELETE)
+- `[ ]` `/api/upload`
+- `[ ]` `/api/ai-chat`
+- `[ ]` `/api/users/gifts-received`
+
+## Phase 2: Payment & Admin Security
+- `[ ]` `/api/stripe/webhook` (Enable signature verification)
+- `[ ]` `/api/characters/debug` (Remove debug endpoint)
+- `[ ]` `/api/setup` (Add admin secret wrapper)
+- `[ ]` `/api/init-profiles` (Add admin secret wrapper)
+- `[ ]` `/api/ai-profiles/seed` (Add admin secret wrapper)
+
+## Phase 3: Data Leakage & Hardening
+- `[x]` `/api/auth/google` (Remove token from DB and logs, fix error leaks)
+- `[ ]` `/api/auth/verify` (Return safe user fields only)
+- `[ ]` `/api/auth/register` (Add password strength validation)
+- `[ ]` `/api/ai-profiles/available` (Remove token logs)
+- `[ ]` Remove hardcoded MongoDB URI in `conversations`
+- `[ ]` Remove hardcoded JWT secret fallback in `auth.ts`
+
+## Phase 4: API Rate Limiting for LLMs
+- `[ ]` `lib/rateLimit.ts` (Create in-memory rate limiter)
+- `[ ]` `/api/grok/generate-image` (Max 5/min)
+- `[ ]` `/api/grok/generate-video` (Max 3/min)
+- `[ ]` `server.ts` (Centralize socket rate limits)
