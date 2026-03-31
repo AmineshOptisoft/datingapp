@@ -16,6 +16,7 @@ interface User {
   phone: string;
   avatar?: string;
   bio?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -25,6 +26,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   loading: boolean;
 }
 
@@ -63,7 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.data.user);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
-      router.push("/");
+      
+      // Redirect admin to /admin, regular users to /
+      if (data.data.user.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        router.push("/");
+      }
     } else {
       throw new Error(data.message);
     }
@@ -92,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         updateUser,
         isAuthenticated: !!user && !!token,
+        isAdmin: user?.role === "admin",
         loading,
       }}
     >

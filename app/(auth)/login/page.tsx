@@ -37,8 +37,12 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.data.user));
         
-        // Trigger a custom event or just redirect
-        window.location.href = "/dashboard"; 
+        // Redirect admin to admin panel, regular users to dashboard
+        if (data.data.user.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       } else {
         setMessage(data.message || "Google Login failed");
       }

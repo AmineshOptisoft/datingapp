@@ -32,7 +32,7 @@ export interface IUser extends Document {
   authProvider?: 'email' | 'google';
   avatar?: string;
   bio?: string;
-  role: 'user' | 'character';
+  role: 'user' | 'character' | 'admin';
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   profileComplete: boolean;

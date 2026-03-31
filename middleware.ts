@@ -10,6 +10,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
+  // Protect admin routes
+  if (pathname.includes("/admin") && !token) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   // Redirect to homepage if already logged in
   if ((pathname === "/login" || pathname === "/register") && token) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -19,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/register"],
 };

@@ -19,44 +19,35 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const { theme } = useTheme();
   const pathname = usePathname();
   const isMessagesPage = pathname === '/messages';
+  const isAdminPage = pathname.startsWith('/admin');
 
   return (
     <div className="flex h-screen-dvh overflow-hidden relative">
-      {/* Global Background Image */}
+      {/* Global Background */}
       <div 
         className="fixed inset-0 z-0"
         style={{
-          // backgroundImage: `url(/${theme === 'light' ? 'light_bg.svg' : 'bg.svg'})`,
-          // backgroundRepeat: 'no-repeat',
-          // backgroundSize: 'cover',
           backgroundColor: theme === 'light' ? '#f2f2f2' : '#0a0a0a',
           backgroundPosition: 'center',
         }}
       />
 
-      {/* Desktop Sidebar - Only renders above 768px */}
-      {/* <div className="hidden md:block">
-        <SidebarWrapper isOpen={true} onClose={() => {}} />
-      </div> */}
-      
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
-        {/* Mobile Sidebar - Only renders below 768px as overlay */}
-        {/* {isSidebarOpen && (
-          <div className="md:hidden fixed inset-0 z-50">
-            <SidebarWrapper isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-          </div>
-        )} */}
-        {/* Header */}
-        <Header />
+        {/* Header - hide on admin pages */}
+        {!isAdminPage && <Header />}
 
-        {/* Page Content - flex for messages so chat area gets proper height for scroll */}
-        <main className={`flex-1 min-h-0 ${isMessagesPage ? 'flex flex-col overflow-hidden pb-0' : 'overflow-y-auto pb-20 md:pb-0'}`}>
+        {/* Page Content */}
+        <main className={`flex-1 min-h-0 ${
+          isAdminPage 
+            ? 'flex flex-col overflow-hidden pb-0' 
+            : isMessagesPage 
+              ? 'flex flex-col overflow-hidden pb-0' 
+              : 'overflow-y-auto pb-20 md:pb-0'
+        }`}>
           {children}
         </main>
       </div>
     </div>
   );
 }
-
-
