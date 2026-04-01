@@ -3,6 +3,7 @@ import { networkInterfaces } from "os";
 import { parse } from "url";
 import next from "next";
 import { Server as SocketIOServer } from "socket.io";
+import cron from "node-cron";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Message from "./models/Message";
@@ -800,6 +801,18 @@ async function connectMongoDB() {
 app.prepare().then(async () => {
   await connectMongoDB();
 
+  // Initialize Inactivity Reminder Cron Job (Runs every 15 minutes)
+  cron.schedule("*/15 * * * *", async () => {
+    try {
+      console.log("⏰ Running Inactivity Reminder Cron Job...");
+      const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
+      const data = await response.json();
+      console.log("✅ Cron Job Result:", data);
+    } catch (error) {
+      console.error("❌ Cron Job Fetch Error:", error);
+    }
+  });
+
   const server = createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url!, true);
@@ -834,6 +847,13 @@ app.prepare().then(async () => {
       if (!message) return;
       const userId = socket.data.userId;
       const aiBotId = profileId || "ai_bot";
+
+      // 🔄 ACTIVITY TRACKER: Reset their inactive timer every time they send a new message!
+      try {
+        await User.findByIdAndUpdate(userId, { lastActiveAt: new Date() });
+      } catch (err) {
+        console.error("Failed to update lastActiveAt on socket send_message:", err);
+      }
 
       console.log(
         `📨 send_message event received: "${message}" from user ${userId}${personaContext ? ` (Persona: ${personaContext.substring(0, 30)}...)` : ''}`

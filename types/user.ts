@@ -45,6 +45,9 @@ export interface IUser extends Document {
   authToken?: string;
   followersCount?: number;
   followingCount?: number;
+  lastActiveAt?: Date;
+  inactivityNotificationSentAt?: Date | null;
+  dailyInactivityCount?: number;
 }
 
 export interface UserRegistrationData {
