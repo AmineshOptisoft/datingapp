@@ -15,6 +15,14 @@ export async function GET(
 
     const userId = params.id;
 
+    const mongoose = require("mongoose");
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid User ID format" },
+        { status: 400 }
+      );
+    }
+
     // Fetch user public info (no password, no email, no sensitive fields)
     const user = await User.findById(userId)
       .select("_id name username avatar bio characters followersCount followingCount")

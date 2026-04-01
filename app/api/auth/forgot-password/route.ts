@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     
     const mailOptions = {
         to: user.email,
-        from: process.env.SMTP_FROM || '"Idyll Support" <noreply@idyll.com>',
+        from: process.env.SMTP_FROM || '"Lily Support" <noreply@lily.com>',
         subject: 'Password Reset Request',
         text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n` +
           `Please click on the following link, or paste this into your browser to complete the process:\n\n` +

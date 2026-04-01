@@ -162,9 +162,9 @@ function HomePageContent() {
         </div>
       </section>
 
-      {/* Idyll AI Companion Section */}
-      <section className="mb-16">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white mb-6 text-center">Idyll AI Companion</h2>
+      {/* Lily AI Companion Section */}
+      <section className="flex flex-col items-center justify-center py-10 px-4 md:px-8 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white mb-6 text-center">Lily AI Companion</h2>
 
         <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed mb-6">
           Experience a meaningful connection with the advanced AI virtual girlfriend and AI boyfriend —they are AI voicebots that allow you to interact in real-time. Talk to your AI partner in person, choose from multiple avatars, and immerse into conversation.

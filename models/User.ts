@@ -187,6 +187,18 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    lastActiveAt: {
+      type: Date,
+      default: Date.now,
+    },
+    inactivityNotificationSentAt: {
+      type: Date,
+      default: null,
+    },
+    dailyInactivityCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

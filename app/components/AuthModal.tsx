@@ -284,7 +284,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             <div className="w-10 h-10 bg-zinc-900 dark:bg-white rounded flex items-center justify-center">
               <span className="text-white dark:text-black font-bold text-lg">🖼️</span>
             </div>
-            <span className="text-zinc-900 dark:text-white font-bold text-2xl">IDYLL</span>
+            <span className="text-zinc-900 dark:text-white font-bold text-2xl">LILY</span>
           </div>
 
           {/* Title */}

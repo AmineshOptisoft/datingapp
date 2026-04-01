@@ -21,7 +21,7 @@ export default function FAQPage() {
     {
       id: 2,
       question: 'Can I customize my AI Girlfriend or Boyfriend?',
-      answer: 'No, you cannot edit the AI, but we have a combined and dynamic collection of avatars. Whether you want a caring or adventurous— Idyll AI virtual partner adapts to your preferences.',
+      answer: 'No, you cannot edit the AI, but we have a combined and dynamic collection of avatars. Whether you want a caring or adventurous— Lily AI virtual partner adapts to your preferences.',
     },
     {
       id: 3,
@@ -46,7 +46,7 @@ export default function FAQPage() {
     {
       id: 7,
       question: 'What happens if my AI says weird things to me?',
-      answer: 'AI responses are generated based on machine learning and user interactions. While we continuously improve accuracy, occasional unexpected or "weird" responses may occur. If this happens, you can report the response by mailing us at info@getidyll.in, or reset the conversation to realign interactions with your preferences.',
+      answer: 'AI responses are generated based on machine learning and user interactions. While we continuously improve accuracy, occasional unexpected or "weird" responses may occur. If this happens, you can report the response by mailing us at info@getlily.in, or reset the conversation to realign interactions with your preferences.',
     },
     {
       id: 8,

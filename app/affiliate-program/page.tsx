@@ -155,7 +155,7 @@ export default function AffiliateProgramPage() {
             Ready to Start Earning?
           </h2>
           <p className="text-white/90 text-base md:text-lg mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed">
-            Email us at info@getidyll.in to get your unique coupon code and start earning commissions today.
+            Email us at info@getlily.in to get your unique coupon code and start earning commissions today.
           </p>
           <Link 
             href="/"

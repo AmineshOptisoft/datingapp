@@ -35,6 +35,11 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
+    // Update user's last activity
+    await User.findByIdAndUpdate(decoded.userId, { 
+      lastActiveAt: new Date() 
+    });
+
     // Get unique user IDs from messages
     const conversations = await Message.aggregate([
       {

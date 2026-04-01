@@ -45,6 +45,28 @@ export async function sendWelcomeMessages(userId: string) {
 
     await Message.insertMany(messagesToCreate);
     console.log(`✨ Successfully created ${messagesToCreate.length} welcome messages for user ${userId}.`);
+
+    try {
+      const { sendNotificationToUser } = await import("@/lib/onesignal");
+      for (const msg of messagesToCreate) {
+        // Find Character Name for push payload
+        const charId = msg.sender.replace("character-", "");
+        let senderName = "A new friend";
+        
+        const characterUser = randomCharacters.find(u => u.characters._id.toString() === charId);
+        if (characterUser) {
+          senderName = characterUser.characters.characterName;
+        }
+
+        await sendNotificationToUser(
+          userId, 
+          "New Message! 💕", 
+          `${senderName}: ${msg.message}`
+        );
+      }
+    } catch (pushErr) {
+      console.error("⚠️ Failed to send welcome push notifications:", pushErr);
+    }
   } catch (error) {
     console.error("⚠️ Error sending welcome messages:", error);
   }

@@ -146,44 +146,44 @@ export default function Footer() {
               Contact us at:
               <br />
               <a
-                href="mailto:info@getidyll.in"
+                href="mailto:info@getlily.in"
                 className="text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 transition-colors"
               >
-                info@getidyll.in
+                info@getlily.in
               </a>
             </p>
           </div>
         </div>
 
         {/* Volume Discount Banner */}
-        <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-600/30 rounded-xl p-4 mb-8">
-          <h3 className="text-yellow-700 dark:text-yellow-500 font-bold text-xl mb-2">
+        {/* <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-600/30 rounded-xl p-4 mb-8"> */}
+          {/* <h3 className="text-yellow-700 dark:text-yellow-500 font-bold text-xl mb-2">
             Volume Discount: Save 25% on Bulk Purchases
-          </h3>
-          <p className="text-zinc-700 dark:text-zinc-300 text-sm mb-4">
+          </h3> */}
+          {/* <p className="text-zinc-700 dark:text-zinc-300 text-sm mb-4">
             Looking to purchase more than 5 character subscriptions? Contact us for a special 25% discount on bulk orders.
-          </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-black font-semibold rounded-lg transition-colors">
+          </p> */}
+          {/* <div className="flex flex-wrap items-center gap-4"> */}
+            {/* <button className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-black font-semibold rounded-lg transition-colors">
               Contact for Bulk Discount
-            </button>
-            <span className="text-zinc-600 dark:text-zinc-400 text-sm">
-              Or email us directly at:{' '}
+            </button> */}
+            {/* <span className="text-zinc-600 dark:text-zinc-400 text-sm"> */}
+              {/* Or email us directly at:{' '}
               <a
-                href="mailto:info@getidyll.in"
+                href="mailto:info@getlily.in"
                 className="text-yellow-700 dark:text-yellow-500 hover:text-yellow-800 dark:hover:text-yellow-400 transition-colors"
               >
-                info@getidyll.in
-              </a>
-            </span>
-          </div>
-        </div>
+                info@getlily.in
+              </a> */}
+            {/* </span> */}
+          {/* </div> */}
+        {/* </div> */}
 
         {/* Important Notice */}
         <div className="bg-zinc-100 dark:bg-zinc-800/30 border border-zinc-300 dark:border-zinc-700/50 rounded-xl p-4 mb-8">
           <h3 className="text-zinc-900 dark:text-white font-bold text-lg mb-3">Important Notice</h3>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-            Idyll is a platform for meaningful AI companionship and emotional support. We do not promote or allow explicit
+            Lily is a platform for meaningful AI companionship and emotional support. We do not promote or allow explicit
             content, nudity, or inappropriate behavior. Our AI companions are designed for genuine connections and
             conversations, providing comfort, friendship, and emotional support in a safe, respectful environment.
           </p>
@@ -191,7 +191,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="text-center text-zinc-600 dark:text-zinc-500 text-sm pt-8 border-t border-zinc-300 dark:border-zinc-800">
-          <p>&copy; {new Date().getFullYear()} Idyll. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Lily. All rights reserved.</p>
         </div>
       </div>
     </footer>
