@@ -115,16 +115,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {isDark ? "Light Mode" : "Dark Mode"}
           </button>
 
-          {/* Back to App */}
-          <Link
-            href="/"
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all ${
-              isDark ? 'text-zinc-400 hover:bg-white/5 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+              isDark ? 'text-zinc-400 hover:bg-red-500/10 hover:text-red-500' : 'text-gray-500 hover:bg-red-50 hover:text-red-500'
             }`}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to App
-          </Link>
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
         </div>
       </aside>
 

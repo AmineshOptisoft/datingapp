@@ -40,6 +40,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   stripeCustomerId: string;
   characters?: ICharacter[];
+  country?: string;
+  preferredLanguage?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   authToken?: string;

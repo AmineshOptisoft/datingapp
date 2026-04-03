@@ -149,6 +149,16 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    country: {
+      type: String,
+      default: "USA",
+      trim: true,
+    },
+    preferredLanguage: {
+      type: String,
+      default: "English",
+      trim: true,
+    },
     stripeCustomerId: {
       type: String,
       default: null,

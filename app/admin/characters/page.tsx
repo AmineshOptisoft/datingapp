@@ -54,7 +54,7 @@ export default function AdminCharactersPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [characters, setCharacters] = useState<CharacterData[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1 , limit: 20, total: 0, totalPages: 0 });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 

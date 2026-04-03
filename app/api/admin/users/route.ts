@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     const [users, total] = await Promise.all([
       User.find(query)
-        .select("name email avatar role createdAt characters followersCount followingCount")
+        .select("name email avatar role createdAt characters followersCount followingCount country")
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
       avatar: u.avatar,
       role: u.role,
       createdAt: u.createdAt,
+      country: u.country || "USA",
       characterCount: u.characters?.length || 0,
       followersCount: u.followersCount || 0,
       followingCount: u.followingCount || 0,
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { name, email, password, avatar } = body;
+    const { name, email, password, avatar, country } = body;
 
     if (!name || !email) {
       return NextResponse.json({ success: false, error: "Name and email are required" }, { status: 400 });
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       role: "user",
       isEmailVerified: true, // Admin-created users are pre-verified
       authProvider: "email",
+      country: country || "USA",
     };
 
     if (password) {
@@ -110,6 +112,7 @@ export async function POST(request: NextRequest) {
         email: user.email,
         avatar: user.avatar,
         role: user.role,
+        country: user.country || "USA",
         createdAt: user.createdAt,
       },
     }, { status: 201 });

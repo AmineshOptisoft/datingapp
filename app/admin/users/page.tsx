@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import {
@@ -24,6 +25,7 @@ interface UserData {
   avatar: string | null;
   role: string;
   createdAt: string;
+  country?: string;
   characterCount: number;
   followersCount: number;
   followingCount: number;
@@ -37,6 +39,7 @@ interface Pagination {
 }
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const { token } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -58,6 +61,7 @@ export default function AdminUsersPage() {
   const [formAvatar, setFormAvatar] = useState("");
   const [formAvatarFile, setFormAvatarFile] = useState<File | null>(null);
   const [formAvatarPreview, setFormAvatarPreview] = useState("");
+  const [formCountry, setFormCountry] = useState("USA");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchUsers = useCallback(async (page = 1) => {
@@ -124,7 +128,7 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formName, email: formEmail, password: formPassword || undefined, avatar: avatarUrl || undefined }),
+        body: JSON.stringify({ name: formName, email: formEmail, password: formPassword || undefined, avatar: avatarUrl || undefined, country: formCountry }),
       });
       const data = await res.json();
       if (data.success) {
@@ -154,7 +158,7 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users/${editingUser._id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formName, email: formEmail, avatar: avatarUrl }),
+        body: JSON.stringify({ name: formName, email: formEmail, avatar: avatarUrl, country: formCountry }),
       });
       const data = await res.json();
       if (data.success) {
@@ -199,6 +203,7 @@ export default function AdminUsersPage() {
     setFormAvatar("");
     setFormAvatarFile(null);
     setFormAvatarPreview("");
+    setFormCountry("USA");
   };
 
   const openEditModal = (user: UserData) => {
@@ -208,6 +213,7 @@ export default function AdminUsersPage() {
     setFormAvatar(user.avatar || "");
     setFormAvatarPreview(user.avatar || "");
     setFormAvatarFile(null);
+    setFormCountry(user.country || "USA");
     setShowEditModal(true);
   };
 
@@ -250,6 +256,7 @@ export default function AdminUsersPage() {
               <tr className={`border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                 <th className={`text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>User</th>
                 <th className={`text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider hidden md:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>Email</th>
+                <th className={`text-center px-6 py-4 text-xs font-semibold uppercase tracking-wider hidden sm:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>Country</th>
                 <th className={`text-center px-6 py-4 text-xs font-semibold uppercase tracking-wider hidden sm:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>Characters</th>
                 <th className={`text-center px-6 py-4 text-xs font-semibold uppercase tracking-wider hidden lg:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>Followers</th>
                 <th className={`text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider hidden lg:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>Joined</th>
@@ -290,6 +297,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-sm hidden md:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>{user.email}</td>
+                    <td className={`px-6 py-4 text-center text-sm hidden sm:table-cell ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>{user.country || "USA"}</td>
                     <td className="px-6 py-4 text-center hidden sm:table-cell">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
                         {user.characterCount}
@@ -301,6 +309,13 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => router.push(`/admin/profile?pid=${user._id}`)}
+                          className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-white/10 text-zinc-400 hover:text-green-400' : 'hover:bg-gray-100 text-gray-400 hover:text-green-600'}`}
+                          title="View Profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => openEditModal(user)}
                           className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-white/10 text-zinc-400 hover:text-blue-400' : 'hover:bg-gray-100 text-gray-400 hover:text-blue-600'}`}
@@ -394,6 +409,13 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Country</label>
+                <input
+                  type="text" value={formCountry} onChange={(e) => setFormCountry(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="USA"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
                 <input
                   type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)}
@@ -451,6 +473,13 @@ export default function AdminUsersPage() {
                 <input
                   type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Country</label>
+                <input
+                  type="text" value={formCountry} onChange={(e) => setFormCountry(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="USA"
                 />
               </div>
             </div>

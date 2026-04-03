@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
 import { PiCoinsFill } from "react-icons/pi";
-import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video } from 'lucide-react';
+import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video, Globe } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import { useSocket } from '@/lib/socket';
@@ -32,6 +32,28 @@ import {
 } from "@/components/ui/popover";
 
 import { GIFTS } from '@/lib/constants/gifts';
+
+const LANGUAGES = [
+  { id: 'en', name: 'English', flag: '🇺🇸' },
+  { id: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { id: 'fr', name: 'French', flag: '🇫🇷' },
+  { id: 'de', name: 'German', flag: '🇩🇪' },
+  { id: 'it', name: 'Italian', flag: '🇮🇹' },
+  { id: 'pt', name: 'Portuguese', flag: '🇧🇷' },
+  { id: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { id: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { id: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { id: 'ru', name: 'Russian', flag: '🇷🇺' },
+  { id: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { id: 'bn', name: 'Bengali', flag: '🇮🇳' },
+  { id: 'te', name: 'Telugu', flag: '🇮🇳' },
+  { id: 'mr', name: 'Marathi', flag: '🇮🇳' },
+  { id: 'ta', name: 'Tamil', flag: '🇮🇳' },
+  { id: 'gu', name: 'Gujarati', flag: '🇮🇳' },
+  { id: 'kn', name: 'Kannada', flag: '🇮🇳' },
+  { id: 'ml', name: 'Malayalam', flag: '🇮🇳' },
+  { id: 'pa', name: 'Punjabi', flag: '🇮🇳' },
+];
 
 interface Conversation {
   id: number;
@@ -158,9 +180,27 @@ export default function MessagesClient() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [sfwEnabled, setSfwEnabled] = useState(true);
 
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
 
-
-
+  useEffect(() => {
+    const fetchLanguage = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/user/language', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.language) setSelectedLanguage(data.language);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user language', err);
+      }
+    };
+    fetchLanguage();
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasProcessedUrlParam = useRef(false);
@@ -933,6 +973,63 @@ export default function MessagesClient() {
                                 <p className="text-[10px] text-zinc-400 mt-1">Create one in your profile settings</p>
                               </div>
                             )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Language Selector Popover */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowLanguageSelector(!showLanguageSelector)}
+                      className="flex items-center gap-1.5 bg-zinc-100 dark:bg-[#2a2a35] hover:bg-zinc-200 dark:hover:bg-[#323240] rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all border border-zinc-200 dark:border-white/5 shadow-sm active:scale-95"
+                    >
+                      <Globe className="w-4 h-4 text-purple-500" />
+                      <span className="truncate max-w-[80px]">
+                        {selectedLanguage}
+                      </span>
+                      <ChevronDown className={`w-3 h-3 text-zinc-500 transition-transform duration-200 ${showLanguageSelector ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showLanguageSelector && (
+                      <div className="absolute left-0 bottom-full mb-3 w-[200px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        {/* Backdrop for closing */}
+                        <div className="fixed inset-0 z-[-1]" onClick={() => setShowLanguageSelector(false)} />
+
+                        <div className="bg-white dark:bg-[#1a1a1f] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
+                          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-800/20">
+                            <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Select Language</h3>
+                          </div>
+                          <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
+                            {LANGUAGES.map((lang) => (
+                              <button
+                                key={lang.id}
+                                onClick={async () => {
+                                  setSelectedLanguage(lang.name);
+                                  setShowLanguageSelector(false);
+                                  try {
+                                    const token = localStorage.getItem('token');
+                                    if (token) {
+                                      await fetch('/api/user/language', {
+                                        method: 'PUT',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ language: lang.name })
+                                      });
+                                    }
+                                  } catch (err) {
+                                    console.error('Failed to save language', err);
+                                  }
+                                }}
+                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedLanguage === lang.name ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                              >
+                                <span className="text-xl leading-none">{lang.flag}</span>
+                                <span className="text-sm font-semibold text-zinc-900 dark:text-white">{lang.name}</span>
+                              </button>
+                            ))}
                           </div>
                         </div>
                       </div>

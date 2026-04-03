@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, Suspense, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useTheme } from '@/app/contexts/ThemeContext';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 function SidebarWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   return (
@@ -18,8 +19,17 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAdmin } = useAuth();
+
   const isMessagesPage = pathname === '/messages';
   const isAdminPage = pathname.startsWith('/admin');
+
+  useEffect(() => {
+    if (isAdmin && !isAdminPage) {
+      router.push('/admin');
+    }
+  }, [isAdmin, isAdminPage, router]);
 
   return (
     <div className="flex h-screen-dvh overflow-hidden relative">

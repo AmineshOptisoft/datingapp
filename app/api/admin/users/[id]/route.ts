@@ -41,13 +41,14 @@ export async function PUT(
     await dbConnect();
 
     const body = await request.json();
-    const { name, email, avatar, bio } = body;
+    const { name, email, avatar, bio, country } = body;
 
     const updateData: any = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email.toLowerCase();
     if (avatar !== undefined) updateData.avatar = avatar;
     if (bio !== undefined) updateData.bio = bio;
+    if (country !== undefined) updateData.country = country;
 
     const user = await User.findByIdAndUpdate(
       params.id,

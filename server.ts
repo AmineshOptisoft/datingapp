@@ -802,16 +802,16 @@ app.prepare().then(async () => {
   await connectMongoDB();
 
   // Initialize Inactivity Reminder Cron Job (Runs every 15 minutes)
-  cron.schedule("*/15 * * * *", async () => {
-    try {
-      console.log("⏰ Running Inactivity Reminder Cron Job...");
-      const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
-      const data = await response.json();
-      console.log("✅ Cron Job Result:", data);
-    } catch (error) {
-      console.error("❌ Cron Job Fetch Error:", error);
-    }
-  });
+  // cron.schedule("*/15 * * * *", async () => {
+  //   try {
+  //     console.log("⏰ Running Inactivity Reminder Cron Job...");
+  //     const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
+  //     const data = await response.json();
+  //     console.log("✅ Cron Job Result:", data);
+  //   } catch (error) {
+  //     console.error("❌ Cron Job Fetch Error:", error);
+  //   }
+  // });
 
   const server = createServer(async (req, res) => {
     try {
@@ -849,8 +849,12 @@ app.prepare().then(async () => {
       const aiBotId = profileId || "ai_bot";
 
       // 🔄 ACTIVITY TRACKER: Reset their inactive timer every time they send a new message!
+      let userLanguage = "English";
       try {
-        await User.findByIdAndUpdate(userId, { lastActiveAt: new Date() });
+        const userRecord = await User.findByIdAndUpdate(userId, { lastActiveAt: new Date() }, { new: true });
+        if (userRecord && userRecord.preferredLanguage) {
+          userLanguage = userRecord.preferredLanguage;
+        }
       } catch (err) {
         console.error("Failed to update lastActiveAt on socket send_message:", err);
       }
@@ -1179,6 +1183,12 @@ app.prepare().then(async () => {
             optimizedHistory = conversationHistory.slice(-6) as LLMMessage[];
             inputTokens = estimateTokens(systemPrompt) + 
               optimizedHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
+          }
+
+          // Inject language context
+          if (userLanguage && userLanguage.toLowerCase() !== "english") {
+            systemPrompt += `\n\nIMPORTANT INSTRUCTION: You must respond to the user entirely in ${userLanguage}. Do not use any other language unless explicitly asked.`;
+            console.log(`🌐 Language context added: ${userLanguage}`);
           }
 
           // Build Grok API messages
