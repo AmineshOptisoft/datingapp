@@ -209,6 +209,10 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    shareCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

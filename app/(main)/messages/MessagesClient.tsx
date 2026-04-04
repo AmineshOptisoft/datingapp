@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
 import { PiCoinsFill } from "react-icons/pi";
-import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video, Globe } from 'lucide-react';
+import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video, Globe, MoreVertical } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
+import ReportModal from '@/components/ReportModal';
 import { useSocket } from '@/lib/socket';
 import {
   Dialog,
@@ -94,6 +95,7 @@ export default function MessagesClient() {
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Restricted Content Modal State
   const [restrictedModalOpen, setRestrictedModalOpen] = useState(false);
@@ -631,11 +633,29 @@ export default function MessagesClient() {
               <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <FaVideo className="w-5 h-5" />
               </button>
-              <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                <FaInfoCircle className="w-5 h-5" />
-              </button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-2" align="end">
+                  <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-medium flex items-center gap-2"
+                  >
+                    Report User
+                  </button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
+
+          <ReportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            reportedId={selectedConv.profileId || selectedProfileId || ''}
+          />
 
           {/* Messages Area - min-h-0 allows flex shrink when keyboard opens; pb-24 so last message clears input bar */}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-24 space-y-4 overscroll-contain touch-scroll">

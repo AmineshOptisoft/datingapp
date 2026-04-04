@@ -12,6 +12,7 @@ import {
   Gift,
   LogOut,
   Shield,
+  ShieldAlert,
   ChevronRight,
   Sun,
   Moon,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", label: "Profiles", icon: Users },
   { href: "/admin/characters", label: "Character List", icon: Bot },
   { href: "/admin/gifts", label: "Gifts", icon: Gift },
+  { href: "/admin/reports", label: "Reports", icon: ShieldAlert },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

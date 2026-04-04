@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Grid, Film, User, MessageSquare, Play } from "lucide-react";
+import { ArrowLeft, Grid, Film, User, MessageSquare, Play, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ReportModal from "@/components/ReportModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface PublicUser {
   _id: string;
@@ -66,6 +68,7 @@ export default function PublicUserProfilePage() {
   const [isCharacterScenesOpen, setIsCharacterScenesOpen] = useState(false);
   const [viewingScene, setViewingScene] = useState<Scene | null>(null);
   const [isSceneViewOpen, setIsSceneViewOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const formatViews = (count: number) => {
     if (!count) return "0";
@@ -341,6 +344,21 @@ export default function PublicUserProfilePage() {
                    {isFollowing ? "Following" : "Follow"}
                  </button>
                )}
+               <Popover>
+                 <PopoverTrigger asChild>
+                   <button className="px-3 py-2 rounded-full font-semibold text-sm transition-all shadow-sm bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-700 focus:outline-none">
+                     <MoreVertical className="w-5 h-5 mx-0" />
+                   </button>
+                 </PopoverTrigger>
+                 <PopoverContent className="w-40 p-2" align="end">
+                   <button
+                     onClick={() => setIsReportModalOpen(true)}
+                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-medium"
+                   >
+                     Report User
+                   </button>
+                 </PopoverContent>
+               </Popover>
              </div>
            )}
         </div>
@@ -745,6 +763,14 @@ export default function PublicUserProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {profileUser && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          reportedId={profileUser._id}
+        />
       )}
     </main>
   );

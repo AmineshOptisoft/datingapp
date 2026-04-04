@@ -50,6 +50,7 @@ export interface IUser extends Document {
   lastActiveAt?: Date;
   inactivityNotificationSentAt?: Date | null;
   dailyInactivityCount?: number;
+  shareCount?: number;
 }
 
 export interface UserRegistrationData {

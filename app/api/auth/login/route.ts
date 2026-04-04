@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
             email: adminUser.email,
             avatar: adminUser.avatar,
             role: "admin",
+            shareCount: adminUser.shareCount || 0,
           },
         },
       });
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           avatar: user.avatar,
           role: user.role || "user",
+          shareCount: user.shareCount || 0,
         },
       },
     });
