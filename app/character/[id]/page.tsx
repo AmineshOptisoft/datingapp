@@ -107,7 +107,14 @@ export default function CharacterDetailPage() {
     }
     if (!characterId || likeLoading) return;
 
+    // Optimistic update – flip UI instantly
+    const prevLiked = liked;
+    const prevLikes = likes;
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikes(prev => prev + (newLiked ? 1 : -1));
     setLikeLoading(true);
+
     try {
       const res = await fetch(`/api/characters/${characterId}/like`, {
         method: 'POST',
@@ -116,15 +123,23 @@ export default function CharacterDetailPage() {
       });
       const data = await res.json();
       if (data.success) {
+        // Reconcile with server truth
         setLiked(data.liked);
         setLikes(data.likes);
+      } else {
+        // Rollback on server rejection
+        setLiked(prevLiked);
+        setLikes(prevLikes);
       }
     } catch (e) {
       console.error('Like failed:', e);
+      // Rollback on network error
+      setLiked(prevLiked);
+      setLikes(prevLikes);
     } finally {
       setLikeLoading(false);
     }
-  }, [user, characterId, likeLoading, router]);
+  }, [user, characterId, likeLoading, liked, likes, router]);
 
   const handleStartChat = useCallback(async () => {
     if (!profile) return;

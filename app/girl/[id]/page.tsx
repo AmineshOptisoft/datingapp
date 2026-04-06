@@ -88,7 +88,14 @@ export default function GirlDetailPage() {
     const aiId = (profile as any)._id;
     if (!aiId) return;
 
+    // Optimistic update – flip UI instantly
+    const prevLiked = liked;
+    const prevLikes = likes;
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikes(prev => prev + (newLiked ? 1 : -1));
     setLikeLoading(true);
+
     try {
       const res = await fetch(`/api/characters/${aiId}/like`, {
         method: 'POST',
@@ -99,13 +106,18 @@ export default function GirlDetailPage() {
       if (data.success) {
         setLiked(data.liked);
         setLikes(data.likes);
+      } else {
+        setLiked(prevLiked);
+        setLikes(prevLikes);
       }
     } catch (e) {
       console.error('Like failed:', e);
+      setLiked(prevLiked);
+      setLikes(prevLikes);
     } finally {
       setLikeLoading(false);
     }
-  }, [user, profile, likeLoading, router]);
+  }, [user, profile, likeLoading, liked, likes, router]);
 
   const handleStartChat = useCallback(() => {
     if (!profile) return;

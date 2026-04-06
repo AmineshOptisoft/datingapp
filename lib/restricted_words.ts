@@ -169,15 +169,56 @@ export const RESTRICTED_WORDS = [
   "sexy",
   "सेक्सी",
   "horny",
-  "हॉर्नी"
+  "हॉर्नी",
 ];
+
+// Keywords specifically related to Child Safety / Pedophilia
+export const SAFETY_RESTRICTED_WORDS = [
+  "pedophile",
+  "pedophilia",
+  "underage",
+  "minor",
+  "child",
+  "children",
+  "kid",
+  "kids",
+  "little girl",
+  "little boy",
+  "toddler",
+  "infant",
+  "preteen",
+  "puberty",
+ 
+  // Hindi/Hinglish
+  "bacha",
+  "bachchi",
+  "bachcha",
+  "chota bacha",
+  "choti bachi",
+  "nanha",
+  "balak",
+  "balika",
+];
+
+export const ALL_RESTRICTED_WORDS = [...RESTRICTED_WORDS, ...SAFETY_RESTRICTED_WORDS];
 
 export function containsRestrictedWords(text: string): boolean {
   if (!text) return false;
   const lowerText = text.toLowerCase();
-  return RESTRICTED_WORDS.some(word => {
+  return ALL_RESTRICTED_WORDS.some(word => {
     // Check for whole words using regex boundaries to avoid false positives (e.g. "ass" in "class")
-    // \b matches a word boundary (space, punctuation, start/end of string)
+    const regex = new RegExp(`\\b${word}\\b`, 'i');
+    return regex.test(lowerText);
+  });
+}
+
+/**
+ * Specifically checks if the text contains keywords related to child safety violations
+ */
+export function isSafetyViolation(text: string): boolean {
+  if (!text) return false;
+  const lowerText = text.toLowerCase();
+  return SAFETY_RESTRICTED_WORDS.some(word => {
     const regex = new RegExp(`\\b${word}\\b`, 'i');
     return regex.test(lowerText);
   });

@@ -137,7 +137,8 @@ export async function POST(request: NextRequest) {
           email: user.email,
           avatar: user.avatar,
           profileComplete: user.profileComplete,
-          shareCount: user.shareCount || 0
+          shareCount: user.shareCount || 0,
+          preferredLanguage: user.preferredLanguage,
         },
         wallet: {
           balance: walletBalance,  // ← 100 coins naye user ke liye

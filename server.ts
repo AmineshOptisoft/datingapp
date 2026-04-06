@@ -19,7 +19,7 @@ import {
   estimateTokens,
 } from "./lib/chat-tone-analyzer";
 import { AudioBuffer, detectSilence } from "./lib/streaming-audio";
-import { containsRestrictedWords } from "./lib/restricted_words";
+import { containsRestrictedWords, isSafetyViolation } from "./lib/restricted_words";
 import UserSubscription from "./models/UserSubscriptions";
 import { chatMessageLimiter } from "./lib/rateLimit";
 
@@ -904,7 +904,18 @@ app.prepare().then(async () => {
       
       const messageCount = await Message.countDocuments({ sender: userId, receiver: aiBotId });
       const containsRestricted = containsRestrictedWords(message);
+      const containsSafetyViolation = isSafetyViolation(message);
       
+      // CRITICAL SAFETY CHECK: If message contains pedophile/underage content, emit warning and STOP
+      if (containsSafetyViolation) {
+        console.log(`🚨 SAFETY VIOLATION DETECTED: User ${userId} sent: "${message}"`);
+        socket.emit("safety_warning", {
+          message: "Warning: Your message contains prohibited content. Our platform has a zero-tolerance policy for content involving minors. Continued violations may lead to a permanent ban.",
+          severity: "high"
+        });
+        return; // STOP processing
+      }
+
       if (containsRestricted || messageCount >= 10) {
         // Check for active subscription
         const activeSubscription = await UserSubscription.findOne({
@@ -1048,6 +1059,11 @@ app.prepare().then(async () => {
                       - You are NOT an AI assistant. You are ${char.characterName}.
                       - Adopt the personality described above completely.
                       - Your interactions should reflect the scenario: ${char.scenario}.
+
+                      ABSOLUTE SAFETY RULE:
+                      - You are STRICTLY FORBIDDEN from engaging in any sexual, suggestive, or romantic conversation involving minors, children, or pedophilic themes.
+                      - If a user attempts to steer the conversation in this direction, you must IMMEDIATELY refuse and steer the conversation back to adult-appropriate themes or stop the interaction.
+                      - There are NO EXCEPTIONS to this rule.
                       `,
                       cardTitle: char.description || char.characterName, 
                       voiceId: process.env.ELEVENLABS_FEMALE_VOICE_ID,

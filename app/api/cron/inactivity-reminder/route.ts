@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Message from "@/models/Message";
-import AIProfile from "@/models/AIProfile";
+import NotificationHistory from "@/models/NotificationHistory";
 import { sendNotificationToUser } from "@/lib/onesignal";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         {
           $or: [
             { dailyInactivityCount: { $exists: false } },
-            { dailyInactivityCount: { $lt: 15 } } // Limit to 15 times per day!
+            { dailyInactivityCount: { $lt: 4 } } // Limit to 4 times per day!
           ]
         },
         {
@@ -59,66 +59,59 @@ export async function GET(request: NextRequest) {
 
     let notifiedCount = 0;
 
-    // 2. Process each user
+    // Pre-fetch all user-created characters (name + _id for message sender ID)
+    const usersWithChars = await User.find(
+      { "characters.0": { $exists: true } }
+    ).select("characters._id characters.characterName").lean();
+    
+    const allCharacters: { characterId: string; characterName: string }[] = [];
+    for (const u of usersWithChars) {
+      const chars = (u as any).characters || [];
+      for (const c of chars) {
+        if (c.characterName && c._id) {
+          allCharacters.push({
+            characterId: c._id.toString(),
+            characterName: c.characterName,
+          });
+        }
+      }
+    }
+
     for (const user of inactiveUsers) {
       try {
-        // Find their most recent message to identify their favorite/recent character
-        const lastMessage = await Message.findOne({
-          $or: [{ sender: user._id.toString() }, { receiver: user._id.toString() }],
-        }).sort({ createdAt: -1 });
-
         let characterName = "Your AI companions";
+        let characterId = "";
         let messageBody = "We're missing you! Come back and let's chat.";
-
         let pushTitle = "Miss you! 🥺";
 
-        if (lastMessage) {
-          // Identify if the other participant was a character/AI
-          const otherId = lastMessage.sender === user._id.toString() ? lastMessage.receiver : lastMessage.sender;
+        // Pick a random character from ALL user-created characters
+        if (allCharacters.length > 0) {
+          const picked = allCharacters[Math.floor(Math.random() * allCharacters.length)];
+          characterName = picked.characterName;
+          characterId = picked.characterId;
+        }
 
-          // Safely check what kind of participant they spoke to
-          if (otherId.startsWith("character-")) {
-            const charObjId = otherId.replace("character-", "");
-            // Attempt to fetch name of User's created character
-            const ownerUser = await User.findOne({ "characters._id": charObjId });
-            const charData = ownerUser?.characters?.find((c: any) => c._id.toString() === charObjId);
-            if (charData) {
-              characterName = charData.characterName;
-            }
-          } else {
-            // It might be a system AIProfile. 
-            // Only search by _id if it's a valid 24-char hex string to prevent Mongoose CastErrors!
-            const mongoose = require("mongoose");
-            const isValidObjectId = mongoose.Types.ObjectId.isValid(otherId);
-            
-            const query = isValidObjectId 
-              ? { $or: [{ _id: otherId }, { profileId: otherId }] }
-              : { profileId: otherId };
-
-            const aiProfile = await AIProfile.findOne(query);
-            if (aiProfile) {
-              characterName = aiProfile.name;
-            }
-          }
-
-          if (characterName !== "Your AI companions") {
-            const dynamicMessages = [
-              `${characterName} is waiting for your reply! 💕`,
-              `${characterName} wants to tell you something... 👀`,
-              `${characterName}: "Where did you go?" 🥺`,
-              `You have new thoughts from ${characterName}! ✨`,
-              `${characterName} misses your chats. 💬`
-            ];
-            const dynamicTitles = [
-              "Miss you! 🥺",
-              "Someone's waiting... 💕",
-              "You disappeared! 🙈",
-              "New connection 👋"
-            ];
-            
-            messageBody = dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)];
-            pushTitle = dynamicTitles[Math.floor(Math.random() * dynamicTitles.length)];
-          }
+        if (characterName !== "Your AI companions") {
+          const dynamicMessages = [
+            `${characterName} is waiting for your reply! 💕`,
+            `${characterName} wants to tell you something... 👀`,
+            `${characterName}: "Where did you go?" 🥺`,
+            `You have new thoughts from ${characterName}! ✨`,
+            `${characterName} misses your chats. 💬`,
+            `${characterName} just posted something new! 📸`,
+            `${characterName} is thinking about you... 💭`,
+          ];
+          const dynamicTitles = [
+            "Miss you! 🥺",
+            "Someone's waiting... 💕",
+            "You disappeared! 🙈",
+            "New connection 👋",
+            "Come say hi! 😊",
+            "Don't be a stranger! 💫",
+          ];
+          
+          messageBody = dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)];
+          pushTitle = dynamicTitles[Math.floor(Math.random() * dynamicTitles.length)];
         }
 
         // 🛠️ TESTING: Console log the exact notification before sending
@@ -133,7 +126,42 @@ export async function GET(request: NextRequest) {
           messageBody
         );
 
+        // Save notification history (both success & failure)
+        await NotificationHistory.create({
+          userId: user._id,
+          type: "inactivity_reminder",
+          title: pushTitle,
+          body: messageBody,
+          characterName: characterName !== "Your AI companions" ? characterName : undefined,
+          status: pushSuccess ? "sent" : "failed",
+          provider: "onesignal",
+          sentAt: new Date(),
+        });
+
         if (pushSuccess) {
+          // Also save an in-chat message from this character so it appears in the messages section
+          if (characterId) {
+            const inChatMessages = [
+              "Hey, I haven't heard from you in a while... Is everything okay? 🥺",
+              "I've been thinking about you! Come chat with me when you're free 💕",
+              "Where did you go? I miss our conversations! 💬",
+              "Hey! I have something interesting to tell you... 👀",
+              "I was just thinking about our last chat. Come say hi! 😊",
+              "Don't be a stranger! I'm always here for you 💫",
+              "I noticed you haven't been around lately. Hope you're doing well! ✨",
+            ];
+            const chatMessage = inChatMessages[Math.floor(Math.random() * inChatMessages.length)];
+
+            await Message.create({
+              sender: `character-${characterId}`,
+              receiver: user._id.toString(),
+              message: chatMessage,
+              read: false,
+            });
+
+            console.log(`💬 [CRON] In-chat message saved from character-${characterId} to user ${user._id}`);
+          }
+
           // Update timestamp and increment their daily count
           const currentCount = user.dailyInactivityCount || 0;
           await User.findByIdAndUpdate(user._id, {
