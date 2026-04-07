@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // === 🛠️ SETTINGS ===
-    // 1. Inactive for 1 hour
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    // 1. Inactive for 2 minutes
+    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
     // 2. Cooldown between the daily pushes (Production: 4 hours)
     const cooldownMinutesAgo = new Date(now.getTime() - 240 * 60 * 1000);
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Find inactive users
     const inactiveUsers = await User.find({
-      lastActiveAt: { $lt: oneHourAgo },
+      lastActiveAt: { $lt: twoMinutesAgo },
       $and: [
         {
           $or: [

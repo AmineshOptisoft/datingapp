@@ -801,8 +801,8 @@ async function connectMongoDB() {
 app.prepare().then(async () => {
   await connectMongoDB();
 
-  // Initialize Inactivity Reminder Cron Job (Runs every 15 minutes)
-  // cron.schedule("*/15 * * * *", async () => {
+  // Initialize Inactivity Reminder Cron Job (Runs every 2 minutes)
+  // cron.schedule("*/1 * * * *", async () => {
   //   try {
   //     console.log("⏰ Running Inactivity Reminder Cron Job...");
   //     const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);

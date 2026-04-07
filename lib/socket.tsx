@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Message {
   _id?: string;
@@ -122,9 +123,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     // Listen for rate limit errors
     socket.on("rate_limit_exceeded", (data: { message: string; retryAfter?: number }) => {
       console.warn("⚠️ Rate limit exceeded:", data.message);
-      // Show error notification to user
       if (typeof window !== 'undefined') {
-        alert(data.message); // Simple alert for now, can be replaced with toast notification
+        toast.error(data.message, {
+          duration: 5000,
+        });
+      }
+    });
+
+    // Listen for safety warnings
+    socket.on("safety_warning", (data: { message: string; severity?: string }) => {
+      console.warn("🚨 Safety warning:", data.message);
+      if (typeof window !== 'undefined') {
+        toast.error(data.message, {
+          duration: 8000,
+          style: { background: '#ef4444', color: 'white', border: 'none' }
+        });
       }
     });
 
