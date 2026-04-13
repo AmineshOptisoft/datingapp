@@ -399,7 +399,7 @@ export default function AdminCharactersPage() {
 
       {/* ============ EDIT CHARACTER MODAL ============ */}
       {showEditModal && editingChar && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowEditModal(false) }}>
           <div className={`w-full max-w-2xl max-h-[90vh] flex flex-col border rounded-2xl shadow-2xl ${isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-gray-200'}`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className={`flex items-center justify-between p-6 border-b shrink-0 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
@@ -662,7 +662,7 @@ export default function AdminCharactersPage() {
 
       {/* ============ CREATE REEL MODAL ============ */}
       {showReelModal && reelChar && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowReelModal(false)}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowReelModal(false) }}>
           <div className={`w-full max-w-lg border rounded-2xl shadow-2xl ${isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-gray-200'}`} onClick={(e) => e.stopPropagation()}>
             <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
               <div>
