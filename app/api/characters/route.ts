@@ -37,6 +37,15 @@ export async function GET(request: NextRequest) {
     // Determine if the requester is the owner
     const isOwner = decoded && decoded.userId === requestedUserId;
 
+    // Check if the requester is an admin
+    let isAdmin = false;
+    if (decoded && decoded.userId) {
+      const requestingUser = await User.findById(decoded.userId).select("role").lean();
+      if (requestingUser && (requestingUser as any).role === "admin") {
+        isAdmin = true;
+      }
+    }
+
     const user = await User.findById(requestedUserId)
       .select(
         isLite
@@ -54,8 +63,8 @@ export async function GET(request: NextRequest) {
 
     let characters = (user as any).characters || [];
 
-    // Security: Filter characters based on visibility if not the owner
-    if (!isOwner) {
+    // Security: Filter characters based on visibility if not the owner and not admin
+    if (!isOwner && !isAdmin) {
       characters = characters.filter((char: any) => char.visibility === "public");
     }
 
@@ -92,11 +101,21 @@ export async function POST(request: NextRequest) {
       tags: string[], description: string, personality: string,
       scenario: string, firstMessage: string, visibility: string;
 
+    // Check if the requester is an admin (for target user support)
+    await dbConnect();
+    let isAdmin = false;
+    const requestingUser = await User.findById(decoded.userId).select("role").lean();
+    if (requestingUser && (requestingUser as any).role === "admin") {
+      isAdmin = true;
+    }
+
     if (contentType.includes("multipart/form-data")) {
       // FormData path — file upload support
       const formData = await request.formData();
 
-      userId        = decoded.userId;
+      // Admin can specify a target userId, otherwise use own userId
+      const formUserId = formData.get("userId") as string;
+      userId = (isAdmin && formUserId) ? formUserId : decoded.userId;
       characterName = formData.get("characterName") as string;
       characterAge  = Number(formData.get("characterAge"));
       characterGender = formData.get("characterGender") as string;
@@ -148,10 +167,11 @@ export async function POST(request: NextRequest) {
         tags, description, personality,
         scenario, firstMessage, visibility,
       } = body);
-      userId = decoded.userId;
+      // Admin can specify a target userId, otherwise use own userId
+      userId = (isAdmin && body.userId) ? body.userId : decoded.userId;
     }
 
-    // userId is always set from the JWT token at this point
+    // userId is set from JWT token, or target user if admin
 
     if (!characterName || characterName.trim() === "") {
       return NextResponse.json(
@@ -211,7 +231,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
+    // dbConnect already called above for admin check
 
     // Check if user already has 5 characters
     const existingUser = await User.findById(userId).select("characters");

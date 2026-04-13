@@ -31,11 +31,18 @@ export async function DELETE(
 
     await dbConnect();
 
-    // Delete only if it belongs to this user
-    const deleted = await Scene.findOneAndDelete({
-      _id: params.id,
-      userId: decoded.userId
-    });
+    // Check if the requester is an admin
+    const User = (await import("@/models/User")).default;
+    const requestingUser = await User.findById(decoded.userId).select("role").lean();
+    const isAdmin = requestingUser && (requestingUser as any).role === "admin";
+
+    // Admin can delete any scene, regular users can only delete their own
+    const query: any = { _id: params.id };
+    if (!isAdmin) {
+      query.userId = decoded.userId;
+    }
+
+    const deleted = await Scene.findOneAndDelete(query);
 
     if (!deleted) {
       return NextResponse.json(

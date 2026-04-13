@@ -691,6 +691,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex-1 overflow-hidden min-h-0">
                           <CreatePersonaForm 
+                            targetUserId={pid || undefined}
                             onSuccess={() => {
                               setIsPersonaDialogOpen(false);
                               fetchCharacters(); // Refresh the character list
@@ -858,6 +859,7 @@ export default function ProfilePage() {
                         fetchPersonas(); // Refresh personas list
                       }} 
                       onClose={() => setIsCreatePersonaDialogOpen(false)} 
+                      targetUserId={pid || user?._id || user?.id || user?.userId}
                     />
                   </DialogContent>
                 </Dialog>

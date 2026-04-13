@@ -33,7 +33,7 @@ const TAG_CATEGORIES = {
     Religion: ["Muslim"]
 };
 
-export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: () => void; onClose?: () => void }) {
+export default function CreatePersonaForm({ onSuccess, onClose, targetUserId }: { onSuccess?: () => void; onClose?: () => void; targetUserId?: string }) {
     const [name, setName] = useState("");
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -95,8 +95,8 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             const user = JSON.parse(storedUser);
             console.log("User from localStorage:", user); // Debug
             
-            // Try different possible user ID fields
-            const userId = user._id || user.id || user.userId;
+            // Use targetUserId if provided (admin creating for another user), else use own ID
+            const userId = targetUserId || user._id || user.id || user.userId;
             
             if (!userId) {
                 console.error("No user ID found in user object:", user);
@@ -104,7 +104,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                 return;
             }
 
-            console.log("Using userId:", userId); // Debug
+            console.log("Using userId:", userId, targetUserId ? "(target user)" : "(self)"); // Debug
 
             setIsCreating(true);
 

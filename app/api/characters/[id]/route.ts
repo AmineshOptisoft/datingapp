@@ -250,8 +250,27 @@ export async function DELETE(
 
     await connectToDatabase();
     const { id } = params;
-    const userId = decoded.userId;
 
+    // Check if the requester is an admin
+    const requestingUser = await User.findById(decoded.userId).select("role").lean();
+    const isAdmin = requestingUser && (requestingUser as any).role === "admin";
+
+    // For admin: use userId from query param, or find the user who owns this character
+    // For regular users: always use their own userId
+    let userId = decoded.userId;
+    if (isAdmin) {
+      const { searchParams } = new URL(request.url);
+      const queryUserId = searchParams.get("userId");
+      if (queryUserId) {
+        userId = queryUserId;
+      } else {
+        // Find user who owns this character
+        const ownerUser = await User.findOne({ "characters._id": id }).select("_id").lean();
+        if (ownerUser) {
+          userId = (ownerUser as any)._id.toString();
+        }
+      }
+    }
 
     // Find user with the character and verify ownership
     const user = await User.findOne({ _id: userId, "characters._id": id });

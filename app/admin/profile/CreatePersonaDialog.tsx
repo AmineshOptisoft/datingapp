@@ -5,9 +5,10 @@ import { toast } from "sonner";
 interface CreatePersonaDialogProps {
   onSuccess: () => void;
   onClose: () => void;
+  targetUserId?: string;
 }
 
-export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePersonaDialogProps) {
+export default function CreatePersonaDialog({ onSuccess, onClose, targetUserId }: CreatePersonaDialogProps) {
   const [displayName, setDisplayName] = useState("");
   const [background, setBackground] = useState("");
   const [makeDefault, setMakeDefault] = useState(false);
@@ -43,17 +44,21 @@ export default function CreatePersonaDialog({ onSuccess, onClose }: CreatePerson
       }
 
       setIsSaving(true);
+      
+      let userId = targetUserId;
 
-      // Get user ID from localStorage
-      const storedUser = localStorage.getItem("user");
-      if (!storedUser) {
-        toast.error("User not found. Please login again.");
-        setIsSaving(false);
-        return;
+      if (!userId) {
+        // Get user ID from localStorage as fallback
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) {
+          toast.error("User not found. Please login again.");
+          setIsSaving(false);
+          return;
+        }
+
+        const user = JSON.parse(storedUser);
+        userId = user._id || user.id || user.userId;
       }
-
-      const user = JSON.parse(storedUser);
-      const userId = user._id || user.id || user.userId;
 
       if (!userId) {
         toast.error("User ID not found. Please try logging out and logging back in.");

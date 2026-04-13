@@ -140,15 +140,36 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { sceneId, mediaUrl, mediaType, caption } = body;
+    const { sceneId, mediaUrl, mediaType, caption, targetUserId } = body;
 
     if (!mediaUrl || !mediaType) {
       return NextResponse.json({ success: false, error: "mediaUrl and mediaType are required" }, { status: 400 });
     }
 
+    // Determine the reel owner
+    let reelOwnerId = decoded.userId;
+
+    // Check if the requester is an admin
+    const requestingUser = await User.findById(decoded.userId).select("role").lean();
+    const isAdmin = requestingUser && (requestingUser as any).role === "admin";
+
+    if (isAdmin) {
+      // If a scene is provided, use the scene's actual owner
+      if (sceneId) {
+        const scene = await Scene.findById(sceneId).select("userId").lean();
+        if (scene && (scene as any).userId) {
+          reelOwnerId = (scene as any).userId.toString();
+        }
+      }
+      // Or if targetUserId is explicitly provided, use that
+      if (targetUserId) {
+        reelOwnerId = targetUserId;
+      }
+    }
+
     // Create the reel
     const reel = await Reel.create({
-      userId: decoded.userId,
+      userId: reelOwnerId,
       sceneId: sceneId || null,
       mediaUrl,
       mediaType,
@@ -162,7 +183,7 @@ export async function POST(request: NextRequest) {
     // Update the scene if sceneId provided
     if (sceneId) {
       await Scene.findOneAndUpdate(
-        { _id: sceneId, userId: decoded.userId },
+        { _id: sceneId },
         { isPublishedAsReel: true, reelId: reel._id.toString() }
       );
     }
