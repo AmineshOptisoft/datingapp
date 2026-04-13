@@ -382,12 +382,12 @@ export default function AdminUsersPage() {
                   {formAvatarPreview ? (
                     <img src={formAvatarPreview} alt="Avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-pink-500/30" />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <UserCircle className="w-8 h-8 text-zinc-500" />
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                      <UserCircle className={`w-8 h-8 ${isDark ? 'text-zinc-500' : 'text-gray-400'}`} />
                     </div>
                   )}
                 </div>
-                <label className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-zinc-300 hover:bg-white/10 cursor-pointer transition-all">
+                <label className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm cursor-pointer transition-all ${isDark ? 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'}`}>
                   <Upload className="w-4 h-4" />
                   Upload Avatar
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
@@ -395,36 +395,36 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Name *</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Name *</label>
                 <input
                   type="text" value={formName} onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="John Doe"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`} placeholder="John Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email *</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Email *</label>
                 <input
                   type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="john@example.com"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`} placeholder="john@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Country</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Country</label>
                 <input
                   type="text" value={formCountry} onChange={(e) => setFormCountry(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="USA"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`} placeholder="USA"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Password</label>
                 <input
                   type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="Optional"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`} placeholder="Optional"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-              <button onClick={() => setShowCreateModal(false)} className="px-5 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors">Cancel</button>
+            <div className={`flex items-center justify-end gap-3 p-6 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <button onClick={() => setShowCreateModal(false)} className={`px-5 py-2.5 text-sm transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>Cancel</button>
               <button
                 onClick={handleCreate} disabled={submitting}
                 className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-lg"
@@ -439,10 +439,10 @@ export default function AdminUsersPage() {
       {/* ============ EDIT USER MODAL ============ */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowEditModal(false) }}>
-          <div className="w-full max-w-lg bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold text-white">Edit User</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5" /></button>
+          <div className={`w-full max-w-lg border rounded-2xl shadow-2xl ${isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-gray-200'}`} onClick={(e) => e.stopPropagation()}>
+            <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit User</h3>
+              <button onClick={() => setShowEditModal(false)} className={isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-4">
@@ -450,41 +450,41 @@ export default function AdminUsersPage() {
                   {formAvatarPreview ? (
                     <img src={formAvatarPreview} alt="Avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-pink-500/30" />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <UserCircle className="w-8 h-8 text-zinc-500" />
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                      <UserCircle className={`w-8 h-8 ${isDark ? 'text-zinc-500' : 'text-gray-400'}`} />
                     </div>
                   )}
                 </div>
-                <label className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-zinc-300 hover:bg-white/10 cursor-pointer transition-all">
+                <label className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm cursor-pointer transition-all ${isDark ? 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'}`}>
                   <Upload className="w-4 h-4" />
                   Change Avatar
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
                 </label>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Name *</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Name *</label>
                 <input
                   type="text" value={formName} onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email *</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Email *</label>
                 <input
                   type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Country</label>
+                <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>Country</label>
                 <input
                   type="text" value={formCountry} onChange={(e) => setFormCountry(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-pink-500/50 focus:outline-none text-sm" placeholder="USA"
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none text-sm ${isDark ? 'bg-white/5 border-white/10 text-white placeholder-zinc-500 focus:border-pink-500/50' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-pink-500'}`} placeholder="USA"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-              <button onClick={() => setShowEditModal(false)} className="px-5 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors">Cancel</button>
+            <div className={`flex items-center justify-end gap-3 p-6 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <button onClick={() => setShowEditModal(false)} className={`px-5 py-2.5 text-sm transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>Cancel</button>
               <button
                 onClick={handleEdit} disabled={submitting}
                 className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-lg"
@@ -499,19 +499,19 @@ export default function AdminUsersPage() {
       {/* ============ DELETE CONFIRM MODAL ============ */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowDeleteConfirm(null) }}>
-          <div className="w-full max-w-sm bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className={`w-full max-w-sm border rounded-2xl shadow-2xl ${isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-gray-200'}`} onClick={(e) => e.stopPropagation()}>
             <div className="p-6 text-center">
               <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7 text-red-400" />
+                <Trash2 className="w-7 h-7 text-red-500" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Delete User?</h3>
-              <p className="text-zinc-400 text-sm">This action cannot be undone. All user data including characters will be permanently deleted.</p>
+              <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Delete User?</h3>
+              <p className={`text-sm ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>This action cannot be undone. All user data including characters will be permanently deleted.</p>
             </div>
-            <div className="flex items-center gap-3 p-6 border-t border-white/10">
-              <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 px-4 py-2.5 text-sm text-zinc-400 border border-white/10 rounded-xl hover:bg-white/5 transition-all">Cancel</button>
+            <div className={`flex items-center gap-3 p-6 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              <button onClick={() => setShowDeleteConfirm(null)} className={`flex-1 px-4 py-2.5 text-sm border rounded-xl transition-all ${isDark ? 'text-zinc-400 border-white/10 hover:bg-white/5' : 'text-gray-700 border-gray-200 hover:bg-gray-50'}`}>Cancel</button>
               <button
                 onClick={() => handleDelete(showDeleteConfirm)}
-                className="flex-1 px-4 py-2.5 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-all"
+                className="flex-1 px-4 py-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all"
               >
                 Delete
               </button>
