@@ -17,6 +17,7 @@ import {
   Sun,
   Moon,
   ArrowLeft,
+  Bell,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", label: "Profiles", icon: Users },
   { href: "/admin/characters", label: "Character List", icon: Bot },
   { href: "/admin/gifts", label: "Gifts", icon: Gift },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/reports", label: "Reports", icon: ShieldAlert },
 ];
 

@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Message from "@/models/Message";
 import NotificationHistory from "@/models/NotificationHistory";
+import NotificationSchedule from "@/models/NotificationSchedule";
 import { sendNotificationToUser } from "@/lib/onesignal";
 
 export const dynamic = "force-dynamic";
@@ -18,14 +19,64 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
+    // Fetch config
+    let schedule = await NotificationSchedule.findOne({});
+    if (!schedule) {
+      // Fallback defaults
+      schedule = {
+        isEnabled: true,
+        maxNotificationsPerDay: 4,
+        cooldownMinutes: 240,
+        inactivityThresholdMinutes: 2,
+        timeSlots: [],
+        templates: {
+          titles: ["Miss you! 🥺", "Someone's waiting... 💕", "You disappeared! 🙈", "New connection 👋", "Come say hi! 😊", "Don't be a stranger! 💫"],
+          bodies: ["${characterName} is waiting for your reply! 💕", "${characterName} wants to tell you something... 👀", "${characterName}: \"Where did you go?\" 🥺", "You have new thoughts from ${characterName}! ✨", "${characterName} misses your chats. 💬", "${characterName} just posted something new! 📸", "${characterName} is thinking about you... 💭"],
+          inChatMessages: ["Hey, I haven't heard from you in a while... Is everything okay? 🥺", "I've been thinking about you! Come chat with me when you're free 💕", "Where did you go? I miss our conversations! 💬", "Hey! I have something interesting to tell you... 👀", "I was just thinking about our last chat. Come say hi! 😊", "Don't be a stranger! I'm always here for you 💫", "I noticed you haven't been around lately. Hope you're doing well! ✨"]
+        },
+        timezone: "Asia/Kolkata"
+      } as any;
+    }
+
+    if (!schedule!.isEnabled) {  
+      return NextResponse.json({ success: true, message: "Notification system is disabled by admin." });
+    }
+
     const now = new Date();
+
+    // Time Slot Check
+    if (schedule!.timeSlots && schedule!.timeSlots.length > 0) {
+      // Get current hours and mins in the target timezone
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: schedule!.timezone || 'Asia/Kolkata',
+        hour: 'numeric',
+        minute: 'numeric',
+        hourCycle: 'h23'
+      });
+      const parts = formatter.formatToParts(now);
+      const currentHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+      const currentMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+      const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      
+      let isWithinSlot = false;
+      for (const slot of schedule!.timeSlots) {
+        if (currentTimeStr >= slot.startTime && currentTimeStr <= slot.endTime) {
+          isWithinSlot = true;
+          break;
+        }
+      }
+
+      console.log("[CRON TIME CHECK] Current time:", currentTimeStr, "Allowed slots:", schedule!.timeSlots);
+
+      if (!isWithinSlot) {
+        return NextResponse.json({ success: true, message: "Current time is outside of allowed time slots." });
+      }
+    }
+
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // === 🛠️ SETTINGS ===
-    // 1. Inactive for 2 minutes
-    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-    // 2. Cooldown between the daily pushes (Production: 4 hours)
-    const cooldownMinutesAgo = new Date(now.getTime() - 240 * 60 * 1000);
+    // Settings
+    const inactivityLimit = new Date(now.getTime() - (schedule!.inactivityThresholdMinutes * 60 * 1000));
 
     // 1. Reset daily counts automatically if their last notification was before today!
     await User.updateMany(
@@ -35,18 +86,20 @@ export async function GET(request: NextRequest) {
 
     // 2. Find inactive users
     const inactiveUsers = await User.find({
-      lastActiveAt: { $lt: twoMinutesAgo },
+      lastActiveAt: { $lt: inactivityLimit },
       $and: [
         {
           $or: [
             { dailyInactivityCount: { $exists: false } },
-            { dailyInactivityCount: { $lt: 4 } } // Limit to 4 times per day!
+            { dailyInactivityCount: { $lt: schedule!.maxNotificationsPerDay } }
           ]
         },
         {
           $or: [
             { inactivityNotificationSentAt: null },
-            // Only send if they became active AFTER we sent the last notification!
+            // Cooldown check
+            { inactivityNotificationSentAt: { $lt: new Date(now.getTime() - (schedule!.cooldownMinutes * 60 * 1000)) } },
+            // Also Only send if they became active AFTER we sent the last notification!
             { $expr: { $gt: ["$lastActiveAt", "$inactivityNotificationSentAt"] } }
           ]
         }
@@ -92,26 +145,12 @@ export async function GET(request: NextRequest) {
         }
 
         if (characterName !== "Your AI companions") {
-          const dynamicMessages = [
-            `${characterName} is waiting for your reply! 💕`,
-            `${characterName} wants to tell you something... 👀`,
-            `${characterName}: "Where did you go?" 🥺`,
-            `You have new thoughts from ${characterName}! ✨`,
-            `${characterName} misses your chats. 💬`,
-            `${characterName} just posted something new! 📸`,
-            `${characterName} is thinking about you... 💭`,
-          ];
-          const dynamicTitles = [
-            "Miss you! 🥺",
-            "Someone's waiting... 💕",
-            "You disappeared! 🙈",
-            "New connection 👋",
-            "Come say hi! 😊",
-            "Don't be a stranger! 💫",
-          ];
+          const dynamicMessages = schedule!.templates.bodies;
+          const dynamicTitles = schedule!.templates.titles;
           
-          messageBody = dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)];
-          pushTitle = dynamicTitles[Math.floor(Math.random() * dynamicTitles.length)];
+          let rawMessage = dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)] || "${characterName} is waiting!";
+          messageBody = rawMessage.replace(/\$\{characterName\}/g, characterName);
+          pushTitle = dynamicTitles[Math.floor(Math.random() * dynamicTitles.length)] || "Miss you! 🥺";
         }
 
         // 🛠️ TESTING: Console log the exact notification before sending
@@ -141,15 +180,7 @@ export async function GET(request: NextRequest) {
         if (pushSuccess) {
           // Also save an in-chat message from this character so it appears in the messages section
           if (characterId) {
-            const inChatMessages = [
-              "Hey, I haven't heard from you in a while... Is everything okay? 🥺",
-              "I've been thinking about you! Come chat with me when you're free 💕",
-              "Where did you go? I miss our conversations! 💬",
-              "Hey! I have something interesting to tell you... 👀",
-              "I was just thinking about our last chat. Come say hi! 😊",
-              "Don't be a stranger! I'm always here for you 💫",
-              "I noticed you haven't been around lately. Hope you're doing well! ✨",
-            ];
+            const inChatMessages = schedule!.templates.inChatMessages || ["Where did you go? I miss our conversations! 💬"];
             const chatMessage = inChatMessages[Math.floor(Math.random() * inChatMessages.length)];
 
             await Message.create({
