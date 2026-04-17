@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     
     let userId: string, characterName: string, characterImage: string | null,
+      characterVideo: string | null = null, characterThumbnail: string | null = null,
       characterAge: number, characterGender: string, language: string,
       tags: string[], description: string, personality: string,
       scenario: string, firstMessage: string, visibility: string;
@@ -157,12 +158,89 @@ export async function POST(request: NextRequest) {
         characterImage = (formData.get("characterImageUrl") as string) || null;
       }
 
+      // Handle video file upload
+      const videoFile = formData.get("characterVideo");
+      if (videoFile instanceof File && videoFile.size > 0) {
+        const path = await import("path");
+        const fs   = await import("fs");
+        
+        // Use require so typescript doesn't complain about types if not strictly defined
+        const ffmpeg = require("fluent-ffmpeg");
+        
+        // Fix Next.js webpack breaking ffmpeg-static by pointing directly to node_modules
+        let ffmpegPath;
+        const defaultPath = path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe");
+        if (fs.existsSync(defaultPath)) {
+            ffmpegPath = defaultPath;
+        } else {
+            // fallback for linux/mac if used anywhere else
+            const os = require('os');
+            const ext = os.platform() === 'win32' ? '.exe' : '';
+            ffmpegPath = path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg" + ext);
+        }
+        ffmpeg.setFfmpegPath(ffmpegPath);
+
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+        const ext = path.extname(videoFile.name) || ".mp4";
+        const uniqueName = `char-vid-${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const tempVideoPath = path.join(uploadsDir, `${uniqueName}-temp${ext}`);
+        const finalVideoPath = path.join(uploadsDir, `${uniqueName}${ext}`);
+        const thumbnailName = `${uniqueName}-thumb.jpg`;
+
+        const arrayBuffer = await videoFile.arrayBuffer();
+        fs.writeFileSync(tempVideoPath, Buffer.from(arrayBuffer));
+
+        // Process video: trim to 5s max, compress by shrinking bitrate to remain under 500kb
+        // targetting roughly ~600k bitrate max
+        await new Promise((resolve, reject) => {
+           ffmpeg(tempVideoPath)
+             .duration(5)
+             .videoBitrate('500k')
+             .audioBitrate('64k')
+             .size('?x480') // scale to height 480px, proportional width
+             .output(finalVideoPath)
+             .on('end', () => resolve(null))
+             .on('error', (err: any) => reject(err))
+             .run();
+        });
+
+        // Generate thumbnail exactly from the processed video
+        await new Promise((resolve, reject) => {
+           ffmpeg(finalVideoPath)
+             .screenshots({
+               timestamps: [0.5],
+               filename: thumbnailName,
+               folder: uploadsDir,
+               size: '?x480'
+             })
+             .on('end', () => resolve(null))
+             .on('error', (err: any) => reject(err))
+             .on('filenames', function(filenames: string[]) {
+               // Nothing strictly required here
+             });
+        });
+
+        // Delete the temp file to save space
+        if (fs.existsSync(tempVideoPath)) {
+           fs.unlinkSync(tempVideoPath);
+        }
+
+        characterVideo = `/api/uploads/${uniqueName}${ext}`;
+        characterThumbnail = `/api/uploads/${thumbnailName}`;
+      } else {
+        characterVideo = (formData.get("characterVideoUrl") as string) || null;
+        characterThumbnail = (formData.get("characterThumbnailUrl") as string) || null;
+      }
+
     } else {
       // JSON path — accepts a pre-uploaded URL (not base64)
       const body = await request.json();
 
       ({
         characterName, characterImage = null,
+        characterVideo = null, characterThumbnail = null,
         characterAge, characterGender, language,
         tags, description, personality,
         scenario, firstMessage, visibility,
@@ -255,6 +333,8 @@ export async function POST(request: NextRequest) {
       _id: new Types.ObjectId(),
       characterName,
       characterImage: characterImage || null,
+      characterVideo: characterVideo || null,
+      characterThumbnail: characterThumbnail || null,
       characterAge,
       characterGender,
       language: language || "English",

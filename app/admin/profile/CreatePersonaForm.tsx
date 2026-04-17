@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2 } from "lucide-react";
+import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -46,8 +46,20 @@ export default function CreatePersonaForm({ onSuccess, onClose, targetUserId }: 
     const [scenario, setScenario] = useState("");
     const [firstMessage, setFirstMessage] = useState("");
     const [visibility, setVisibility] = useState("private");
+    const [videoFile, setVideoFile] = useState<File | null>(null);
     const [tagSearch, setTagSearch] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 1024 * 1024) {
+                toast.error("Video size must be less than 1 MB.");
+                return;
+            }
+            setVideoFile(file);
+        }
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -125,6 +137,10 @@ export default function CreatePersonaForm({ onSuccess, onClose, targetUserId }: 
                 formData.append("characterImage", imageFile);
             }
 
+            if (videoFile) {
+                formData.append("characterVideo", videoFile);
+            }
+
             console.log("Sending character data via FormData"); // Debug
 
             // Call API
@@ -156,6 +172,7 @@ export default function CreatePersonaForm({ onSuccess, onClose, targetUserId }: 
             setScenario("");
             setFirstMessage("");
             setVisibility("Private");
+            setVideoFile(null);
 
             // Call onSuccess callback
             if (onSuccess) {
@@ -217,6 +234,29 @@ export default function CreatePersonaForm({ onSuccess, onClose, targetUserId }: 
                                 </div>
                                 <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                                     Upload or generate an image that represents your character. Make sure these images comply to <span className="text-blue-500 hover:underline cursor-pointer">our terms and community guidelines</span>.
+                                </p>
+                            </div>
+
+                            {/* Character Video */}
+                            <div>
+                                <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+                                    Character Video (Backdrop)
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 text-sm font-medium rounded-md cursor-pointer transition-colors">
+                                        <Film className="w-4 h-4" />
+                                        Choose video
+                                        <input type="file" accept="video/mp4,video/webm" onChange={handleVideoChange} className="hidden" />
+                                    </label>
+                                    <span className="text-zinc-500 text-sm truncate max-w-[150px]">{videoFile ? videoFile.name : 'No file chosen'}</span>
+                                    {videoFile && (
+                                        <button onClick={() => setVideoFile(null)} className="p-1 hover:text-red-500 transition-colors">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-zinc-500 mt-2">
+                                    Max size: 1 MB. This video will play in the background of chat sessions.
                                 </p>
                             </div>
                         </div>

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const phone = formData.get("phone") as string;
     const avatarFile = formData.get("avatar") as File | null;
 
-    if (!userId || !name || !email) {
+    if (!userId || !name) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }

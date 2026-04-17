@@ -27,6 +27,7 @@ interface CharacterData {
     _id: string;
     characterName: string;
     characterImage: string | null;
+    characterVideo: string | null;
     characterAge: number;
     characterGender: string;
     language: string;
@@ -72,7 +73,20 @@ export default function AdminCharactersPage() {
     firstMessage: "",
     visibility: "public",
     tags: "",
+    characterVideo: null as string | null,
   });
+  const [editVideoFile, setEditVideoFile] = useState<File | null>(null);
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        toast.error("Video size must be less than 1 MB.");
+        return;
+      }
+      setEditVideoFile(file);
+    }
+  };
 
   // Create Reel Modal
   const [showReelModal, setShowReelModal] = useState(false);
@@ -127,7 +141,9 @@ export default function AdminCharactersPage() {
       firstMessage: char.character.firstMessage,
       visibility: char.character.visibility,
       tags: char.character.tags?.join(", ") || "",
+      characterVideo: char.character.characterVideo || null,
     });
+    setEditVideoFile(null);
     setShowEditModal(true);
   };
 
@@ -135,14 +151,29 @@ export default function AdminCharactersPage() {
     if (!editingChar) return;
     setSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append("characterName", editForm.characterName);
+      formData.append("characterAge", String(editForm.characterAge));
+      formData.append("characterGender", editForm.characterGender);
+      formData.append("language", editForm.language);
+      formData.append("description", editForm.description);
+      formData.append("personality", editForm.personality);
+      formData.append("scenario", editForm.scenario);
+      formData.append("firstMessage", editForm.firstMessage);
+      formData.append("visibility", editForm.visibility);
+      const tagList = editForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      formData.append("tags", JSON.stringify(tagList));
+
+      if (editVideoFile) {
+        formData.append("characterVideo", editVideoFile);
+      } else if (editForm.characterVideo) {
+        formData.append("characterVideoUrl", editForm.characterVideo);
+      }
+
       const res = await fetch(`/api/admin/characters/${editingChar.userId}/${editingChar.character._id}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...editForm,
-          characterAge: Number(editForm.characterAge),
-          tags: editForm.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       const data = await res.json();
       if (data.success) {
@@ -449,6 +480,37 @@ export default function AdminCharactersPage() {
                       The character image is managed from the character card. This preview shows the current image.
                     </p>
                   </div>
+                </div>
+
+                {/* Character Video */}
+                <div>
+                  <label className={`block text-sm font-bold mb-1.5 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    Character Video (Backdrop)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className={`flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer text-sm font-medium transition-colors ${
+                      isDark ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-50 border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                    }`}>
+                      <Film className="w-4 h-4" />
+                      Choose video
+                      <input type="file" accept="video/mp4,video/webm" onChange={handleVideoChange} className="hidden" />
+                    </label>
+                    <span className={`text-xs truncate max-w-[150px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                      {editVideoFile ? editVideoFile.name : (editForm.characterVideo ? 'Current video set ✓' : 'No file chosen')}
+                    </span>
+                    {(editVideoFile || editForm.characterVideo) && (
+                      <button 
+                        onClick={() => {
+                          setEditVideoFile(null);
+                          setEditForm({ ...editForm, characterVideo: null });
+                        }} 
+                        className="p-1 text-zinc-500 hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1.5">Max size: 1 MB. Video for chat background.</p>
                 </div>
 
                 {/* Character Age */}

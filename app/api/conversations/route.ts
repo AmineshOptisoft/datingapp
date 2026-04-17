@@ -117,6 +117,8 @@ export async function GET(request: NextRequest) {
                 timestamp: timestamp,
                 unread: false,
                 online: true,
+                characterVideo: character.characterVideo || null,
+                characterThumbnail: character.characterThumbnail || null,
               };
             }
           } catch (err) {

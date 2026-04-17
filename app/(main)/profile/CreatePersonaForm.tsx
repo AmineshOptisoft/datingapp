@@ -37,6 +37,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
     const [name, setName] = useState("");
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [videoFile, setVideoFile] = useState<File | null>(null);
     const [age, setAge] = useState("18");
     const [gender, setGender] = useState<"male" | "female" | "other">("female");
     const [language, setLanguage] = useState("English");
@@ -54,6 +55,17 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
         if (file) {
             setImageFile(file);
             setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 1024 * 1024) {
+                toast.error("Video size must be less than 1 MB.");
+                return;
+            }
+            setVideoFile(file);
         }
     };
 
@@ -124,10 +136,13 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             if (imageFile) {
                 formData.append("characterImage", imageFile);
             }
+            if (videoFile) {
+                formData.append("characterVideo", videoFile);
+            }
 
             console.log("Sending character data via FormData"); // Debug
 
-            // Call API
+            // Call API (cookie-based auth sent automatically by browser)
             const response = await fetch("/api/characters", {
                 method: "POST",
                 body: formData,
@@ -148,6 +163,7 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
             setName("");
             setImageFile(null);
             setImagePreview(null);
+            setVideoFile(null);
             setAge("18");
             setLanguage("English");
             setTags([]);
@@ -220,6 +236,24 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Character Video */}
+                    <div>
+                        <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+                            Character Background Video (Optional)
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <label className="flex items-center gap-2 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 text-sm font-medium rounded-md cursor-pointer transition-colors">
+                                <Upload className="w-4 h-4" />
+                                Choose video
+                                <input type="file" accept="video/mp4,video/webm" onChange={handleVideoChange} className="hidden" />
+                            </label>
+                            <span className="text-zinc-500 text-sm">{videoFile ? videoFile.name : 'No file chosen'}</span>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
+                            Upload a short video (max 1 MB) representing the character's background scene. This will be automatically trimmed on the server to 5 seconds and will also be used to generate a thumbnail.
+                        </p>
                     </div>
 
                     {/* Character Age */}
