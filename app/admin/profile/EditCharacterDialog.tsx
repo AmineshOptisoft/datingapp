@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2 } from "lucide-react";
+import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ interface Character {
     _id: string;
     characterName: string;
     characterImage?: string;
+    characterVideo?: string;
     characterAge: number;
     characterGender?: 'male' | 'female' | 'other';
     language: string;
@@ -67,8 +68,21 @@ export default function EditCharacterDialog({
     const [scenario, setScenario] = useState(character.scenario || "");
     const [firstMessage, setFirstMessage] = useState(character.firstMessage || "");
     const [visibility, setVisibility] = useState(character.visibility?.toLowerCase() || "private");
+    const [video, setVideo] = useState<string | null>(character.characterVideo || null);
+    const [videoFile, setVideoFile] = useState<File | null>(null);
     const [tagSearch, setTagSearch] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 1024 * 1024) {
+                toast.error("Video size must be less than 1 MB.");
+                return;
+            }
+            setVideoFile(file);
+        }
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -142,6 +156,13 @@ export default function EditCharacterDialog({
             } else if (image && !image.startsWith("data:")) {
                 // Keep existing URL (not base64)
                 formData.append("characterImageUrl", image);
+            }
+
+            // Video
+            if (videoFile) {
+                formData.append("characterVideo", videoFile);
+            } else if (video) {
+                formData.append("characterVideoUrl", video);
             }
 
             const response = await fetch(`/api/characters/${character._id}`, {
@@ -232,6 +253,34 @@ export default function EditCharacterDialog({
                                 </div>
                                 <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                                     Upload or generate an image that represents your character. Make sure these images comply to <span className="text-blue-500 hover:underline cursor-pointer">our terms and community guidelines</span>.
+                                </p>
+                            </div>
+
+                            {/* Character Video */}
+                            <div>
+                                <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+                                    Character Video (Backdrop)
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 text-sm font-medium rounded-md cursor-pointer transition-colors">
+                                        <Film className="w-4 h-4" />
+                                        Choose video
+                                        <input type="file" accept="video/mp4,video/webm" onChange={handleVideoChange} className="hidden" />
+                                    </label>
+                                    <span className="text-zinc-500 text-sm truncate max-w-[150px]">
+                                        {videoFile ? videoFile.name : (video ? 'Current video set ✓' : 'No file chosen')}
+                                    </span>
+                                    {(videoFile || video) && (
+                                        <button 
+                                            onClick={() => { setVideoFile(null); setVideo(null); }} 
+                                            className="p-1 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-zinc-500 mt-2">
+                                    Max size: 1 MB. This video plays in the background of chat sessions.
                                 </p>
                             </div>
                         </div>

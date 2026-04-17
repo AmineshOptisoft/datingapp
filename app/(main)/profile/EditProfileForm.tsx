@@ -35,7 +35,13 @@ export default function EditProfileForm({ user, onSuccess }: EditProfileFormProp
 
         try {
             const formData = new FormData();
-            formData.append("userId", user.id);
+            const userId = user._id || user.id || user.userId;
+            if (!userId) {
+                setMessage("User ID not found. Please try logging out and back in.");
+                setLoading(false);
+                return;
+            }
+            formData.append("userId", userId);
             formData.append("name", name);
             formData.append("bio", bio);
             formData.append("email", email);

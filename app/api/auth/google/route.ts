@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       // wallet fetch fail hone pe 0 bhej do
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Login successful",
       token,
@@ -145,6 +145,17 @@ export async function POST(request: NextRequest) {
         }
       },
     });
+
+    // 🍪 Set the token in an HttpOnly cookie (same as email login)
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
 
   } catch (error: any) {
     console.error("Google Login Error:", error);

@@ -4,6 +4,8 @@ export interface ICharacter {
   _id?: Types.ObjectId;
   characterName: string;
   characterImage?: string;
+  characterVideo?: string;
+  characterThumbnail?: string;
   characterAge: number;
   characterGender: 'male' | 'female' | 'other';
   language: string;

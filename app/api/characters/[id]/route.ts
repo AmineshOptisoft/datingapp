@@ -90,6 +90,7 @@ export async function PUT(
     }
     
     let userId: string, characterName: string, characterImage: string | null | undefined,
+      characterVideo: string | null | undefined, characterThumbnail: string | null | undefined,
       characterAge: number, characterGender: string, language: string,
       tags: string[], description: string, personality: string,
       scenario: string, firstMessage: string, visibility: string;
@@ -131,10 +132,82 @@ export async function PUT(
       } else {
         characterImage = undefined; // Do not overwrite if no new image provided
       }
+
+      // Handle video file upload for updates
+      const videoFile = formData.get("characterVideo") as File | null;
+      if (videoFile && videoFile.size > 0) {
+        const path = await import("path");
+        const fs   = await import("fs");
+        const ffmpeg = require("fluent-ffmpeg");
+        
+        let ffmpegPath;
+        const defaultPath = path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe");
+        if (fs.existsSync(defaultPath)) {
+            ffmpegPath = defaultPath;
+        } else {
+            const os = require('os');
+            const ext = os.platform() === 'win32' ? '.exe' : '';
+            ffmpegPath = path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg" + ext);
+        }
+        ffmpeg.setFfmpegPath(ffmpegPath);
+
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+        const ext = path.extname(videoFile.name) || ".mp4";
+        const uniqueName = `char-vid-${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const tempVideoPath = path.join(uploadsDir, `${uniqueName}-temp${ext}`);
+        const finalVideoPath = path.join(uploadsDir, `${uniqueName}${ext}`);
+        const thumbnailName = `${uniqueName}-thumb.jpg`;
+
+        const arrayBuffer = await videoFile.arrayBuffer();
+        fs.writeFileSync(tempVideoPath, Buffer.from(arrayBuffer));
+
+        await new Promise((resolve, reject) => {
+           ffmpeg(tempVideoPath)
+             .duration(5)
+             .videoBitrate('500k')
+             .audioBitrate('64k')
+             .size('?x480')
+             .output(finalVideoPath)
+             .on('end', () => resolve(null))
+             .on('error', (err: any) => reject(err))
+             .run();
+        });
+
+        await new Promise((resolve, reject) => {
+           ffmpeg(finalVideoPath)
+             .screenshots({
+               timestamps: [0.5],
+               filename: thumbnailName,
+               folder: uploadsDir,
+               size: '?x480'
+             })
+             .on('end', () => resolve(null))
+             .on('error', (err: any) => reject(err))
+             .on('filenames', function(filenames: string[]) {
+             });
+        });
+
+        if (fs.existsSync(tempVideoPath)) {
+           fs.unlinkSync(tempVideoPath);
+        }
+
+        characterVideo = `/api/uploads/${uniqueName}${ext}`;
+        characterThumbnail = `/api/uploads/${thumbnailName}`;
+      } else if (!formData.has("characterVideoUrl")) {
+        // Explicitly cleared
+        characterVideo = null;
+        characterThumbnail = null;
+      } else {
+        characterVideo = undefined; // Do not overwrite
+        characterThumbnail = undefined;
+      }
     } else {
       const body = await request.json();
       ({
         characterName, characterImage,
+        characterVideo, characterThumbnail,
         characterAge, characterGender, language,
         tags, description, personality,
         scenario, firstMessage, visibility,
@@ -174,6 +247,18 @@ export async function PUT(
       );
     }
 
+    // Check if the requester is an admin
+    const requestingUser = await User.findById(decoded.userId).select("role").lean();
+    const isAdmin = requestingUser && (requestingUser as any).role === "admin";
+
+    if (isAdmin) {
+      // Find the actual user who owns this character
+      const ownerUser = await User.findOne({ "characters._id": id }).select("_id").lean();
+      if (ownerUser) {
+        userId = (ownerUser as any)._id.toString();
+      }
+    }
+
     // Find user with the character and verify ownership
     const user = await User.findOne({ _id: userId, "characters._id": id });
 
@@ -200,6 +285,11 @@ export async function PUT(
 
     if (characterImage !== undefined) {
       setQuery["characters.$.characterImage"] = characterImage;
+    }
+
+    if (characterVideo !== undefined) {
+      setQuery["characters.$.characterVideo"] = characterVideo;
+      setQuery["characters.$.characterThumbnail"] = characterThumbnail;
     }
 
     // Update the character within the user's characters array

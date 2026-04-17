@@ -65,6 +65,8 @@ interface Conversation {
   unread: boolean;
   online: boolean;
   profileId?: string;
+  characterVideo?: string;
+  characterThumbnail?: string;
 }
 
 interface Message {
@@ -244,6 +246,8 @@ export default function MessagesClient() {
             unread: conv.unread || false,
             online: conv.online !== false,
             profileId: conv.profileId,
+            characterVideo: conv.characterVideo,
+            characterThumbnail: conv.characterThumbnail,
           }));
 
           // Merge with existing conversations instead of replacing
@@ -335,6 +339,26 @@ export default function MessagesClient() {
           online: true,
           profileId: aiProfileId,
         };
+
+        // Only user-created characters have background videos
+        if (aiProfileId.startsWith('character-')) {
+          if ((data as any).characterVideo) {
+            newConversation.characterVideo = (data as any).characterVideo;
+          }
+          
+          // Also explicitly fetch the video right away to ensure we have the latest
+          const charId = aiProfileId.replace('character-', '');
+          fetch(`/api/characters/${charId}`)
+            .then(res => res.json())
+            .then(charData => {
+              if (charData.success && charData.character && charData.character.characterVideo) {
+                setConversations(prev => prev.map(c => 
+                  c.profileId === aiProfileId ? { ...c, characterVideo: charData.character.characterVideo } : c
+                ));
+              }
+            })
+            .catch(console.error);
+        }
 
         // Mark for selection in separate effect
         pendingSelection.current = { profileId: aiProfileId, conversationId: newConversation.id };
@@ -587,9 +611,22 @@ export default function MessagesClient() {
       {/* Right Side - Chat Area */}
       {selectedConv ? (
         <div
-          className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 min-h-0"
+          className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 min-h-0 relative"
           style={chatContainerHeight ? { height: chatContainerHeight, minHeight: 0 } : undefined}
         >
+          {/* Optional Background Video/Thumbnail */}
+          {selectedConv.characterVideo && (
+            <video 
+              src={selectedConv.characterVideo}
+              poster={selectedConv.characterThumbnail}
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 dark:opacity-30 pointer-events-none"
+            />
+          )}
+
           {/* Chat Header - safe-area for iOS notch; no top margin on mobile */}
           <div className="sticky top-0 z-20 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))] px-3 pb-3 bg-white dark:bg-[#1e1e24] border-b border-zinc-200 dark:border-white/5 flex items-center justify-between md:mx-2 md:mt-2 md:mb-0 md:rounded-[24px] md:border md:shadow-lg md:pt-3">
             <div className="flex items-center gap-3">
@@ -658,7 +695,7 @@ export default function MessagesClient() {
           />
 
           {/* Messages Area - min-h-0 allows flex shrink when keyboard opens; pb-24 so last message clears input bar */}
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-24 space-y-4 overscroll-contain touch-scroll">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-24 space-y-4 overscroll-contain touch-scroll relative z-10">
             {isLoadingMessages ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="relative w-24 h-24 mb-6">
@@ -819,7 +856,7 @@ export default function MessagesClient() {
           {/* Message Input Container - solid bg so messages don't show through gifts */}
           <div
             ref={inputContainerRef}
-            className="sticky bottom-0 z-10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] w-full max-w-4xl mx-auto shrink-0 bg-zinc-50 dark:bg-[#0a0a0a]"
+            className="sticky bottom-0 z-10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] rounded-t-2xl w-full max-w-4xl mx-auto shrink-0 bg-zinc-50 dark:bg-[#0a0a0a]"
           >
             {/* Quick Reactions / Gifts above input - solid background */}
             <div className="flex items-center gap-2 mb-2 px-2 bg-zinc-50 dark:bg-[#0a0a0a] pt-1">

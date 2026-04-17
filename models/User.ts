@@ -13,6 +13,14 @@ const CharacterSchema = new Schema<ICharacter>(
       type: String,
       default: null,
     },
+    characterVideo: {
+      type: String,
+      default: null,
+    },
+    characterThumbnail: {
+      type: String,
+      default: null,
+    },
     characterAge: {
       type: Number,
       required: [true, "Character age is required"],
