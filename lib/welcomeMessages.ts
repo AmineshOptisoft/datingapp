@@ -61,7 +61,19 @@ export async function sendWelcomeMessages(userId: string) {
         await sendNotificationToUser(
           userId, 
           "New Message! 💕", 
-          `${senderName}: ${msg.message}`
+          `${senderName}: ${msg.message}`,
+          {
+            screen: "chat",
+            profileId: charId ? `character-${charId}` : undefined,
+            characterName: senderName,
+          },
+          {
+            buttons: [
+              { id: "accept", text: "Accept" },
+              { id: "reject", text: "Reject" },
+            ],
+            android_sound: "notification_sound",
+          }
         );
       }
     } catch (pushErr) {
