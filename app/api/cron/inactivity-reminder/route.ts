@@ -158,11 +158,25 @@ export async function GET(request: NextRequest) {
         console.log(`   Title: ${pushTitle}`);
         console.log(`   Body:  ${messageBody}\n`);
 
-        // Send push
+        // Send push with deep-link data for native apps
+        const pushData: any = {
+          screen: "chat",
+          profileId: characterId ? `character-${characterId}` : undefined,
+          characterName: characterName !== "Your AI companions" ? characterName : undefined,
+        };
+
         const pushSuccess = await sendNotificationToUser(
           user._id.toString(),
           pushTitle,
-          messageBody
+          messageBody,
+          pushData,
+          {
+            buttons: [
+              { id: "accept", text: "Accept" },
+              { id: "reject", text: "Reject" },
+            ],
+            android_sound: "notification_sound",
+          }
         );
 
         // Save notification history (both success & failure)

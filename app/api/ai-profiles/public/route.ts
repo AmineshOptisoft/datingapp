@@ -112,6 +112,8 @@ export async function GET(request: NextRequest) {
                 likes: char.likes || 0,
                 interactions: char.interactions || 0,
                 likedBy: char.likedBy || [],
+                characterVideo: char.characterVideo || null,
+                characterThumbnail: char.characterThumbnail || null,
               });
             }
           });
@@ -287,6 +289,8 @@ export async function POST(request: NextRequest) {
                 likes: char.likes ?? 0,
                 interactions: char.interactions ?? 0,
                 likedBy: char.likedBy ?? [],
+                characterVideo: char.characterVideo || null,
+                characterThumbnail: char.characterThumbnail || null,
              }
            });
          }

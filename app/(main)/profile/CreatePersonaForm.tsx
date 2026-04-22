@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2 } from "lucide-react";
+import { Plus, X, Upload, Image as ImageIcon, ChevronDown, Loader2, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -206,18 +206,44 @@ export default function CreatePersonaForm({ onSuccess, onClose }: { onSuccess?: 
                         <p className="text-xs text-zinc-500 mt-1.5">This is your character's display name.</p>
                     </div>
 
-                    {/* Character Image */}
-                    <div className="flex gap-6">
-                        <div className="shrink-0 w-32 h-44 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-                            {imagePreview ? (
-                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="flex flex-col items-center text-zinc-400">
-                                    <ImageIcon className="w-8 h-8 opacity-50" />
-                                    <span className="text-xs mt-2 opacity-50">?</span>
+                    {/* Media Setup */}
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Previews container */}
+                        <div className="flex gap-4 shrink-0 overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
+                            <div className="shrink-0 w-32 h-44 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="flex flex-col items-center text-zinc-400">
+                                        <ImageIcon className="w-8 h-8 opacity-50" />
+                                        <span className="text-xs mt-2 opacity-50">?</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {videoFile && (
+                                <div className="shrink-0 w-32 h-44 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center overflow-hidden relative group">
+                                    <video 
+                                        src={URL.createObjectURL(videoFile)} 
+                                        className="w-full h-full object-cover" 
+                                        autoPlay 
+                                        loop 
+                                        muted 
+                                        playsInline 
+                                    />
+                                    <div 
+                                        className="absolute top-2 right-2 bg-black/60 hover:bg-red-500/80 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex items-center justify-center" 
+                                        onClick={() => { setVideoFile(null); }}
+                                    >
+                                        <X className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1">
+                                        <Film className="w-3 h-3" /> Video
+                                    </div>
                                 </div>
                             )}
                         </div>
+
                         <div className="flex-1 space-y-4">
                             <div>
                                 <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">

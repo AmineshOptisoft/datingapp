@@ -9,12 +9,18 @@ const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
  * @param title Title of the notification
  * @param message Body of the notification
  * @param data Optional Deep linking or extra data
+ * @param options Optional extra OneSignal fields (buttons, android_sound, etc.)
  */
 export async function sendNotificationToUser(
   externalUserId: string,
   title: string,
   message: string,
-  data?: any
+  data?: any,
+  options?: {
+    buttons?: { id: string; text: string }[];
+    android_sound?: string;
+    [key: string]: any;
+  }
 ) {
   if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
     console.warn("⚠️ OneSignal logic skipped: Missing APP_ID or REST_API_KEY in .env");
@@ -22,7 +28,7 @@ export async function sendNotificationToUser(
   }
 
   try {
-    const payload = {
+    const payload: any = {
       app_id: ONESIGNAL_APP_ID,
       include_aliases: {
         external_id: [externalUserId]
@@ -31,6 +37,8 @@ export async function sendNotificationToUser(
       headings: { en: title },
       contents: { en: message },
       data: data || {},
+      // Merge any extra options (buttons, sound, etc.)
+      ...options,
     };
 
     const response = await axios.post(
