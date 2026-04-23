@@ -802,16 +802,16 @@ app.prepare().then(async () => {
   await connectMongoDB();
 
   // Initialize Inactivity Reminder Cron Job
-  // cron.schedule("*/1 * * * *", async () => {
-  //   try {
-  //     console.log("⏰ Running Inactivity Reminder Cron Job...");
-  //     const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
-  //     const data = await response.json();
-  //     console.log("✅ Cron Job Result:", data);
-  //   } catch (error) {
-  //     console.error("❌ Cron Job Fetch Error:", error);
-  //   }
-  // });
+  cron.schedule("*/1 * * * *", async () => {
+    try {
+      console.log("⏰ Running Inactivity Reminder Cron Job...");
+      const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
+      const data = await response.json();
+      console.log("✅ Cron Job Result:", data);
+    } catch (error) {
+      console.error("❌ Cron Job Fetch Error:", error);
+    }
+  });
 
   const server = createServer(async (req, res) => {
     try {

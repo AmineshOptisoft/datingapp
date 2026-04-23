@@ -73,6 +73,7 @@ export async function sendWelcomeMessages(userId: string) {
               { id: "reject", text: "Reject" },
             ],
             android_sound: "notification_sound",
+            android_channel_id: "e37834e1-da47-40ee-90ec-0d65d35d59ad",
           }
         );
       }

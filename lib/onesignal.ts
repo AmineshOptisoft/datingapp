@@ -19,6 +19,7 @@ export async function sendNotificationToUser(
   options?: {
     buttons?: { id: string; text: string }[];
     android_sound?: string;
+    android_channel_id?: string;
     [key: string]: any;
   }
 ) {
@@ -37,9 +38,12 @@ export async function sendNotificationToUser(
       headings: { en: title },
       contents: { en: message },
       data: data || {},
-      // Merge any extra options (buttons, sound, etc.)
+      // Merge any extra options (buttons, sound, channel etc.)
       ...options,
     };
+
+    // Debug: log the exact payload being sent to OneSignal
+    console.log(`📦 [OneSignal] Payload for ${externalUserId}:`, JSON.stringify(payload, null, 2));
 
     const response = await axios.post(
       "https://api.onesignal.com/notifications",
