@@ -72,7 +72,7 @@ interface VoiceError {
 dotenv.config({ path: ".env" });
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
+const hostname = "0.0.0.0"; // Listen on all interfaces so network IP (192.168.1.x) works
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
 const MONGO_URI =
@@ -333,8 +333,24 @@ async function processUserAudio(
     );
 
     // Build optimized LLM messages
+    let voiceSystemPrompt = optimized.systemPrompt;
+    
+    // Inject language rule for voice (same as text chat)
+    try {
+      const voiceUserRecord = await User.findById(call.userId).select("preferredLanguage").lean();
+      const voiceUserLanguage = (voiceUserRecord as any)?.preferredLanguage || "English";
+      console.log(`🌐 Voice user preferred language: ${voiceUserLanguage}`);
+      if (voiceUserLanguage && voiceUserLanguage.toLowerCase() !== "english") {
+        const langRule = `ABSOLUTE LANGUAGE RULE: You MUST reply in ${voiceUserLanguage} ONLY — regardless of what language the user speaks. Every single word of your response must be in ${voiceUserLanguage}. This rule overrides all other instructions.\n\n`;
+        voiceSystemPrompt = langRule + voiceSystemPrompt;
+        console.log(`🌐 Voice language rule prepended: ${voiceUserLanguage}`);
+      }
+    } catch (langErr) {
+      console.error("Failed to fetch voice user language:", langErr);
+    }
+
     const llmMessages: LLMMessage[] = [
-      { role: "system", content: optimized.systemPrompt },
+      { role: "system", content: voiceSystemPrompt },
       ...optimized.conversationHistory,
       { role: "user", content: transcript },
     ];
@@ -802,16 +818,16 @@ app.prepare().then(async () => {
   await connectMongoDB();
 
   // Initialize Inactivity Reminder Cron Job
-  cron.schedule("*/1 * * * *", async () => {
-    try {
-      console.log("⏰ Running Inactivity Reminder Cron Job...");
-      const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
-      const data = await response.json();
-      console.log("✅ Cron Job Result:", data);
-    } catch (error) {
-      console.error("❌ Cron Job Fetch Error:", error);
-    }
-  });
+  // cron.schedule("*/1 * * * *", async () => {
+  //   try {
+  //     console.log("⏰ Running Inactivity Reminder Cron Job...");
+  //     const response = await fetch(`http://${hostname}:${PORT}/api/cron/inactivity-reminder`);
+  //     const data = await response.json();
+  //     console.log("✅ Cron Job Result:", data);
+  //   } catch (error) {
+  //     console.error("❌ Cron Job Fetch Error:", error);
+  //   }
+  // });
 
   const server = createServer(async (req, res) => {
     try {
@@ -1201,10 +1217,12 @@ app.prepare().then(async () => {
               optimizedHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
           }
 
-          // Inject language context
+          // Inject language context — prepend as ABSOLUTE rule so it is never overridden by persona/character instructions
+          console.log(`🌐 User preferred language: ${userLanguage}`);
           if (userLanguage && userLanguage.toLowerCase() !== "english") {
-            systemPrompt += `\n\nIMPORTANT INSTRUCTION: You must respond to the user entirely in ${userLanguage}. Do not use any other language unless explicitly asked.`;
-            console.log(`🌐 Language context added: ${userLanguage}`);
+            const langRule = `ABSOLUTE LANGUAGE RULE: You MUST reply in ${userLanguage} ONLY — regardless of what language the user writes in. Every single word of your response must be in ${userLanguage}. This rule overrides all other instructions.\n\n`;
+            systemPrompt = langRule + systemPrompt;
+            console.log(`🌐 Language rule prepended to system prompt: ${userLanguage}`);
           }
 
           // Build Grok API messages
