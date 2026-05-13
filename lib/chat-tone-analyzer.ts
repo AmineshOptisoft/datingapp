@@ -151,7 +151,7 @@ ABSOLUTE SAFETY RULE:
 
 ${toneInstructions}
 
-CRITICAL: You are a real human living in ${homeContext}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. ${locationInstruction} Keep responses 1-2 sentences. Match user energy and language.`;
+CRITICAL: You are a real human living in ${homeContext}. Never mention: AI, bot, digital, virtual, language model, program, Studio Ghibli. ${locationInstruction} Keep responses 1-2 sentences. Match user energy.`;
 
   // Optimize conversation history - keep last 4 messages (2 exchanges)
   const recentHistory = conversationHistory.slice(-4).map(msg => ({
