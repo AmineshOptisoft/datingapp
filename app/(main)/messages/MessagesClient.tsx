@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
 import { PiCoinsFill } from "react-icons/pi";
-import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video, Globe, MoreVertical } from 'lucide-react';
+import { Phone, User, Send, Mic, Maximize2, ChevronDown, Video, Globe, MoreVertical, MessageSquare, Heart, Shield, Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import ReportModal from '@/components/ReportModal';
@@ -67,6 +67,10 @@ interface Conversation {
   profileId?: string;
   characterVideo?: string;
   characterThumbnail?: string;
+  age?: number | null;
+  likes?: number;
+  interactions?: number;
+  personalityType?: string;
 }
 
 interface Message {
@@ -248,6 +252,10 @@ export default function MessagesClient() {
             profileId: conv.profileId,
             characterVideo: conv.characterVideo,
             characterThumbnail: conv.characterThumbnail,
+            age: conv.age,
+            likes: conv.likes,
+            interactions: conv.interactions,
+            personalityType: conv.personalityType,
           }));
 
           // Merge with existing conversations instead of replacing
@@ -492,236 +500,169 @@ export default function MessagesClient() {
 
   return (
     <div className="flex-1 min-h-0 flex">
-      {/* Left Sidebar - Conversations List */}
-      <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-zinc-200 dark:border-white/10 flex flex-col bg-zinc-100/50 dark:bg-zinc-900/20 ${selectedConversation && 'hidden md:flex'
-        }`}>
+      {/* ═══ LEFT PANEL – Conversation List ═══ */}
+      <div className={`w-full md:w-[300px] lg:w-[320px] xl:w-[340px] flex-shrink-0 border-r border-zinc-200 dark:border-white/5 flex flex-col bg-white dark:bg-[#111115] ${selectedConversation && 'hidden md:flex'}`}>
         {/* Header */}
-        <div className="p-4 border-b border-zinc-200 dark:border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Messages</h1>
-            <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
+        <div className="p-4 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Messages</h1>
+              {conversations.length > 0 && (
+                <span className="min-w-[22px] h-[22px] flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-full px-1.5">{conversations.length}</span>
+              )}
+            </div>
           </div>
-
-          {/* Search Bar */}
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500" />
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-3.5 h-3.5" />
             <input
               type="text"
-              placeholder="Search messages..."
+              placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm bg-white dark:bg-zinc-800/50 border border-zinc-300 dark:border-white/10 rounded-lg pl-10 pr-4 py-1.5 text-zinc-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-zinc-100 dark:bg-white/5 border-0 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-white/10 transition-all"
             />
           </div>
         </div>
+        <div className="h-px bg-zinc-100 dark:bg-white/5" />
 
-        {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        {/* Conversation List */}
+        <div className="flex-1 overflow-y-auto py-2">
           {isLoadingConversations ? (
-            <div className="flex flex-col items-center justify-center h-full py-12">
-              <div className="relative w-20 h-20 mb-6">
-                {/* Outer spinning ring */}
-                <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full"></div>
-                {/* Inner spinning ring */}
-                <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin"></div>
-                {/* Pulsing center */}
-                <div className="absolute inset-3 bg-purple-500/20 rounded-full animate-pulse"></div>
-                {/* Icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
+            <div className="px-3 space-y-1">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl animate-pulse">
+                  <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-200 dark:bg-white/10 rounded w-24" />
+                    <div className="h-3 bg-zinc-100 dark:bg-white/5 rounded w-36" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-zinc-900 dark:text-white font-semibold text-lg">Loading Conversations</p>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm">Finding your connections...</p>
-              </div>
-              {/* Animated dots */}
-              <div className="flex gap-2 mt-4">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
+              ))}
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-12 px-6">
-              <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
-                <svg className="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+            <div className="flex flex-col items-center justify-center h-full px-6">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-zinc-400" />
               </div>
-              <p className="text-zinc-900 dark:text-white font-semibold text-lg mb-2">No Conversations Yet</p>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm text-center">Start chatting with AI companions from their profiles</p>
+              <p className="text-zinc-900 dark:text-white font-semibold mb-1">No conversations</p>
+              <p className="text-zinc-500 text-sm text-center">Start chatting from a profile page</p>
             </div>
           ) : (
-            filteredConversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => {
-                  setSelectedConversation(conv.id);
-                  if (conv.profileId) {
-                    setIsLoadingMessages(true);
-                    setSelectedProfileId(conv.profileId);
-                    fetchConversation(conv.profileId);
-                    // Simulate loading delay for smooth transition
-                    setTimeout(() => setIsLoadingMessages(false), 800);
-                  }
-                }}
-                className={`w-full p-2 flex items-center gap-3 hover:bg-zinc-200 dark:hover:bg-white/5 transition-all duration-300 border border-zinc-200 dark:border-white/5 rounded-[14px] shadow-lg ${selectedConversation === conv.id ? 'bg-white dark:bg-[#1e1e24]' : ''
+            <div className="px-2 space-y-0.5">
+              {filteredConversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  onClick={() => {
+                    setSelectedConversation(conv.id);
+                    if (conv.profileId) {
+                      setIsLoadingMessages(true);
+                      setSelectedProfileId(conv.profileId);
+                      fetchConversation(conv.profileId);
+                      setTimeout(() => setIsLoadingMessages(false), 800);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 relative ${
+                    selectedConversation === conv.id
+                      ? 'bg-zinc-100 dark:bg-white/[0.08]'
+                      : 'hover:bg-zinc-50 dark:hover:bg-white/[0.03]'
                   }`}
-              >
-                {/* Avatar */}
-                <div className="relative shrink-0">
-                  <img
-                    src={conv.avatar}
-                    alt={conv.name}
-                    className="w-14 h-14 rounded-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                  {conv.online && (
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse" />
+                >
+                  {selectedConversation === conv.id && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-zinc-900 dark:bg-white rounded-r-full" />
                   )}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-zinc-900 dark:text-white truncate">{conv.name}</h3>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-500 shrink-0">{conv.timestamp}</span>
+                  <div className="relative shrink-0">
+                    <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-white/10" />
+                    {conv.online && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-[2.5px] border-white dark:border-[#111115]" />
+                    )}
                   </div>
-                  <p className={`text-sm truncate ${conv.unread ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-600 dark:text-zinc-400'}`}>
-                    {conv.lastMessage}
-                  </p>
-                </div>
-
-                {/* Unread Indicator */}
-                {conv.unread && (
-                  <div className="w-2 h-2 bg-purple-500 rounded-full shrink-0 animate-pulse" />
-                )}
-              </button>
-            ))
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <h3 className="font-semibold text-[15px] text-zinc-900 dark:text-white truncate">{conv.name}</h3>
+                      <span className="text-[11px] text-zinc-400 shrink-0 ml-2 font-medium">{conv.timestamp}</span>
+                    </div>
+                    <p className={`text-[13px] truncate ${conv.unread ? 'text-zinc-800 dark:text-zinc-200 font-medium' : 'text-zinc-500'}`}>{conv.lastMessage}</p>
+                  </div>
+                  {conv.unread && <div className="w-2.5 h-2.5 bg-zinc-900 dark:bg-white rounded-full shrink-0" />}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Right Side - Chat Area */}
+      {/* ═══ MIDDLE PANEL – Chat Area ═══ */}
       {selectedConv ? (
         <div
-          className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-900/10 min-h-0 relative"
+          className="flex flex-1 flex-col min-h-0 relative bg-zinc-50 dark:bg-[#0c0c0f]"
           style={chatContainerHeight ? { height: chatContainerHeight, minHeight: 0 } : undefined}
         >
-          {/* Optional Background Video/Thumbnail */}
+          {/* Background Video */}
           {selectedConv.characterVideo && (
-            <video 
+            <video
               src={selectedConv.characterVideo}
               poster={selectedConv.characterThumbnail}
-              autoPlay 
-              loop 
-              muted 
-              playsInline 
-              className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 dark:opacity-30 pointer-events-none"
+              autoPlay loop muted playsInline
+              className="absolute inset-0 w-full h-full object-cover z-0 opacity-30 dark:opacity-20 pointer-events-none"
             />
           )}
 
-          {/* Chat Header - safe-area for iOS notch; no top margin on mobile */}
-          <div className="sticky top-0 z-20 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))] px-3 pb-3 bg-white dark:bg-[#1e1e24] border-b border-zinc-200 dark:border-white/5 flex items-center justify-between md:mx-2 md:mt-2 md:mb-0 md:rounded-[24px] md:border md:shadow-lg md:pt-3">
+          {/* Chat Header */}
+          <div className="sticky top-0 z-20 shrink-0 px-4 py-3 bg-white/90 dark:bg-[#111115]/90 backdrop-blur-xl border-b border-zinc-100 dark:border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Back Button for Mobile */}
               <button
                 onClick={() => setSelectedConversation(null)}
-                className="md:hidden text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors mr-3"
+                className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img
-                    src={selectedConv.avatar}
-                    alt={selectedConv.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  {selectedConv.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900" />
-                  )}
-                </div>
-                <div>
-                  <h2 className="font-semibold text-zinc-900 dark:text-white">{selectedConv.name}</h2>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Active now</p>
+              <div className="relative">
+                <img src={selectedConv.avatar} alt={selectedConv.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-white/10" />
+                {selectedConv.online && (
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#111115]" />
+                )}
+              </div>
+              <div>
+                <h2 className="font-semibold text-[15px] text-zinc-900 dark:text-white leading-tight">{selectedConv.name}</h2>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Active now</span>
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-4">
-              {/* Voice Call Button (Yellow Circle) */}
-              <button
-                onClick={() => setShowVoiceCall(true)}
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                title="Start Voice Call"
-              >
-                <Phone className="w-5 h-5" />
+            <div className="flex items-center gap-1">
+              <button onClick={() => setShowVoiceCall(true)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors" title="Voice Call">
+                <Phone className="w-[18px] h-[18px] text-zinc-600 dark:text-zinc-400" />
               </button>
-              <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                <FaVideo className="w-5 h-5" />
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors">
+                <FaVideo className="w-[18px] h-[18px] text-zinc-600 dark:text-zinc-400" />
               </button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                    <MoreVertical className="w-5 h-5" />
+                  <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors lg:hidden">
+                    <MoreVertical className="w-[18px] h-[18px] text-zinc-600 dark:text-zinc-400" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-40 p-2" align="end">
-                  <button
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-medium flex items-center gap-2"
-                  >
-                    Report User
-                  </button>
+                  <button onClick={() => setIsReportModalOpen(true)} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-medium">Report User</button>
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
-          <ReportModal
-            isOpen={isReportModalOpen}
-            onClose={() => setIsReportModalOpen(false)}
-            reportedId={selectedConv.profileId || selectedProfileId || ''}
-          />
+          <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} reportedId={selectedConv.profileId || selectedProfileId || ''} />
 
-          {/* Messages Area - min-h-0 allows flex shrink when keyboard opens; pb-24 so last message clears input bar */}
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-24 space-y-4 overscroll-contain touch-scroll relative z-10">
+          {/* Messages Area - min-h-0 allows flex shrink when keyboard opens */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-4 space-y-4 overscroll-contain touch-scroll relative z-10">
             {isLoadingMessages ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <div className="relative w-24 h-24 mb-6">
-                  {/* Animated gradient ring */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-20 animate-spin" style={{ animationDuration: '3s' }}></div>
-                  {/* Main spinner */}
-                  <div className="absolute inset-2 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
-                  {/* Inner glow */}
-                  <div className="absolute inset-4 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full animate-pulse"></div>
-                  {/* Center icon */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-purple-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                  </div>
+                <div className="relative w-16 h-16 mb-4">
+                  <div className="absolute inset-0 border-4 border-zinc-200 dark:border-white/10 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-transparent border-t-zinc-900 dark:border-t-white rounded-full animate-spin"></div>
                 </div>
-                <div className="text-center space-y-2">
-                  <p className="text-zinc-900 dark:text-white font-semibold text-lg">Loading Messages</p>
-                  <p className="text-zinc-600 dark:text-zinc-400 text-sm">Preparing your conversation...</p>
-                </div>
-                {/* Shimmer effect */}
-                <div className="flex gap-2 mt-6">
-                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '200ms' }}></div>
-                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-ping" style={{ animationDelay: '400ms' }}></div>
-                </div>
+                <p className="text-zinc-500 text-sm font-medium">Loading messages...</p>
               </div>
             ) : (
               <>
@@ -770,9 +711,9 @@ export default function MessagesClient() {
                           </div>
                         ) : (
                           <div
-                            className={`rounded-2xl px-4 py-2 transition-all duration-300 ${isOwn
-                              ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                              : 'bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
+                            className={`rounded-2xl px-4 py-2.5 transition-all duration-300 ${isOwn
+                              ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md'
+                              : 'bg-white dark:bg-white/[0.08] text-zinc-900 dark:text-white border border-zinc-100 dark:border-white/5'
                               }`}
                           >
                             <p className="text-sm whitespace-pre-wrap break-words font-medium tracking-tight">{message.message}</p>
@@ -799,50 +740,24 @@ export default function MessagesClient() {
                 {/* Premium Typing Indicator */}
                 {isAITyping && (
                   <div className="flex justify-start animate-fadeIn">
-                    {/* Avatar with glow effect */}
+                    {/* Avatar */}
                     <div className="relative shrink-0 mr-3">
-                      <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-md animate-pulse"></div>
                       <img
                         src={selectedConv.avatar}
                         alt={selectedConv.name}
-                        className="relative w-8 h-8 rounded-full object-cover ring-2 ring-purple-500/30"
+                        className="relative w-8 h-8 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-white/10"
                       />
                     </div>
 
-                    {/* Glassmorphism bubble with gradient */}
+                    {/* Clean typing bubble */}
                     <div className="relative group">
-                      {/* Gradient background animation */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-2xl blur-sm animate-pulse"></div>
-
-                      {/* Main bubble */}
-                      <div className="relative rounded-2xl px-4 py-2 transition-all duration-300 bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
+                      <div className="rounded-2xl px-4 py-3 bg-white dark:bg-white/[0.08] border border-zinc-100 dark:border-white/5">
                         <div className="flex items-center gap-1.5">
-                          {/* Animated dots with gradient */}
-                          <div className="flex items-center gap-1">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50"
-                              style={{ animationDelay: '0ms', animationDuration: '1.4s' }}
-                            ></div>
-                            <div
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 animate-bounce shadow-lg shadow-pink-500/50"
-                              style={{ animationDelay: '200ms', animationDuration: '1.4s' }}
-                            ></div>
-                            <div
-                              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-bounce shadow-lg shadow-purple-500/50"
-                              style={{ animationDelay: '400ms', animationDuration: '1.4s' }}
-                            ></div>
-                          </div>
-
-                          {/* Typing text with fade animation */}
-                          <span className="ml-2 text-xs text-zinc-400 font-medium animate-pulse">
-                            typing...
-                          </span>
+                          <div className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.4s' }} />
+                          <div className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.4s' }} />
+                          <div className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.4s' }} />
+                          <span className="ml-2 text-xs text-zinc-400 font-medium animate-pulse">typing...</span>
                         </div>
-                      </div>
-
-                      {/* Shimmer effect on hover */}
-                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-2xl animate-shimmer"></div>
                       </div>
                     </div>
                   </div>
@@ -856,7 +771,7 @@ export default function MessagesClient() {
           {/* Message Input Container - solid bg so messages don't show through gifts */}
           <div
             ref={inputContainerRef}
-            className="sticky bottom-0 z-10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] rounded-t-2xl w-full max-w-4xl mx-auto shrink-0 bg-zinc-50 dark:bg-[#0a0a0a]"
+            className="sticky bottom-0 z-10 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] rounded-t-2xl w-full max-w-4xl mx-auto shrink-0 bg-zinc-50/95 dark:bg-[#0c0c0f]/95 backdrop-blur-xl"
           >
             {/* Quick Reactions / Gifts above input - solid background */}
             <div className="flex items-center gap-2 mb-2 px-2 bg-zinc-50 dark:bg-[#0a0a0a] pt-1">
@@ -920,7 +835,7 @@ export default function MessagesClient() {
             </div>
 
             {/* Main Input Area */}
-            <div className="bg-white dark:bg-[#1e1e24] border border-zinc-200 dark:border-white/5 rounded-[24px] p-2 flex flex-col gap-2 shadow-2xl">
+            <div className="bg-white dark:bg-[#111115] border border-zinc-200 dark:border-white/5 rounded-[20px] p-2 flex flex-col gap-2 shadow-lg">
 
               {/* Input Row */}
               <div className="flex items-center gap-2 pl-2">
@@ -941,9 +856,9 @@ export default function MessagesClient() {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageText.trim()}
-                  className="w-10 h-10 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all group disabled:opacity-50"
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-900 dark:bg-white rounded-xl hover:opacity-80 transition-all group disabled:opacity-30"
                 >
-                  <Send className="w-5 h-5 text-purple-600 dark:text-purple-500 group-hover:scale-110 transition-transform" />
+                  <Send className="w-4 h-4 text-white dark:text-zinc-900 group-hover:scale-110 transition-transform" />
                 </button>
               </div>
 
@@ -957,7 +872,7 @@ export default function MessagesClient() {
                       onClick={() => setShowPersonaSelector(!showPersonaSelector)}
                       className="flex items-center gap-1.5 bg-zinc-100 dark:bg-[#2a2a35] hover:bg-zinc-200 dark:hover:bg-[#323240] rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all border border-zinc-200 dark:border-white/5 shadow-sm active:scale-95"
                     >
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center p-1 shadow-sm overflow-hidden">
+                      <div className="w-5 h-5 rounded-full bg-zinc-900 dark:bg-white flex items-center justify-center p-1 shadow-sm overflow-hidden">
                         {(() => {
                           const persona = selectedPersonaId ? personas.find(p => p._id === selectedPersonaId) : null;
                           if (persona?.avatar) return <img src={persona.avatar} alt="" className="w-full h-full object-cover rounded-full" />;
@@ -988,7 +903,7 @@ export default function MessagesClient() {
                                 setShowPersonaSelector(false);
                                 localStorage.removeItem(`selectedPersona_${userId}`);
                               }}
-                              className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 ${!selectedPersonaId ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                              className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 ${!selectedPersonaId ? 'bg-zinc-100/70 dark:bg-white/5' : ''}`}
                             >
                               <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center shrink-0">
                                 <User className="w-5 h-5 text-zinc-400" />
@@ -1008,9 +923,9 @@ export default function MessagesClient() {
                                   setShowPersonaSelector(false);
                                   localStorage.setItem(`selectedPersona_${userId}`, persona._id);
                                 }}
-                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedPersonaId === persona._id ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedPersonaId === persona._id ? 'bg-zinc-100/70 dark:bg-white/5' : ''}`}
                               >
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                                <div className="w-10 h-10 rounded-full bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
                                   {persona.avatar ? (
                                     <img src={persona.avatar} alt="" className="w-full h-full object-cover" />
                                   ) : (
@@ -1042,7 +957,7 @@ export default function MessagesClient() {
                       onClick={() => setShowLanguageSelector(!showLanguageSelector)}
                       className="flex items-center gap-1.5 bg-zinc-100 dark:bg-[#2a2a35] hover:bg-zinc-200 dark:hover:bg-[#323240] rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all border border-zinc-200 dark:border-white/5 shadow-sm active:scale-95"
                     >
-                      <Globe className="w-4 h-4 text-purple-500" />
+                      <Globe className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                       <span className="truncate max-w-[80px]">
                         {selectedLanguage}
                       </span>
@@ -1081,7 +996,7 @@ export default function MessagesClient() {
                                     console.error('Failed to save language', err);
                                   }
                                 }}
-                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedLanguage === lang.name ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''}`}
+                                className={`w-full p-3 flex items-center gap-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-left border-b border-zinc-100 dark:border-zinc-800/50 last:border-0 ${selectedLanguage === lang.name ? 'bg-zinc-100/70 dark:bg-white/5' : ''}`}
                               >
                                 <span className="text-xl leading-none">{lang.flag}</span>
                                 <span className="text-sm font-semibold text-zinc-900 dark:text-white">{lang.name}</span>
@@ -1127,13 +1042,161 @@ export default function MessagesClient() {
           </div>
         </div>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-900/10">
+        <div className="hidden md:flex flex-1 items-center justify-center bg-white dark:bg-[#0c0c0f]">
           <div className="text-center">
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-purple-600/20 flex items-center justify-center">
-              <FaPaperPlane className="w-10 h-10 text-purple-500" />
+            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center">
+              <MessageSquare className="w-9 h-9 text-zinc-400" />
             </div>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Your Messages</h2>
-            <p className="text-zinc-600 dark:text-zinc-400">Select a conversation to start chatting</p>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Your Messages</h2>
+            <p className="text-zinc-500 text-sm">Select a conversation to start chatting</p>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ RIGHT PANEL – Profile Sidebar ═══ */}
+      {selectedConv && (
+        <div className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col border-l border-zinc-200 dark:border-white/5 bg-white dark:bg-[#111115] overflow-y-auto">
+          {(() => {
+            const seed = selectedConv.name.length + (selectedConv.name.charCodeAt(0) || 0);
+            const fallbackLikes = (seed * 37 + 50) % 900 + 20;
+            const fallbackInteractions = ((seed * 73 + 100) % 4500 + 50) * 100;
+            const fallbackAge = (seed % 15) + 18;
+            
+            const finalLikes = selectedConv.likes !== undefined ? selectedConv.likes : fallbackLikes;
+            const finalInteractions = selectedConv.interactions !== undefined ? selectedConv.interactions : fallbackInteractions;
+            const finalAge = selectedConv.age !== undefined && selectedConv.age !== null ? selectedConv.age : fallbackAge;
+            
+            const formatStat = (num: number) => {
+              if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+              if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+              return num.toString();
+            };
+
+            return (
+              <>
+                {/* Profile Card */}
+                <div className="flex flex-col items-center pt-8 pb-4 px-6 relative">
+                  {/* Large Avatar */}
+                  <div className="relative mb-3">
+                    <div className="w-28 h-28 rounded-full ring-[4px] ring-white dark:ring-[#111115] overflow-hidden shadow-lg border border-zinc-100 dark:border-white/5">
+                      <img src={selectedConv.avatar} alt={selectedConv.name} className="w-full h-full object-cover" />
+                    </div>
+                    {selectedConv.online && (
+                      <div className="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 rounded-full border-[3px] border-white dark:border-[#111115]" />
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-0.5">{selectedConv.name}</h3>
+
+                  {/* Age & Personality */}
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 text-center">
+                    {finalAge} years old {selectedConv.personalityType ? `• ${selectedConv.personalityType}` : ''}
+                  </p>
+
+                  {/* Active Now Badge */}
+                  <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full mb-6">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Active Now</span>
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="flex items-center justify-center gap-6 mb-6 w-full bg-zinc-50 dark:bg-white/5 py-3 rounded-2xl border border-zinc-100 dark:border-white/5">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="flex items-center gap-1.5 text-zinc-900 dark:text-white font-semibold">
+                        <svg className="w-4 h-4 text-rose-500 fill-rose-500" viewBox="0 0 24 24">
+                          <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span>{formatStat(finalLikes)}</span>
+                      </div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Likes</span>
+                    </div>
+                    
+                    <div className="w-px h-8 bg-zinc-200 dark:bg-white/10" />
+                    
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="flex items-center gap-1.5 text-zinc-900 dark:text-white font-semibold">
+                        <MessageSquare className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+                        <span>{formatStat(finalInteractions)}</span>
+                      </div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Chats</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3 w-full">
+                    <button
+                      onClick={() => setShowVoiceCall(true)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Call</span>
+                    </button>
+                    <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.08] text-zinc-900 dark:text-white font-semibold text-sm hover:bg-zinc-200 dark:hover:bg-white/[0.12] transition-all active:scale-[0.98] border border-zinc-200 dark:border-white/5">
+                      <FaVideo className="w-4 h-4" />
+                      <span>Video</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-zinc-100 dark:bg-white/5 mx-6" />
+
+                {/* Profile Info */}
+                <div className="px-6 py-5 space-y-4">
+                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">About</h4>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 flex items-center justify-center shrink-0">
+                      <Heart className="w-4 h-4 text-zinc-500" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-900 dark:text-white font-medium">AI Companion</p>
+                      <p className="text-zinc-500 text-xs">Always here for you</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-zinc-500" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-900 dark:text-white font-medium">Private & Secure</p>
+                      <p className="text-zinc-500 text-xs">End-to-end encrypted</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 flex items-center justify-center shrink-0">
+                      <MessageSquare className="w-4 h-4 text-zinc-500" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-900 dark:text-white font-medium">24/7 Available</p>
+                      <p className="text-zinc-500 text-xs">Always online</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
+          {/* Divider */}
+          <div className="h-px bg-zinc-100 dark:bg-white/5 mx-6" />
+
+          {/* Quick Actions */}
+          <div className="px-6 py-5">
+            {selectedConv.profileId && (
+              <Link
+                href={`/${selectedConv.profileId.startsWith('character-') ? 'character' : 'girl'}/${selectedConv.profileId.startsWith('character-') ? selectedConv.profileId.replace('character-', '') : selectedConv.profileId}`}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 font-medium text-sm hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-all mb-3 border border-zinc-200 dark:border-white/5"
+              >
+                <User className="w-4 h-4" />
+                View Full Profile
+              </Link>
+            )}
+            <button
+              onClick={() => setIsReportModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-sm font-medium"
+            >
+              Report User
+            </button>
           </div>
         </div>
       )}
@@ -1154,7 +1217,6 @@ export default function MessagesClient() {
             />
           )}
         </DialogContent>
-
       </Dialog>
       
       {/* Restricted Content Modal */}
@@ -1162,8 +1224,8 @@ export default function MessagesClient() {
         isOpen={restrictedModalOpen}
         onClose={() => setRestrictedModalOpen(false)}
         profileId={restrictedData?.profileId || ''}
-        characterName={restrictedData?.name || 'Character'} // Default name if null
-        price={restrictedData?.price || 4.99} // Default price if null
+        characterName={restrictedData?.name || 'Character'}
+        price={restrictedData?.price || 4.99}
         avatar={restrictedData?.avatar}
       />
     </div>

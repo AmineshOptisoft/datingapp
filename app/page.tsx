@@ -2,12 +2,14 @@
 
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import CategoryTabs from './components/CategoryTabs';
 import GirlCard from './components/GirlCard';
 import Footer from './components/Footer';
 import { useProfiles } from '@/hooks/useProfiles';
 import type { AIProfileOverview } from '@/types/ai-profile';
 import ProfileCardSkeleton from '@/components/features/profile/ProfileCardSkeleton';
+import { Plus } from 'lucide-react';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -40,49 +42,36 @@ function HomePageContent() {
     });
   }, [characterOnly, activeCategory]);
 
-  const groupedProfiles = useMemo(() => {
-    return filteredProfiles.reduce<Record<string, AIProfileOverview[]>>((acc, profile) => {
-      if (!acc[profile.category]) {
-        acc[profile.category] = [];
-      }
-      acc[profile.category].push(profile);
-      console.log(acc);
-      return acc;
-    }, {});
-  }, [filteredProfiles]);
-
   return (
-    <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
+    <div className="min-h-screen bg-white dark:bg-[#0c0c0f]">
       {/* Category Tabs */}
-      <div className="mb-8">
+      <div className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-2">
         <CategoryTabs activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
       </div>
 
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {Array.from({ length: 12 }).map((_, index) => (
-            <ProfileCardSkeleton key={index} />
-          ))}
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="text-red-400 text-center py-12">{error}</div>
-      )}
-
-      {!loading && !error && Object.keys(groupedProfiles).length === 0 && (
-        <div className="text-zinc-300 text-center py-12">
-          No profiles found for this category.
-        </div>
-      )}
-
-      {!loading && !error && Object.entries(groupedProfiles).map(([category, girls]) => (
-        <section key={category} className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">{category}</h2>
+      {/* Profile Grid */}
+      <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
+        {loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <ProfileCardSkeleton key={index} />
+            ))}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {girls.map((girl) => (
+        )}
+
+        {error && !loading && (
+          <div className="text-red-400 text-center py-12">{error}</div>
+        )}
+
+        {!loading && !error && filteredProfiles.length === 0 && (
+          <div className="text-zinc-500 text-center py-20">
+            <p className="text-lg font-medium">No profiles found for this category.</p>
+          </div>
+        )}
+
+        {!loading && !error && filteredProfiles.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+            {filteredProfiles.map((girl) => (
               <GirlCard
                 key={girl.profileId}
                 legacyId={girl.legacyId}
@@ -94,16 +83,20 @@ function HomePageContent() {
                 avatar={girl.avatar}
                 badgeHot={girl.badgeHot}
                 badgePro={girl.badgePro}
+                likes={girl.likes}
+                interactions={girl.interactions}
+                age={girl.age}
               />
             ))}
+
           </div>
-        </section>
-      ))}
+        )}
+      </div>
 
       {/* Additional Sections Before Footer */}
 
       {/* The Best AI Virtual Girlfriend App Section */}
-      <section className="mb-16">
+      <section className="px-4 md:px-6 lg:px-8 mb-16 mt-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white mb-6">The Best AI Virtual Girlfriend App</h2>
         <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed mb-8">
           Join thousands who have found happiness and companionship with their AI girlfriend virtual or boyfriend. Deep conversations, emotional support, or an engaging AI relationship- your AI GF is here to make your experience unforgettable.
@@ -180,7 +173,9 @@ function HomePageContent() {
       </section>
 
       {/* Footer */}
-      <Footer />
+      <div className="px-4 md:px-6 lg:px-8">
+        <Footer />
+      </div>
     </div>
   );
 }

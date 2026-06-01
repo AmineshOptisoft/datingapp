@@ -141,6 +141,9 @@ export default function ForLGBTQPage() {
                 avatar={companion.avatar}
                 badgeHot={companion.badgeHot}
                 badgePro={companion.badgePro}
+                likes={companion.likes}
+                interactions={companion.interactions}
+                age={companion.age}
               />
             ))}
           </div>

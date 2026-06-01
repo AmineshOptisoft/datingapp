@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
                 likedBy: char.likedBy || [],
                 characterVideo: char.characterVideo || null,
                 characterThumbnail: char.characterThumbnail || null,
+                age: char.characterAge || null,
               });
             }
           });

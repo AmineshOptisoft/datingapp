@@ -148,6 +148,9 @@ export default function ForMenPage() {
                 avatar={girl.avatar}
                 badgeHot={girl.badgeHot}
                 badgePro={girl.badgePro}
+                likes={girl.likes}
+                interactions={girl.interactions}
+                age={girl.age}
               />
             ))}
           </div>

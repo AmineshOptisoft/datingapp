@@ -119,6 +119,10 @@ export async function GET(request: NextRequest) {
                 online: true,
                 characterVideo: character.characterVideo || null,
                 characterThumbnail: character.characterThumbnail || null,
+                age: character.characterAge || null,
+                likes: character.likes || 0,
+                interactions: character.interactions || 0,
+                personalityType: character.personality || character.description || "",
               };
             }
           } catch (err) {
@@ -133,7 +137,7 @@ export async function GET(request: NextRequest) {
           profileType: 'ai',
           isActive: true 
         })
-        .select('profileId name avatar cardTitle category')
+        .select('profileId name avatar cardTitle category age likes interactions personalityType')
         .lean();
 
         if (!profile) {
@@ -166,6 +170,10 @@ export async function GET(request: NextRequest) {
           timestamp: timestamp,
           unread: false, // Can be enhanced later
           online: true, // AI is always online
+          age: profile.age || null,
+          likes: profile.likes || 0,
+          interactions: profile.interactions || 0,
+          personalityType: profile.personalityType || profile.cardTitle || "",
         };
       })
     );
