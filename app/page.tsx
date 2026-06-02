@@ -2,19 +2,18 @@
 
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import CategoryTabs from './components/CategoryTabs';
 import GirlCard from './components/GirlCard';
 import Footer from './components/Footer';
 import { useProfiles } from '@/hooks/useProfiles';
 import type { AIProfileOverview } from '@/types/ai-profile';
-import ProfileCardSkeleton from '@/components/features/profile/ProfileCardSkeleton';
-import { Plus } from 'lucide-react';
+import ScreenLoader from './components/ScreenLoader';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [loaderDone, setLoaderDone] = useState(false);
 
   // No segment = home page shows ALL profiles (male + female AI + all user characters)
   const { profiles, loading, error } = useProfiles();
@@ -42,8 +41,12 @@ function HomePageContent() {
     });
   }, [characterOnly, activeCategory]);
 
+  if (!loaderDone) {
+    return <ScreenLoader onExited={() => setLoaderDone(true)} />;
+  }
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0c0c0f]">
+    <div className="min-h-screen bg-transparent">
       {/* Category Tabs */}
       <div className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-2">
         <CategoryTabs activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
@@ -51,14 +54,6 @@ function HomePageContent() {
 
       {/* Profile Grid */}
       <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6">
-        {loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <ProfileCardSkeleton key={index} />
-            ))}
-          </div>
-        )}
-
         {error && !loading && (
           <div className="text-red-400 text-center py-12">{error}</div>
         )}
@@ -70,7 +65,7 @@ function HomePageContent() {
         )}
 
         {!loading && !error && filteredProfiles.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
             {filteredProfiles.map((girl) => (
               <GirlCard
                 key={girl.profileId}
@@ -182,7 +177,7 @@ function HomePageContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={null}>
       <HomePageContent />
     </Suspense>
   );

@@ -76,17 +76,42 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     setIsAuthModalOpen(true);
   };
 
+  useEffect(() => {
+    const onAuthEvent = (e: Event) => {
+      const mode = (e as CustomEvent<{ mode?: 'login' | 'signup' }>).detail?.mode ?? 'login';
+      openAuthModal(mode);
+    };
+    const onUpgradeEvent = () => setIsPurchaseModalOpen(true);
+
+    window.addEventListener('lily:auth', onAuthEvent);
+    window.addEventListener('lily:upgrade', onUpgradeEvent);
+    return () => {
+      window.removeEventListener('lily:auth', onAuthEvent);
+      window.removeEventListener('lily:upgrade', onUpgradeEvent);
+    };
+  }, []);
+
   const handleLogout = () => {
     logout();
   };
 
   return (
     <>
-      <header className="shrink-0 z-40 bg-transparent backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-sm! pt-[env(safe-area-inset-top)]">
+      <header className="shrink-0 z-40 backdrop-blur-2xl border-b border-zinc-200/80 dark:border-white/10 pt-[env(safe-area-inset-top)] transition-colors">
         <div className="flex items-center px-4 md:px-8 py-1.5">
-          {/* Left side - Logo */}
-          <div className="flex-1 flex items-center gap-4">
-            <Link href="/" className="flex items-center">
+          {/* Left side - Menu + Logo */}
+          <div className="flex-1 flex items-center gap-3">
+            {onMenuToggle && (
+              <button
+                type="button"
+                onClick={onMenuToggle}
+                className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg transition-colors"
+                aria-label="Open menu"
+              >
+                <FaBars className="w-5 h-5" />
+              </button>
+            )}
+            <Link href="/" className="flex items-center md:hidden">
               <Image
                 src="/lily-logo.svg"
                 alt="Lily Logo"
@@ -94,50 +119,6 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                 height={40}
                 className="w-20 h-auto"
               />
-            </Link>
-          </div>
-
-          {/* Center - Category Links (Desktop Only) */}
-          <div className="hidden md:flex items-center gap-4 md:gap-8">
-            <Link
-              href="/for-men"
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-men'
-                  ? 'bg-blue-500/20 dark:bg-blue-400/20 border border-blue-500/50 dark:border-blue-400/50'
-                  : ''
-                }`}
-            >
-              <FaMars className="w-5 h-5 md:w-6 md:h-6 text-blue-500 dark:text-blue-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-Male</span>
-            </Link>
-            <Link
-              href="/for-women"
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-women'
-                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
-                  : ''
-                }`}
-            >
-              <FaVenus className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-Female</span>
-            </Link>
-            <Link
-              href="/for-lgbtq"
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/for-lgbtq'
-                  ? 'bg-purple-500/20 dark:bg-purple-400/20 border border-purple-500/50 dark:border-purple-400/50'
-                  : ''
-                }`}
-            >
-              <Transgender className="w-5 h-5 md:w-6 md:h-6 text-purple-500 dark:text-purple-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">For-LGBTQ+</span>
-            </Link>
-            <Link
-              href="/reels"
-              className={`flex flex-col items-center gap-1 hover:opacity-80 transition-all group px-4 py-2 rounded-lg ${pathname === '/reels'
-                  ? 'bg-pink-500/20 dark:bg-pink-400/20 border border-pink-500/50 dark:border-pink-400/50'
-                  : ''
-                }`}
-            >
-              <Film className="w-5 h-5 md:w-6 md:h-6 text-pink-500 dark:text-pink-400" />
-              <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Reels</span>
             </Link>
           </div>
 

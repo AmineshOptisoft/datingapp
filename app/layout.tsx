@@ -37,6 +37,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme'),d=document.documentElement;if(t==='light')d.classList.remove('dark');else d.classList.add('dark');var p=location.pathname;if(p==='/'||p===''){d.style.backgroundColor='#000';document.body&&(document.body.style.backgroundColor='#000',document.body.style.overflow='hidden');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} ${outfit.variable} antialiased`}>
         <ClientProviders>
           <LayoutWrapper>{children}</LayoutWrapper>

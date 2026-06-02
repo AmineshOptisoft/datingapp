@@ -1,207 +1,236 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useTheme } from '@/app/contexts/ThemeContext';
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
-  FaMars,
-  FaVenus,
-  FaHeart,
-  FaDollarSign,
-  FaChartLine,
-  FaTimes,
-  FaComments,
-  FaFilm,
-} from 'react-icons/fa';
-import { MdAddCircle } from 'react-icons/md';
-import {
-  SiX,
-  SiYoutube,
-  SiInstagram,
-  SiLinkedin,
-  SiFacebook,
-  SiDiscord,
-  SiReddit,
-} from 'react-icons/si';
+  Plus,
+  Compass,
+  MessageCircle,
+  Camera,
+  Sparkles,
+  Users,
+  Crown,
+  LogIn,
+  UserPlus,
+  MoreHorizontal,
+  Menu,
+  X,
+} from "lucide-react";
+import { SiDiscord } from "react-icons/si";
+import { FaMars, FaVenus } from "react-icons/fa";
+import { Transgender, Film } from "lucide-react";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  onLoginClick?: () => void;
+  onSignUpClick?: () => void;
+  onUpgradeClick?: () => void;
 }
 
-export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
-  const [activeNav, setActiveNav] = useState('');
+const mainNavItems = [
+  { icon: Plus, label: "Create", href: "/profile" },
+  { icon: Compass, label: "Explore", href: "/" },
+  { icon: MessageCircle, label: "Chat", href: "/messages" },
+  { icon: Camera, label: "Generate", href: "/reels" },
+  { icon: Sparkles, label: "Custom", href: "/monetize" },
+  { icon: Users, label: "Personas", href: "/profile" },
+];
+
+/** Desktop sidebar only — mobile uses bottom bar in Header */
+const categoryNavItems = [
+  {
+    href: "/for-men",
+    label: "For-Male",
+    Icon: FaMars,
+    iconClass: "text-blue-500 dark:text-blue-400",
+    activeClass:
+      "bg-blue-500/15 dark:bg-blue-400/20 border border-blue-500/40 dark:border-blue-400/50",
+  },
+  {
+    href: "/for-women",
+    label: "For-Female",
+    Icon: FaVenus,
+    iconClass: "text-pink-500 dark:text-pink-400",
+    activeClass:
+      "bg-pink-500/15 dark:bg-pink-400/20 border border-pink-500/40 dark:border-pink-400/50",
+  },
+  {
+    href: "/for-lgbtq",
+    label: "For-LGBTQ+",
+    Icon: Transgender,
+    iconClass: "text-purple-500 dark:text-purple-400",
+    activeClass:
+      "bg-purple-500/15 dark:bg-purple-400/20 border border-purple-500/40 dark:border-purple-400/50",
+  },
+  {
+    href: "/reels",
+    label: "Reels",
+    Icon: Film,
+    iconClass: "text-pink-500 dark:text-pink-400",
+    activeClass:
+      "bg-pink-500/15 dark:bg-pink-400/20 border border-pink-500/40 dark:border-pink-400/50",
+  },
+];
+
+const navLinkClass = (active: boolean) =>
+  cn(
+    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+    active
+      ? "bg-zinc-200 text-zinc-900 dark:bg-white/10 dark:text-white"
+      : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5"
+  );
+
+const bottomActionClass =
+  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors";
+
+const iconBtnClass =
+  "p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/10 rounded-lg transition-colors";
+
+export default function Sidebar({
+  isOpen = true,
+  onClose,
+  onLoginClick,
+  onSignUpClick,
+  onUpgradeClick,
+}: SidebarProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category');
-  const { theme } = useTheme();
+  const { isAuthenticated } = useAuth();
 
-  const navigationItems = [
-    { icon: FaMars, label: 'For Male', id: 'male', href: '/for-men' },
-    { icon: FaVenus, label: 'For Female', id: 'female', href: '/for-women' },
-    { icon: MdAddCircle, label: 'For LGBTQ+', id: 'lgbtq', href: '/for-lgbtq' },
-    { icon: FaFilm, label: 'Reels', id: 'reels', href: '/reels' },
-    { icon: FaDollarSign, label: 'Affiliate Program', id: 'affiliate', href: '/affiliate-program' },
-    { icon: FaChartLine, label: 'Monetize Your Character', id: 'monetize', href: '/monetize' },
-    { icon: FaComments, label: 'Messages', id: 'messages', href: '/messages' },
-  ];
-
-  const premiumCategories = [
-    { icon: FaHeart, label: 'Infidelity & Drama', id: 'infidelity' },
-    { icon: FaHeart, label: 'Relationship Stages', id: 'relationship' },
-    { icon: FaHeart, label: 'Fantasy & Kinks', id: 'fantasy' },
-    { icon: FaHeart, label: 'Nationalities & Cultures', id: 'nationalities' },
-  ];
-
-  const socialIcons = [
-    { icon: SiX, label: 'X (Twitter)' },
-    { icon: SiYoutube, label: 'YouTube' },
-    { icon: SiInstagram, label: 'Instagram' },
-    { icon: SiLinkedin, label: 'LinkedIn' },
-    { icon: SiFacebook, label: 'Facebook' },
-    { icon: SiDiscord, label: 'Discord' },
-    { icon: SiReddit, label: 'Reddit' },
-  ];
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 dark:bg-black/60 z-40 md:hidden"
           onClick={onClose}
+          aria-hidden
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`
-        fixed md:static
-        w-[280px] md:w-[200px]
-        bg-transparent backdrop-blur-2xl border-r border-white/20 dark:border-white/10
-        flex flex-col h-screen md:shrink-0 shadow-sm!
-        z-50
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}
+        className={cn(
+          "app-sidebar fixed md:static w-[220px] shrink-0 flex flex-col h-screen-dvh z-50",
+          "transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
       >
-        {/* Logo and Close Button */}
-        <div className="px-4 py-3">
-          <div className="flex items-center md:justify-center justify-between">
-            <Link href="/" className="">
-              <Image
-                src="/lily-logo.svg"
-                alt="Lily Logo"
-                width={40}
-                height={40}
-                className="w-25 h-auto"
-                // className="w-10 h-10"
-              />
-            </Link>
+        <div className="px-4 pt-5 pb-4">
+          <div className="flex items-center gap-3 mb-6">
             <button
+              type="button"
               onClick={onClose}
-              className="md:hidden p-2 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className={cn(iconBtnClass, "md:hidden")}
               aria-label="Close menu"
             >
-              <FaTimes className="w-5 h-5" />
+              <X className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              className={cn(iconBtnClass, "hidden md:flex")}
+              aria-label="Menu"
+            >
+              <Menu className="w-5 h-5" />
             </button>
           </div>
+
+          <Link href="/" className="block px-1" onClick={onClose}>
+            <Image
+              src="/lily-logo.svg"
+              alt="Lily"
+              width={120}
+              height={40}
+              className="h-8 w-auto dark:brightness-100 brightness-90"
+              priority
+            />
+          </Link>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <h3 className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold mb-3 uppercase">Navigation</h3>
-            <nav className="space-y-1">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === item.href
-                    ? 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-white backdrop-blur-sm shadow-lg'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white hover:backdrop-blur-sm'
-                    }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Premium Categories */}
-          <div className="p-4 border-t border-white/20 dark:border-white/10">
-            <h3 className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold mb-3 uppercase">
-              Premium Categories
-            </h3>
-            <nav className="space-y-1">
-              {premiumCategories.map((item) => (
-                <Link
-                  key={item.id}
-                  href={{
-                    pathname: '/',
-                    query: { category: item.label },
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-300 ${pathname === '/' && currentCategory === item.label
-                    ? 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-white backdrop-blur-sm shadow-lg'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white hover:backdrop-blur-sm'
-                    }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span className="text-xs truncate">{item.label}</span>
-                  </div>
-                  {item.id === 'nationalities' && (
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  )}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-
-        {/* Social Icons */}
-        <div className="p-4 border-t border-white/20 dark:border-white/10">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {socialIcons.map((social, index) => (
-              <button
-                key={index}
-                className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center hover:bg-yellow-600 transition-colors"
-                aria-label={social.label}
+        {/* Category links — md+ sidebar only (mobile uses bottom bar) */}
+        <nav className="hidden md:block px-3 pb-3 space-y-0.5 border-b border-zinc-200 dark:border-white/5">
+          {categoryNavItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-transparent",
+                  active
+                    ? item.activeClass
+                    : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5"
+                )}
               >
-                <social.icon className="w-4 h-4 text-black" />
+                <item.Icon className={cn("w-[18px] h-[18px] shrink-0", item.iconClass)} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <nav className="flex-1 px-3 pt-3 space-y-0.5 overflow-y-auto">
+          {mainNavItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={onClose}
+              className={navLinkClass(isActive(item.href))}
+            >
+              <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="px-3 pb-5 pt-2 space-y-1 border-t border-zinc-200 dark:border-white/5 mt-2">
+          <button
+            type="button"
+            onClick={onUpgradeClick}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium mb-2 transition-colors",
+              "text-violet-700 border border-violet-400/60 hover:bg-violet-100",
+              "dark:text-violet-300 dark:border-violet-500/50 dark:hover:bg-violet-500/10"
+            )}
+          >
+            <Crown className="w-4 h-4" />
+            Upgrade
+          </button>
+
+          {!isAuthenticated && (
+            <>
+              <button type="button" onClick={onLoginClick} className={bottomActionClass}>
+                <LogIn className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+                Login
               </button>
-            ))}
-          </div>
+              <button type="button" onClick={onSignUpClick} className={bottomActionClass}>
+                <UserPlus className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+                Sign Up
+              </button>
+            </>
+          )}
+
+          <a
+            href="https://discord.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={bottomActionClass}
+          >
+            <SiDiscord className="w-[18px] h-[18px] shrink-0" />
+            Discord
+          </a>
+
+          <button type="button" className={bottomActionClass}>
+            <MoreHorizontal className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+            More
+          </button>
         </div>
       </aside>
     </>
