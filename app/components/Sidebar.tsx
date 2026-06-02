@@ -31,14 +31,6 @@ interface SidebarProps {
   onUpgradeClick?: () => void;
 }
 
-const mainNavItems = [
-  { icon: Plus, label: "Create", href: "/profile" },
-  { icon: Compass, label: "Explore", href: "/" },
-  { icon: MessageCircle, label: "Chat", href: "/messages" },
-  { icon: Camera, label: "Generate", href: "/reels" },
-  { icon: Sparkles, label: "Custom", href: "/monetize" },
-  { icon: Users, label: "Personas", href: "/profile" },
-];
 
 /** Desktop sidebar only — mobile uses bottom bar in Header */
 const categoryNavItems = [
@@ -107,14 +99,6 @@ export default function Sidebar({
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 dark:bg-black/60 z-40 md:hidden"
-          onClick={onClose}
-          aria-hidden
-        />
-      )}
-
       <aside
         className={cn(
           "app-sidebar fixed md:static w-[220px] shrink-0 flex flex-col h-screen-dvh z-50",
@@ -122,25 +106,7 @@ export default function Sidebar({
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="px-4 pt-5 pb-4">
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className={cn(iconBtnClass, "md:hidden")}
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              className={cn(iconBtnClass, "hidden md:flex")}
-              aria-label="Menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          </div>
-
+        <div className="flex items-center justify-between px-4 pt-5 pb-4">
           <Link href="/" className="block px-1" onClick={onClose}>
             <Image
               src="/lily-logo.svg"
@@ -151,6 +117,15 @@ export default function Sidebar({
               priority
             />
           </Link>
+            <button
+              type="button"
+              onClick={onClose}
+              className={cn(iconBtnClass, "md:hidden")}
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
         </div>
 
         {/* Category links — md+ sidebar only (mobile uses bottom bar) */}
@@ -176,21 +151,9 @@ export default function Sidebar({
           })}
         </nav>
 
-        <nav className="flex-1 px-3 pt-3 space-y-0.5 overflow-y-auto">
-          {mainNavItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={onClose}
-              className={navLinkClass(isActive(item.href))}
-            >
-              <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
+        
 
-        <div className="px-3 pb-5 pt-2 space-y-1 border-t border-zinc-200 dark:border-white/5 mt-2">
+        <div className="px-3 pb-5 pt-2 space-y-1 border-t border-zinc-200 dark:border-white/5 mt-auto">
           <button
             type="button"
             onClick={onUpgradeClick}
@@ -216,21 +179,6 @@ export default function Sidebar({
               </button>
             </>
           )}
-
-          <a
-            href="https://discord.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={bottomActionClass}
-          >
-            <SiDiscord className="w-[18px] h-[18px] shrink-0" />
-            Discord
-          </a>
-
-          <button type="button" className={bottomActionClass}>
-            <MoreHorizontal className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
-            More
-          </button>
         </div>
       </aside>
     </>

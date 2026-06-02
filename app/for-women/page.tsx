@@ -136,6 +136,7 @@ export default function ForWomenPage() {
             {randomBoys.slice(0, 16).map((boy) => (
               <GirlCard
                 key={boy.profileId}
+                _id={(boy as any)._id}
                 legacyId={boy.legacyId}
                 routePrefix={boy.routePrefix}
                 name={boy.name}
@@ -148,6 +149,7 @@ export default function ForWomenPage() {
                 likes={boy.likes}
                 interactions={boy.interactions}
                 age={boy.age}
+                audienceSegment={boy.audienceSegment}
               />
             ))}
           </div>

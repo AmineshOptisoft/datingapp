@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActiveAIProfiles } from "@/lib/ai-profiles-seeder";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import AIProfile from "@/models/AIProfile";
+import Block from "@/models/Block";
 import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -67,7 +69,6 @@ export async function GET(request: NextRequest) {
         }
 
         if (currentUserId) {
-          const Block = (await import("@/models/Block")).default;
           const blocks = await Block.find({
             $or: [{ blockerId: currentUserId }, { blockedId: currentUserId }]
           }).lean();
@@ -189,10 +190,7 @@ export async function POST(request: NextRequest) {
     if (profileId && typeof profileId === 'string' && profileId.startsWith('character-')) {
       const characterId = profileId.replace('character-', '');
       
-      // Connect to database if not already connected (though AIProfile import does it)
-      await (await import("@/lib/db")).default();
-      const User = (await import("@/models/User")).default;
-
+      await dbConnect();
       // Find user with this character
       const user = await User.findOne({ "characters._id": characterId }).lean();
       
@@ -304,9 +302,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const AIProfile = (await import("@/models/AIProfile")).default;
-    await (await import("@/lib/db")).default();
 
     const profile = await AIProfile.findOne({
       profileId,

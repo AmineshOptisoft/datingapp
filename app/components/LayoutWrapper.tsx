@@ -6,6 +6,13 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import BackgroundAnimation from './BackgroundAnimation';
 import { useAuth } from '@/app/contexts/AuthContext';
+import ProfileModal from './ProfileModal';
+
+/**
+ * Mirrors the flag in page.tsx — set to true when the loader fires its done event.
+ * Persists across client-side navigations, resets on hard reload.
+ */
+let layoutLoaderHasPlayed = false;
 
 function SidebarWrapper({
   isOpen,
@@ -46,7 +53,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const { isAdmin } = useAuth();
 
   const isHome = pathname === '/';
-  const [homeLoaderDone, setHomeLoaderDone] = useState(() => !isHome);
+
+  // Module-level flag (mirrors the one in page.tsx) — true after the first loader completes.
+  // This lets LayoutWrapper know instantly (no async) whether to hide content or show it.
+  const [homeLoaderDone, setHomeLoaderDone] = useState(() => {
+    // If loader has already played this session OR we're not on the home page,
+    // show content immediately.
+    return layoutLoaderHasPlayed || !isHome;
+  });
+
 
   const isMessagesPage = pathname === '/messages';
   const isAdminPage = pathname.startsWith('/admin');
@@ -68,9 +83,18 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       setHomeLoaderDone(true);
       return;
     }
+
+    // If loader already played this session, show content immediately — don't hide and wait.
+    if (layoutLoaderHasPlayed) {
+      setHomeLoaderDone(true);
+      return;
+    }
+
+    // First visit: hide chrome and wait for the loader to signal completion.
     setHomeLoaderDone(false);
 
     const onLoaderDone = () => {
+      layoutLoaderHasPlayed = true;
       setHomeLoaderDone(true);
       document.documentElement.style.backgroundColor = '';
       document.body.style.backgroundColor = '';
@@ -117,6 +141,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {children}
         </main>
       </div>
+      <ProfileModal />
     </div>
   );
 }

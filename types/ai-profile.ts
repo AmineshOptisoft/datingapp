@@ -94,6 +94,7 @@ export interface AIProfileDetail extends AIProfileOverview {
   onlineStatus: "online" | "offline" | "recently_active";
   lastSeen: string | Date;
   responseDelay: number;
+  likedBy?: string[];
 
   personaPrompt?: string | null;
   realtimeVoiceEnabled?: boolean;

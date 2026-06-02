@@ -1,10 +1,13 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RoutePrefix } from '@/types/ai-profile';
 import { getProfileRoute } from '@/lib/url-helpers';
+import { setProfilePreview } from '@/lib/profile-preview-cache';
+import { useProfileModal } from '@/app/contexts/ProfileModalContext';
 
 interface GirlCardProps {
+  _id?: string;
   legacyId: number | string | null;
   routePrefix: RoutePrefix;
   name: string;
@@ -17,6 +20,7 @@ interface GirlCardProps {
   likes?: number;
   interactions?: number;
   age?: number;
+  audienceSegment?: string;
 }
 
 // Helper to format numbers (e.g., 1500 -> 1.5K)
@@ -26,7 +30,11 @@ const formatStat = (num: number) => {
   return num.toString();
 };
 
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/app/contexts/AuthContext';
+
 export default function GirlCard({
+  _id,
   legacyId,
   routePrefix,
   name,
@@ -39,7 +47,12 @@ export default function GirlCard({
   likes,
   interactions,
   age,
+  audienceSegment,
 }: GirlCardProps) {
+  const router = useRouter();
+  const { openProfile } = useProfileModal();
+  const { user } = useAuth();
+  
   const displayText = routePrefix === 'character' && personality ? personality : cardTitle;
   const slugSource = routePrefix === 'character' && personality ? personality : cardTitle;
 
@@ -60,9 +73,147 @@ export default function GirlCard({
   const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500', 'bg-rose-500', 'bg-amber-500'];
   const avatarColor = avatarColors[seed % avatarColors.length];
 
+  const profileRoute = getProfileRoute(routePrefix, name, slugSource, legacyId);
+  const cacheKey = `${routePrefix}-${legacyId}`;
+
+  // Unique database identifier for likes API
+  const dbCharacterId = routePrefix === 'character' ? legacyId : _id;
+
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [likesCount, setLikesCount] = useState(finalLikes);
+
+  // Sync likes count prop changes
+  useEffect(() => {
+    setLikesCount(finalLikes);
+  }, [finalLikes]);
+
+  // Check localStorage on mount / dbCharacterId change
+  useEffect(() => {
+    if (dbCharacterId && typeof window !== 'undefined') {
+      const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+      setLiked(likedList.includes(dbCharacterId));
+    }
+  }, [dbCharacterId]);
+
+  // Listen to global like updates
+  useEffect(() => {
+    const handleLikeUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { characterId: updatedId, liked: newLiked, likes: newLikes } = customEvent.detail;
+      if (updatedId === dbCharacterId) {
+        setLiked(newLiked);
+        if (newLikes !== undefined) {
+          setLikesCount(newLikes);
+        }
+      }
+    };
+    window.addEventListener('lily:like-updated', handleLikeUpdate);
+    return () => window.removeEventListener('lily:like-updated', handleLikeUpdate);
+  }, [dbCharacterId]);
+
+  const handleLikeClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    if (!dbCharacterId || likeLoading) return;
+
+    // Optimistic toggle
+    const prevLiked = liked;
+    const prevLikes = likesCount;
+    const newLiked = !liked;
+
+    setLiked(newLiked);
+    const newLikesCount = prevLikes + (newLiked ? 1 : -1);
+    setLikesCount(newLikesCount);
+    setLikeLoading(true);
+
+    // Dispatch global event instantly
+    window.dispatchEvent(new CustomEvent('lily:like-updated', {
+      detail: { characterId: dbCharacterId, liked: newLiked, likes: newLikesCount }
+    }));
+
+    try {
+      const res = await fetch(`/api/characters/${dbCharacterId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLiked(data.liked);
+        setLikesCount(data.likes);
+        
+        // Update localStorage
+        if (typeof window !== 'undefined') {
+          const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+          if (data.liked) {
+            if (!likedList.includes(dbCharacterId)) {
+              likedList.push(dbCharacterId);
+              localStorage.setItem('lily:liked-profiles', JSON.stringify(likedList));
+            }
+          } else {
+            const newList = likedList.filter((id: string) => id !== dbCharacterId);
+            localStorage.setItem('lily:liked-profiles', JSON.stringify(newList));
+          }
+        }
+
+        // Dispatch updated count from server
+        window.dispatchEvent(new CustomEvent('lily:like-updated', {
+          detail: { characterId: dbCharacterId, liked: data.liked, likes: data.likes }
+        }));
+      } else {
+        // Rollback
+        setLiked(prevLiked);
+        setLikesCount(prevLikes);
+        window.dispatchEvent(new CustomEvent('lily:like-updated', {
+          detail: { characterId: dbCharacterId, liked: prevLiked, likes: prevLikes }
+        }));
+      }
+    } catch (err) {
+      console.error('Like failed:', err);
+      // Rollback
+      setLiked(prevLiked);
+      setLikesCount(prevLikes);
+      window.dispatchEvent(new CustomEvent('lily:like-updated', {
+        detail: { characterId: dbCharacterId, liked: prevLiked, likes: prevLikes }
+      }));
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [user, dbCharacterId, likeLoading, liked, likesCount, router]);
+
+  function handleCardClick() {
+    // Write card data into preview cache BEFORE navigating so the profile
+    // page can render instantly without waiting for the full API response.
+    setProfilePreview(cacheKey, {
+      _id,
+      name,
+      avatar,
+      cardTitle,
+      personalityType: personality,
+      age: finalAge,
+      likes: likesCount,
+      interactions: finalInteractions,
+      routePrefix,
+      monthlyPrice,
+      audienceSegment,
+    });
+    if (legacyId) {
+      openProfile(routePrefix, legacyId);
+    } else {
+      router.push(profileRoute);
+    }
+  }
+
   return (
-    <Link
-      href={getProfileRoute(routePrefix, name, slugSource, legacyId)}
+    <div
+      onClick={handleCardClick}
       className="group relative rounded-xl overflow-hidden cursor-pointer block bg-[#1a1a1f]"
     >
       {/* Card Image */}
@@ -84,10 +235,21 @@ export default function GirlCard({
 
         {/* Heart icon top-right */}
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-all"
+          onClick={handleLikeClick}
+          disabled={likeLoading}
+          className={`absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-md transition-all ${
+            liked
+              ? 'bg-pink-500 text-white hover:bg-pink-600 scale-105 shadow-lg shadow-pink-500/15'
+              : 'bg-black/40 text-white hover:bg-black/60 hover:scale-105'
+          } ${likeLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
-          <svg className="w-[16px] h-[16px] text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className={`w-[16px] h-[16px] transition-transform ${liked ? 'fill-white' : ''}`}
+            fill={liked ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
@@ -127,7 +289,7 @@ export default function GirlCard({
                 <svg className="w-[11px] h-[11px] text-zinc-300 fill-zinc-300" viewBox="0 0 24 24">
                   <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <span className="text-[11px] font-medium text-zinc-200 tracking-wide">{formatStat(finalLikes)}</span>
+                <span className="text-[11px] font-medium text-zinc-200 tracking-wide">{formatStat(likesCount)}</span>
               </div>
               {/* Messages */}
               <div className="flex items-center gap-1">
@@ -140,6 +302,6 @@ export default function GirlCard({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

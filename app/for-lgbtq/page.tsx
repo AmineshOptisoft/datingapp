@@ -132,6 +132,7 @@ export default function ForLGBTQPage() {
             {randomCompanions.slice(0, 16).map((companion) => (
               <GirlCard
                 key={companion.profileId}
+                _id={(companion as any)._id}
                 legacyId={companion.legacyId}
                 routePrefix={companion.routePrefix}
                 name={companion.name}
@@ -144,6 +145,7 @@ export default function ForLGBTQPage() {
                 likes={companion.likes}
                 interactions={companion.interactions}
                 age={companion.age}
+                audienceSegment={companion.audienceSegment}
               />
             ))}
           </div>

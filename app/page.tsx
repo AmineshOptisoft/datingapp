@@ -9,11 +9,23 @@ import { useProfiles } from '@/hooks/useProfiles';
 import type { AIProfileOverview } from '@/types/ai-profile';
 import ScreenLoader from './components/ScreenLoader';
 
+/**
+ * Module-level flag — lives in JS memory.
+ * Stays `true` across client-side navigation (Next.js keeps the module alive)
+ * but resets to `false` on a true hard reload / new tab.
+ * No async, no useEffect, no flash.
+ */
+let loaderHasPlayed = false;
+
 function HomePageContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [loaderDone, setLoaderDone] = useState(false);
+
+  // Read module-level flag synchronously — no useEffect, no async gap, no blank flash.
+  // false = first load this session → show loader
+  // true  = already played → skip loader immediately
+  const [showLoader, setShowLoader] = useState(() => !loaderHasPlayed);
 
   // No segment = home page shows ALL profiles (male + female AI + all user characters)
   const { profiles, loading, error } = useProfiles();
@@ -41,8 +53,21 @@ function HomePageContent() {
     });
   }, [characterOnly, activeCategory]);
 
-  if (!loaderDone) {
-    return <ScreenLoader onExited={() => setLoaderDone(true)} />;
+  // Safety cleanup: if the loader is skipped (navigation-back), ensure body styles
+  // are never left in a locked state from any previous run or inline script.
+  useEffect(() => {
+    if (!showLoader) {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = '';
+      document.body.style.overflow = '';
+    }
+  }, [showLoader]);
+
+  if (showLoader) {
+    return <ScreenLoader onExited={() => {
+      loaderHasPlayed = true;   // mark so every subsequent visit skips the loader
+      setShowLoader(false);
+    }} />;
   }
 
   return (
@@ -69,6 +94,7 @@ function HomePageContent() {
             {filteredProfiles.map((girl) => (
               <GirlCard
                 key={girl.profileId}
+                _id={(girl as any)._id}
                 legacyId={girl.legacyId}
                 routePrefix={girl.routePrefix}
                 name={girl.name}
@@ -81,6 +107,7 @@ function HomePageContent() {
                 likes={girl.likes}
                 interactions={girl.interactions}
                 age={girl.age}
+                audienceSegment={girl.audienceSegment}
               />
             ))}
 

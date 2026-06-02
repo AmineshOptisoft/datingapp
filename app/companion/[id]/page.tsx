@@ -34,24 +34,54 @@ export default function CompanionDetailPage() {
       const p = profile as any;
       setLikes(p.likes ?? 0);
       setInteractions(p.interactions ?? 0);
+
+      const dbCharacterId = p._id || p.id;
+
+      if (typeof window !== 'undefined') {
+        const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+        if (dbCharacterId && likedList.includes(dbCharacterId)) {
+          setLiked(true);
+          return;
+        }
+      }
+
       if (user && Array.isArray(p.likedBy)) {
-        setLiked(p.likedBy.includes(user.id));
+        const isLiked = p.likedBy.includes(user.id);
+        setLiked(isLiked);
+        if (isLiked && dbCharacterId && typeof window !== 'undefined') {
+          const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+          if (!likedList.includes(dbCharacterId)) {
+            likedList.push(dbCharacterId);
+            localStorage.setItem('lily:liked-profiles', JSON.stringify(likedList));
+          }
+        }
       }
     }
   }, [profile, user]);
 
+  // Gifts state — fetch in parallel with profile using legacyId from URL slug
+  const [gifts, setGifts] = useState<any[]>([]);
+  useEffect(() => {
+    if (!legacyId) return;
+    const profileId = `companion-${legacyId}`;
+    fetch(`/api/characters/${profileId}/gifts`)
+      .then(res => res.json())
+      .then(data => { if (data.success && data.gifts) setGifts(data.gifts); })
+      .catch(console.error);
+  }, [legacyId]);
+
   const highlightCards = useMemo(() => {
     if (!profile) return [];
-    const titles = profile.personalityQuirks.slice(0, 4);
+    const titles = (profile.personalityQuirks ?? []).slice(0, 4);
     const descriptions = [
-      ...profile.backstoryElements,
-      ...profile.topicPreferences,
+      ...(profile.backstoryElements ?? []),
+      ...(profile.topicPreferences ?? []),
     ];
     return titles.map((title, index) => ({
       title,
       description:
         descriptions[index] ||
-        `${profile.name} loves creating rituals around ${profile.topicPreferences[0] ?? 'soft conversations'}.`,
+        `${profile.name} loves creating rituals around ${(profile.topicPreferences ?? [])[0] ?? 'soft conversations'}.`,
     }));
   }, [profile]);
 
@@ -83,6 +113,18 @@ export default function CompanionDetailPage() {
       if (data.success) {
         setLiked(data.liked);
         setLikes(data.likes);
+        if (typeof window !== 'undefined') {
+          const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+          if (data.liked) {
+            if (!likedList.includes(aiId)) {
+              likedList.push(aiId);
+              localStorage.setItem('lily:liked-profiles', JSON.stringify(likedList));
+            }
+          } else {
+            const newList = likedList.filter((id: string) => id !== aiId);
+            localStorage.setItem('lily:liked-profiles', JSON.stringify(newList));
+          }
+        }
       } else {
         setLiked(prevLiked);
         setLikes(prevLikes);
@@ -157,7 +199,7 @@ export default function CompanionDetailPage() {
     );
   }
 
-  const priceLabel = `$${profile.monthlyPrice.toFixed(2)}`;
+  const priceLabel = `$${(profile.monthlyPrice ?? 0).toFixed(2)}`;
   const primaryPhoto = profile.photos?.[0] ?? profile.avatar;
   const voiceChatEnabled =
     profile.audienceSegment === 'for-men' &&
@@ -337,7 +379,7 @@ export default function CompanionDetailPage() {
                       <span className="text-purple-600 dark:text-purple-400">✓</span>
                       <span>{profile.conversationStyle}</span>
                     </li>
-                    {profile.topicPreferences.slice(0, 3).map((topic) => (
+                    {(profile.topicPreferences ?? []).slice(0, 3).map((topic) => (
                       <li key={topic} className="flex items-start gap-2">
                         <span className="text-purple-600 dark:text-purple-400">✓</span>
                         <span>{topic}</span>

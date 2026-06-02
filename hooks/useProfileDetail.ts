@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AIProfileDetail, RoutePrefix } from "@/types/ai-profile";
+import { getProfilePreview } from "@/lib/profile-preview-cache";
 
 interface UseProfileDetailResult {
   profile: AIProfileDetail | null;
@@ -9,7 +10,7 @@ interface UseProfileDetailResult {
   error: string | null;
 }
 
-// In-memory cache for profile data
+// In-memory cache for full profile data
 const profileCache = new Map<string, { data: AIProfileDetail; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -22,13 +23,36 @@ export function useProfileDetail(
   routePrefix: RoutePrefix,
   legacyId: string | number | undefined
 ): UseProfileDetailResult {
-  const [profile, setProfile] = useState<AIProfileDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = legacyId ? `${routePrefix}-${legacyId}` : null;
+
+  // --- Instant preview from card data ---
+  // If the user clicked a card we already have name/avatar/age/stats in the
+  // preview cache. Use those as the initial state so the page renders
+  // immediately while the full fetch runs in the background.
+  const preview = cacheKey ? getProfilePreview(cacheKey) : null;
+
+  // --- Full profile cache hit ---
+  const fullCached = cacheKey ? profileCache.get(cacheKey) : undefined;
+  const hasFreshCache =
+    fullCached !== undefined && Date.now() - fullCached.timestamp < CACHE_DURATION;
+
+  const [profile, setProfile] = useState<AIProfileDetail | null>(
+    () => fullCached?.data ?? (preview as any) ?? null
+  );
+  // Only show loading state if we have neither a full cache hit nor a preview
+  const [loading, setLoading] = useState(() => !hasFreshCache && !preview);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!legacyId) {
+    if (!legacyId || !cacheKey) {
       setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    // Full cache hit — no fetch needed
+    if (hasFreshCache) {
+      setProfile(fullCached!.data);
       setLoading(false);
       return;
     }
@@ -37,29 +61,18 @@ export function useProfileDetail(
     const controller = new AbortController();
 
     async function fetchProfile() {
-      const profileId = `${routePrefix}-${legacyId}`;
-      
-      // Skip cache for user-created characters since likes/interactions change frequently
-      const isCharacter = routePrefix === 'character';
-      
-      // Check cache first (but not for character profiles)
-      if (!isCharacter) {
-        const cached = profileCache.get(profileId);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-          setProfile(cached.data);
-          setLoading(false);
-          return;
-        }
+      // If we have a preview, don't show the loading skeleton — let the UI
+      // render with partial data while the full fetch completes in background.
+      if (!preview) {
+        setLoading(true);
       }
-
-      setLoading(true);
       setError(null);
 
       try {
         const response = await fetch("/api/ai-profiles/public", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ profileId }),
+          body: JSON.stringify({ profileId: cacheKey }),
           signal: controller.signal,
         });
 
@@ -70,16 +83,14 @@ export function useProfileDetail(
         const payload = await response.json();
         if (!cancelled) {
           setProfile(payload.data);
-          // Cache the result (for non-character profiles)
-          if (!isCharacter) {
-            profileCache.set(profileId, {
-              data: payload.data,
-              timestamp: Date.now(),
-            });
-          }
+          // Cache all profile types (characters included) — invalidate explicitly on mutation
+          profileCache.set(cacheKey!, {
+            data: payload.data,
+            timestamp: Date.now(),
+          });
         }
       } catch (err: any) {
-        if (!cancelled && err.name !== 'AbortError') {
+        if (!cancelled && err.name !== "AbortError") {
           setError(err?.message ?? "Unable to fetch profile");
         }
       } finally {
@@ -95,9 +106,8 @@ export function useProfileDetail(
       cancelled = true;
       controller.abort();
     };
-  }, [routePrefix, legacyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey]);
 
   return { profile, loading, error };
 }
-
-
