@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Settings, Share, Grid, Heart, User, Mic, FileText, MessageSquare, Plus, Loader2, Film, Play, Gift } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EditProfileForm from "./EditProfileForm";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("characters");
   const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
@@ -390,6 +391,15 @@ export default function ProfilePage() {
       fetchGifts();
     }
   }, [activeTab]);
+
+  // Sync active tab with ?tab= query param
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const validTabs = ["characters", "personas", "scenes", "liked", "gifts"];
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   if (!user) {
     return <LoadingSpinner icon={User} title="Loading Profile" subtitle="Getting your information..." />;

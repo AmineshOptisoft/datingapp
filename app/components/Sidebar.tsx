@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import {
   Plus,
   Compass,
@@ -16,6 +17,10 @@ import {
   MoreHorizontal,
   Menu,
   X,
+  ChevronDown,
+  User,
+  Clapperboard,
+  Ghost,
 } from "lucide-react";
 import { SiDiscord } from "react-icons/si";
 import { FaMars, FaVenus } from "react-icons/fa";
@@ -31,6 +36,19 @@ interface SidebarProps {
   onUpgradeClick?: () => void;
 }
 
+const mainNavItems = [
+  { icon: Plus, label: "Create", href: "/profile", hasSubTabs: true },
+  { icon: Compass, label: "Explore", href: "/" },
+  { icon: MessageCircle, label: "Chat", href: "/messages" },
+  { icon: Camera, label: "Generate", href: "/reels" },
+  { icon: Sparkles, label: "Custom", href: "/monetize" },
+];
+
+const createSubTabs = [
+  { icon: User, label: "Character", tab: "characters" },
+  { icon: Ghost, label: "Personas", tab: "personas" },
+  { icon: Clapperboard, label: "Scenes", tab: "scenes" },
+];
 
 /** Desktop sidebar only — mobile uses bottom bar in Header */
 const categoryNavItems = [
@@ -90,7 +108,11 @@ export default function Sidebar({
   onUpgradeClick,
 }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const isOnCreatePage = pathname === "/profile";
+  const activeSubTab = searchParams.get("tab");
+  const [createExpanded, setCreateExpanded] = useState(isOnCreatePage);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -99,6 +121,14 @@ export default function Sidebar({
 
   return (
     <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 dark:bg-black/60 z-40 md:hidden"
+          onClick={onClose}
+          aria-hidden
+        />
+      )}
+
       <aside
         className={cn(
           "app-sidebar fixed md:static w-[220px] shrink-0 flex flex-col h-screen-dvh z-50",
@@ -106,7 +136,8 @@ export default function Sidebar({
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex items-center justify-between px-4 pt-5 pb-4">
+        {/* <div className="px-4  pb-4"> */}
+          <div className="flex items-center justify-between gap-2 px-4 py-2">
           <Link href="/" className="block px-1" onClick={onClose}>
             <Image
               src="/lily-logo.svg"
@@ -125,6 +156,7 @@ export default function Sidebar({
             >
               <X className="w-5 h-5" />
             </button>
+          {/* </div> */}
 
         </div>
 
@@ -151,9 +183,82 @@ export default function Sidebar({
           })}
         </nav>
 
-        
+        <nav className="flex-1 px-3 pt-3 space-y-0.5 overflow-y-auto">
+          {mainNavItems.map((item) => {
+            if (item.hasSubTabs) {
+              const active = isOnCreatePage;
+              return (
+                <div key={item.label}>
+                  {/* Create parent button */}
+                  <button
+                    onClick={() => {
+                      setCreateExpanded((prev) => !prev);
+                    }}
+                    className={cn(
+                      navLinkClass(active),
+                      "w-full justify-between"
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+                      <span>{item.label}</span>
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "w-3.5 h-3.5 shrink-0 transition-transform duration-200",
+                        createExpanded ? "rotate-180" : "rotate-0"
+                      )}
+                    />
+                  </button>
 
-        <div className="px-3 pb-5 pt-2 space-y-1 border-t border-zinc-200 dark:border-white/5 mt-auto">
+                  {/* Sub-tabs */}
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-200 ease-in-out",
+                      createExpanded ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                    )}
+                  >
+                    <div className="ml-3 mt-0.5 pl-3 border-l border-zinc-200 dark:border-white/10 space-y-0.5">
+                      {createSubTabs.map((sub) => {
+                        const subActive = isOnCreatePage && activeSubTab === sub.tab;
+                        return (
+                          <Link
+                            key={sub.tab}
+                            href={`/profile?tab=${sub.tab}`}
+                            onClick={onClose}
+                            className={cn(
+                              "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                              subActive
+                                ? "bg-zinc-200 text-zinc-900 dark:bg-white/10 dark:text-white"
+                                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/5"
+                            )}
+                          >
+                            <sub.icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                            {sub.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={onClose}
+                className={navLinkClass(isActive(item.href))}
+              >
+                <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="px-3 pb-5 pt-2 space-y-1 border-t border-zinc-200 dark:border-white/5 mt-2">
           <button
             type="button"
             onClick={onUpgradeClick}
@@ -179,6 +284,21 @@ export default function Sidebar({
               </button>
             </>
           )}
+
+          <a
+            href="https://discord.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={bottomActionClass}
+          >
+            <SiDiscord className="w-[18px] h-[18px] shrink-0" />
+            Discord
+          </a>
+
+          <button type="button" className={bottomActionClass}>
+            <MoreHorizontal className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+            More
+          </button>
         </div>
       </aside>
     </>

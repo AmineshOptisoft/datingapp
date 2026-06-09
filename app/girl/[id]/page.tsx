@@ -37,22 +37,21 @@ export default function GirlDetailPage() {
   useEffect(() => {
     if (profile) {
       const p = profile as any;
-      setLikes(p.likes ?? 0);
       setInteractions(p.interactions ?? 0);
 
       const dbCharacterId = p._id || p.id;
 
+      // Determine liked state first
+      let isLiked = false;
       if (typeof window !== 'undefined') {
         const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
         if (dbCharacterId && likedList.includes(dbCharacterId)) {
-          setLiked(true);
-          return;
+          isLiked = true;
         }
       }
 
-      if (user && Array.isArray(p.likedBy)) {
-        const isLiked = p.likedBy.includes(user.id);
-        setLiked(isLiked);
+      if (!isLiked && user && Array.isArray(p.likedBy)) {
+        isLiked = p.likedBy.includes(user.id);
         if (isLiked && dbCharacterId && typeof window !== 'undefined') {
           const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
           if (!likedList.includes(dbCharacterId)) {
@@ -61,8 +60,34 @@ export default function GirlDetailPage() {
           }
         }
       }
+
+      setLiked(isLiked);
+
+      // If user has liked this profile but server reports 0, show at least 1
+      const serverLikes = p.likes ?? 0;
+      setLikes(isLiked && serverLikes === 0 ? 1 : serverLikes);
     }
   }, [profile, user]);
+
+  // Listen to global like updates
+  useEffect(() => {
+    if (!profile) return;
+    const dbCharacterId = (profile as any)._id || (profile as any).id;
+    if (!dbCharacterId) return;
+
+    const handleLikeUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { characterId: updatedId, liked: newLiked, likes: newLikes } = customEvent.detail;
+      if (updatedId === dbCharacterId) {
+        setLiked(newLiked);
+        if (newLikes !== undefined) {
+          setLikes(newLikes);
+        }
+      }
+    };
+    window.addEventListener('lily:like-updated', handleLikeUpdate);
+    return () => window.removeEventListener('lily:like-updated', handleLikeUpdate);
+  }, [profile]);
 
   // Fetch gifts in parallel with the profile API — legacyId is known from
   // the URL slug immediately, so we don't need to wait for profile to load.
@@ -110,8 +135,14 @@ export default function GirlDetailPage() {
     const prevLikes = likes;
     const newLiked = !liked;
     setLiked(newLiked);
-    setLikes(prev => prev + (newLiked ? 1 : -1));
+    const newLikesCount = Math.max(0, prevLikes + (newLiked ? 1 : -1));
+    setLikes(newLikesCount);
     setLikeLoading(true);
+
+    // Dispatch global event instantly
+    window.dispatchEvent(new CustomEvent('lily:like-updated', {
+      detail: { characterId: aiId, liked: newLiked, likes: newLikesCount }
+    }));
 
     try {
       const res = await fetch(`/api/characters/${aiId}/like`, {
@@ -135,14 +166,24 @@ export default function GirlDetailPage() {
             localStorage.setItem('lily:liked-profiles', JSON.stringify(newList));
           }
         }
+        // Dispatch updated count from server
+        window.dispatchEvent(new CustomEvent('lily:like-updated', {
+          detail: { characterId: aiId, liked: data.liked, likes: data.likes }
+        }));
       } else {
         setLiked(prevLiked);
         setLikes(prevLikes);
+        window.dispatchEvent(new CustomEvent('lily:like-updated', {
+          detail: { characterId: aiId, liked: prevLiked, likes: prevLikes }
+        }));
       }
     } catch (e) {
       console.error('Like failed:', e);
       setLiked(prevLiked);
       setLikes(prevLikes);
+      window.dispatchEvent(new CustomEvent('lily:like-updated', {
+        detail: { characterId: aiId, liked: prevLiked, likes: prevLikes }
+      }));
     } finally {
       setLikeLoading(false);
     }
