@@ -265,18 +265,18 @@ export default function CharacterDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#040406] text-white px-4 md:px-8 py-8 animate-pulse">
-        <div className="max-w-6xl mx-auto">
-          <div className="h-6 bg-zinc-800 rounded-lg w-28 mb-6"></div>
+      <div className="min-h-screen  text-zinc-900 dark:text-white px-4 md:px-8 py-8 animate-pulse transition-colors">
+        <div className="">
+          <div className="h-6 bg-zinc-200 dark:bg-zinc-800 rounded-lg w-28 mb-6"></div>
           <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 mb-12">
-            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] bg-zinc-900 border border-white/5"></div>
+            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5"></div>
             <div className="space-y-6">
-              <div className="h-14 bg-zinc-900 rounded-2xl w-3/4"></div>
-              <div className="h-6 bg-zinc-900 rounded-lg w-1/3"></div>
-              <div className="h-20 bg-zinc-900 rounded-2xl"></div>
+              <div className="h-14 bg-zinc-200 dark:bg-zinc-900 rounded-2xl w-3/4"></div>
+              <div className="h-6 bg-zinc-200 dark:bg-zinc-900 rounded-lg w-1/3"></div>
+              <div className="h-20 bg-zinc-200 dark:bg-zinc-900 rounded-2xl"></div>
               <div className="flex gap-4">
-                <div className="h-14 bg-zinc-900 rounded-2xl w-44"></div>
-                <div className="h-14 bg-zinc-900 rounded-2xl w-24"></div>
+                <div className="h-14 bg-zinc-200 dark:bg-zinc-900 rounded-2xl w-44"></div>
+                <div className="h-14 bg-zinc-200 dark:bg-zinc-900 rounded-2xl w-24"></div>
               </div>
             </div>
           </div>
@@ -287,10 +287,10 @@ export default function CharacterDetailPage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#040406] text-white flex items-center justify-center">
+      <div className="min-h-screen text-zinc-900 dark:text-white flex items-center justify-center transition-colors">
         <div className="text-center">
           <h1 className="text-4xl font-extrabold mb-4 font-outfit">Character Not Found</h1>
-          <p className="text-zinc-400 text-sm">The character you're looking for doesn't exist.</p>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">The character you're looking for doesn't exist.</p>
           <button 
             onClick={() => router.push('/')}
             className="mt-6 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all"
@@ -306,12 +306,12 @@ export default function CharacterDetailPage() {
   const galleryPhotos = profile.photos || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#0d0d14] to-[#040406] text-white px-4 md:px-8 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen  dark:to-[#040406] text-zinc-900 dark:text-white px-4 md:px-8 py-8 transition-colors">
+      <div className="">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="mb-8 flex items-center gap-2 text-zinc-400 hover:text-white transition-all group hover:scale-[1.02] active:scale-[0.98] select-none"
+          className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-all group hover:scale-[1.02] active:scale-[0.98] select-none"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
           <span className="text-sm font-semibold tracking-wide">Back to Browse</span>
@@ -321,7 +321,7 @@ export default function CharacterDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 mb-12">
           {/* Gallery Column */}
           <div className="relative mx-auto lg:mx-0 space-y-4 w-full max-w-[400px] lg:max-w-none">
-            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] bg-zinc-950 border border-white/10 shadow-2xl hover:border-purple-500/30 transition-all duration-500 group">
+            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 shadow-2xl hover:border-purple-500/30 transition-all duration-500 group">
               <img 
                 src={primaryPhoto} 
                 alt={profile.name} 
@@ -355,11 +355,11 @@ export default function CharacterDetailPage() {
             {/* Header info */}
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight font-outfit">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-zinc-900 dark:text-white tracking-tight font-outfit">
                   {profile.name}
                 </h1>
                 {profile.age && (
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-zinc-500 font-outfit">
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-zinc-400 dark:text-zinc-500 font-outfit">
                     , {profile.age}
                   </span>
                 )}
@@ -377,14 +377,14 @@ export default function CharacterDetailPage() {
             </div>
 
             {/* Stats Row */}
-            <div className="flex gap-8 border-y border-white/5 py-5">
+            <div className="flex gap-8 border-y border-zinc-200 dark:border-white/5 py-5">
               <div>
-                <div className="text-3xl font-extrabold text-white font-outfit">{formatCount(interactions)}</div>
+                <div className="text-3xl font-extrabold text-zinc-900 dark:text-white font-outfit">{formatCount(interactions)}</div>
                 <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Interactions</div>
               </div>
-              <div className="w-px bg-white/10 my-1" />
+              <div className="w-px bg-zinc-200 dark:bg-white/10 my-1" />
               <div>
-                <div className="text-3xl font-extrabold text-white font-outfit">{formatCount(likes)}</div>
+                <div className="text-3xl font-extrabold text-zinc-900 dark:text-white font-outfit">{formatCount(likes)}</div>
                 <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Likes</div>
               </div>
             </div>
@@ -404,8 +404,8 @@ export default function CharacterDetailPage() {
                 disabled={likeLoading}
                 className={`flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border-2 font-bold transition-all text-base sm:w-auto ${
                   liked
-                    ? 'bg-pink-500/25 border-pink-500 text-pink-500 shadow-lg shadow-pink-500/10'
-                    : 'border-white/10 text-zinc-400 hover:border-pink-500/50 hover:text-pink-500'
+                    ? 'bg-pink-500/25 border-pink-500 text-pink-600 dark:text-pink-500 shadow-lg shadow-pink-500/10'
+                    : 'border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:border-pink-500/50 hover:text-pink-600 dark:hover:text-pink-500'
                 }`}
               >
                 <Heart className={`w-5 h-5 ${liked ? 'fill-pink-500' : ''}`} />
@@ -414,20 +414,20 @@ export default function CharacterDetailPage() {
             </div>
 
             {/* Bio Card */}
-            <div className="bg-[#0f0f14]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-xl">
+            <div className="bg-white dark:bg-[#0f0f14]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/5 rounded-3xl p-6 shadow-xl">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white tracking-tight font-outfit">Character Profile</h2>
-                <span className="text-purple-400 text-sm font-bold">• User Created</span>
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight font-outfit">Character Profile</h2>
+                <span className="text-purple-600 dark:text-purple-400 text-sm font-bold">• User Created</span>
               </div>
 
               {/* Tabs header */}
-              <div className="flex gap-6 mb-6 border-b border-white/5">
+              <div className="flex gap-6 mb-6 border-b border-zinc-200 dark:border-white/5">
                 <button
                   onClick={() => setActiveTab('bio')}
                   className={`pb-3 px-2 font-bold text-sm transition-all relative ${
                     activeTab === 'bio'
-                      ? 'text-white border-b-2 border-purple-500'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                      ? 'text-zinc-900 dark:text-white border-b-2 border-purple-500'
+                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
                   👤 Bio
@@ -436,8 +436,8 @@ export default function CharacterDetailPage() {
                   onClick={() => setActiveTab('features')}
                   className={`pb-3 px-2 font-bold text-sm transition-all relative ${
                     activeTab === 'features'
-                      ? 'text-white border-b-2 border-purple-500'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                      ? 'text-zinc-900 dark:text-white border-b-2 border-purple-500'
+                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
                   ⚙️ Features
@@ -445,25 +445,25 @@ export default function CharacterDetailPage() {
               </div>
 
               {/* Tab contents */}
-              <div className="text-zinc-300 leading-relaxed text-base min-h-[80px]">
+              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-base min-h-[80px]">
                 {activeTab === 'bio' && (
                   <p>{profile.bio || `${profile.name} is waiting for you to say hi and begin your chat.`}</p>
                 )}
                 {activeTab === 'features' && (
                   <div className="space-y-4">
-                    <p className="font-semibold text-white">Available Features:</p>
+                    <p className="font-semibold text-zinc-900 dark:text-white">Available Features:</p>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <li className="flex items-center gap-2 text-zinc-300">
+                      <li className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
                         <span className="text-purple-500">✓</span>
                         <span>{profile.personalityType || 'Engaging Personality'}</span>
                       </li>
-                      <li className="flex items-center gap-2 text-zinc-300">
+                      <li className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
                         <span className="text-purple-500">✓</span>
                         <span>Interactive Voice Response</span>
                       </li>
                       {profile.interests && profile.interests.length > 0 ? (
                         profile.interests.map((interest: string, idx: number) => (
-                          <li key={idx} className="flex items-center gap-2 text-zinc-300 capitalize">
+                          <li key={idx} className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 capitalize">
                             <span className="text-purple-500">✓</span>
                             <span>{interest}</span>
                           </li>
@@ -480,10 +480,10 @@ export default function CharacterDetailPage() {
             {/* Meta info */}
             <div className="text-zinc-500 text-sm space-y-1">
               <p>
-                <span className="font-semibold text-zinc-400">Category:</span> User Created
+                <span className="font-semibold text-zinc-700 dark:text-zinc-400">Category:</span> User Created
               </p>
               <p>
-                <span className="font-semibold text-zinc-400">Personality Type:</span>{' '}
+                <span className="font-semibold text-zinc-700 dark:text-zinc-400">Personality Type:</span>{' '}
                 {profile.personalityType || 'Unique'}
               </p>
             </div>
@@ -493,14 +493,14 @@ export default function CharacterDetailPage() {
         {/* Gifts Received Section */}
         {gifts.length > 0 && (
           <section className="mb-12">
-            <div className="bg-[#0f0f14]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold text-white mb-6 font-outfit">Gifts Received</h2>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x">
+            <div className="bg-white dark:bg-[#0f0f14]/60 backdrop-blur-xl border border-zinc-200 dark:border-white/5 rounded-3xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6 font-outfit">Gifts Received</h2>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x">
                 {gifts.map((gift, idx) => {
                   const giftRef = GIFTS.find(g => g.name === gift.giftName);
                   if (!giftRef) return null;
                   return (
-                    <div key={idx} className="relative flex flex-col items-center min-w-[120px] p-4 rounded-2xl bg-white/5 border border-white/5 shadow-md snap-center hover:scale-105 hover:bg-white/10 transition-all select-none">
+                    <div key={idx} className="relative flex flex-col items-center min-w-[120px] p-4 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/5 shadow-md snap-center hover:scale-105 hover:bg-zinc-100 dark:hover:bg-white/10 transition-all select-none">
                       <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5 z-10">
                         <PiCoinsFill className="w-3.5 h-3.5" />
                         {giftRef.price}
@@ -508,7 +508,7 @@ export default function CharacterDetailPage() {
                       <img src={giftRef.image} alt={gift.giftName} className="w-16 h-16 object-contain mb-3 drop-shadow-md" />
                       <div className="flex flex-col items-center gap-1.5 w-full mt-auto">
                         <img src={gift.sender.avatar} alt={gift.sender.name} className="w-6 h-6 rounded-full object-cover ring-2 ring-purple-500/50" />
-                        <span className="text-xs font-semibold text-zinc-300 truncate max-w-[95px]" title={gift.sender.name}>{gift.sender.name}</span>
+                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 truncate max-w-[95px]" title={gift.sender.name}>{gift.sender.name}</span>
                       </div>
                     </div>
                   );
@@ -522,7 +522,7 @@ export default function CharacterDetailPage() {
         {(characterScenes.length > 0 || loadingScenes) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-extrabold text-white flex items-center gap-2 font-outfit">
+              <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white flex items-center gap-2 font-outfit">
                 <Film className="w-7 h-7 text-purple-500" />
                 Featured Scenes & Reels
               </h2>
@@ -534,7 +534,7 @@ export default function CharacterDetailPage() {
             {loadingScenes ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="aspect-[3/4] rounded-2xl bg-zinc-900 border border-white/5 animate-pulse" />
+                  <div key={i} className="aspect-[3/4] rounded-2xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 animate-pulse" />
                 ))}
               </div>
             ) : (
@@ -542,7 +542,7 @@ export default function CharacterDetailPage() {
                 {characterScenes.map((scene) => (
                   <div
                     key={scene._id}
-                    className="group/scene relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-md shadow-lg hover:shadow-purple-500/5 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                    className="group/scene relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/5 hover:border-zinc-300 dark:hover:border-white/20 transition-all duration-300 cursor-pointer"
                     onMouseEnter={(e) => {
                       const video = e.currentTarget.querySelector('video');
                       if (video) video.play().catch(() => {});
@@ -625,23 +625,23 @@ export default function CharacterDetailPage() {
 
         {/* Feature Highlights Grid */}
         {highlightCards.length > 0 && (
-          <section className="mb-16 border-t border-white/5 pt-10">
-            <h2 className="text-3xl font-extrabold text-white mb-6 font-outfit">Highlights</h2>
+          <section className="mb-16 border-t border-zinc-200 dark:border-white/5 pt-10">
+            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white mb-6 font-outfit">Highlights</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {highlightCards.map((feature, index) => (
                 <div
                   key={index}
-                  className="bg-[#0f0f14]/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-purple-500/20 hover:bg-[#0f0f14]/60 transition-all duration-300"
+                  className="bg-white dark:bg-[#0f0f14]/40 backdrop-blur-xl border border-zinc-200 dark:border-white/5 rounded-2xl p-5 hover:border-purple-500/20 hover:bg-zinc-50 dark:hover:bg-[#0f0f14]/60 transition-all duration-300"
                 >
-                  <h3 className="text-lg font-bold text-white mb-2 font-outfit">{feature.title}</h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed">{feature.description}</p>
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2 font-outfit">{feature.title}</h3>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        <Footer />
+        <Footer simple />
       </div>
     </div>
   );

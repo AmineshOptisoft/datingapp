@@ -27,45 +27,23 @@ export default function CheckoutSuccessPage() {
 
             if (sessionId) {
                 console.log('Checkout successful! Session ID:', sessionId);
+                
+                // Manually verify session to handle cases where local webhooks fail
+                try {
+                    await fetch('/api/stripe/verify-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId })
+                    });
+                } catch (e) {
+                    console.error('Failed to verify session manually', e);
+                }
             }
 
-            // If we have a profileId, fetch the profile to get the correct route
+            // Redirect directly to the chat for the purchased profile
             if (profileId) {
-                try {
-                    const response = await fetch(`/api/ai-profiles/public`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ profileId }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        const profile = data.profile || data.data;
-
-                        if (profile) {
-                            // Generate SEO-friendly URL
-                            const seoUrl = getProfileRoute(
-                                profile.routePrefix,
-                                profile.name,
-                                profile.cardTitle,
-                                profile.legacyId
-                            );
-                            setProfileRoute(seoUrl);
-                        } else {
-                            // Fallback to dashboard if no profile data
-                            setProfileRoute('/dashboard');
-                        }
-                    } else {
-                        // Fallback to dashboard if API fails
-                        setProfileRoute('/dashboard');
-                    }
-                } catch (error) {
-                    console.error('Error fetching profile:', error);
-                    // Fallback to dashboard
-                    setProfileRoute('/dashboard');
-                }
+                // Add unlocked=true parameter so the messages page can show a success message
+                setProfileRoute(`/messages?ai=${profileId}&unlocked=true`);
             } else {
                 // No profileId, redirect to dashboard
                 setProfileRoute('/dashboard');

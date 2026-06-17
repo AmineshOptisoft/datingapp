@@ -366,6 +366,7 @@ export default function ProfilePage() {
     const storedUser = localStorage.getItem("user");
 
     if (!token || !storedUser) {
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
       router.push("/");
       return;
     }

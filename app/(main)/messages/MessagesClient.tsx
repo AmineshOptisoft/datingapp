@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaSearch, FaPaperPlane, FaPhone, FaVideo, FaInfoCircle, FaSmile, FaGift, FaMicrophone, FaExpand } from 'react-icons/fa';
 import { PiCoinsFill } from "react-icons/pi";
@@ -10,12 +10,14 @@ import dynamic from 'next/dynamic';
 import { VoiceCallPanel } from '@/components/VoiceCallPanel';
 import ReportModal from '@/components/ReportModal';
 import { useSocket } from '@/lib/socket';
+import { useAuth } from '@/app/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
 import RestrictedContentModal from '@/components/RestrictedContentModal';
+import { toast } from 'sonner';
 
 
 
@@ -87,7 +89,16 @@ interface Message {
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { messages: socketMessages, sendMessage, isConnected, selectedProfileId, setSelectedProfileId, fetchConversation, userId, isAITyping, socket } = useSocket();
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
+      router.push('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   // Store socket reference
   useEffect(() => {
@@ -217,6 +228,21 @@ export default function MessagesClient() {
   const messageInputRef = useRef<HTMLInputElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const [chatContainerHeight, setChatContainerHeight] = useState<number | null>(null);
+  const [showUnlockedBanner, setShowUnlockedBanner] = useState(false);
+
+  // Handle successful unlock redirect
+  useEffect(() => {
+    if (searchParams.get('unlocked') === 'true') {
+      toast.success("Payment successful! You have unlocked Full Chat Access.");
+      setShowUnlockedBanner(true);
+      
+      // Clean up the URL so it doesn't re-trigger on refresh
+      const aiParam = searchParams.get('ai');
+      if (aiParam) {
+        window.history.replaceState({}, '', `/messages?ai=${aiParam}`);
+      }
+    }
+  }, [searchParams]);
 
 
 
@@ -392,6 +418,18 @@ export default function MessagesClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations]);
 
+  // Auto-select first conversation if none selected and no URL param
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedConversation && !searchParams.get('ai')) {
+      const firstConv = conversations[0];
+      setSelectedConversation(firstConv.id);
+      if (firstConv.profileId) {
+        setSelectedProfileId(firstConv.profileId);
+        fetchConversation(firstConv.profileId);
+      }
+    }
+  }, [conversations, selectedConversation, searchParams, fetchConversation, setSelectedProfileId]);
+
   // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -497,6 +535,17 @@ export default function MessagesClient() {
   const filteredConversations = conversations.filter(conv =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center bg-white dark:bg-[#0c0c0f]">
+        <div className="relative w-16 h-16 mb-4">
+          <div className="absolute inset-0 border-4 border-zinc-200 dark:border-white/10 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-transparent border-t-zinc-900 dark:border-t-white rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 min-h-0 flex">
@@ -666,6 +715,14 @@ export default function MessagesClient() {
               </div>
             ) : (
               <>
+                {showUnlockedBanner && (
+                  <div className="flex justify-center my-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 border border-white/20">
+                      <Shield className="w-4 h-4" />
+                      You have unlocked Full Chat Access with {selectedConv.name}! 🥂
+                    </div>
+                  </div>
+                )}
                 {socketMessages.map((message, index) => {
                   const isOwn = message.sender === userId;
 
@@ -1072,6 +1129,10 @@ export default function MessagesClient() {
               return num.toString();
             };
 
+            const profileHref = selectedConv.profileId 
+              ? `/${selectedConv.profileId.startsWith('character-') ? 'character' : 'girl'}/${selectedConv.profileId.startsWith('character-') ? selectedConv.profileId.replace('character-', '') : selectedConv.profileId}`
+              : '#';
+
             return (
               <>
                 {/* Profile Card */}
@@ -1087,7 +1148,15 @@ export default function MessagesClient() {
                   </div>
 
                   {/* Name */}
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-0.5">{selectedConv.name}</h3>
+                  {selectedConv.profileId ? (
+                    <Link href={profileHref} className="group">
+                      <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        {selectedConv.name}
+                      </h3>
+                    </Link>
+                  ) : (
+                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-0.5">{selectedConv.name}</h3>
+                  )}
 
                   {/* Age & Personality */}
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 text-center">

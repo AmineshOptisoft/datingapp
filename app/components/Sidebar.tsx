@@ -41,7 +41,7 @@ const mainNavItems = [
   { icon: Compass, label: "Explore", href: "/" },
   { icon: MessageCircle, label: "Chat", href: "/messages" },
   { icon: Camera, label: "Generate", href: "/reels" },
-  { icon: Sparkles, label: "Custom", href: "/monetize" },
+  // { icon: Sparkles, label: "Custom", href: "/monetize" },
 ];
 
 const createSubTabs = [
@@ -191,7 +191,13 @@ export default function Sidebar({
                 <div key={item.label}>
                   {/* Create parent button */}
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      if (!isAuthenticated) {
+                        e.preventDefault();
+                        if (onLoginClick) onLoginClick();
+                        if (onClose) onClose();
+                        return;
+                      }
                       setCreateExpanded((prev) => !prev);
                     }}
                     className={cn(
@@ -225,7 +231,15 @@ export default function Sidebar({
                           <Link
                             key={sub.tab}
                             href={`/profile?tab=${sub.tab}`}
-                            onClick={onClose}
+                            onClick={(e) => {
+                              if (!isAuthenticated) {
+                                e.preventDefault();
+                                if (onLoginClick) onLoginClick();
+                                if (onClose) onClose();
+                              } else {
+                                if (onClose) onClose();
+                              }
+                            }}
                             className={cn(
                               "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                               subActive
@@ -285,7 +299,7 @@ export default function Sidebar({
             </>
           )}
 
-          <a
+          {/* <a
             href="https://discord.com"
             target="_blank"
             rel="noopener noreferrer"
@@ -293,12 +307,12 @@ export default function Sidebar({
           >
             <SiDiscord className="w-[18px] h-[18px] shrink-0" />
             Discord
-          </a>
+          </a> */}
 
-          <button type="button" className={bottomActionClass}>
+          {/* <button type="button" className={bottomActionClass}>
             <MoreHorizontal className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
             More
-          </button>
+          </button> */}
         </div>
       </aside>
     </>

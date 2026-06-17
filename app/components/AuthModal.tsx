@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { GoogleLogin } from "@react-oauth/google";
@@ -24,10 +25,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [userId, setUserId] = useState('');
   const [verified, setVerified] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,8 +270,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     setError("Google Login Failed");
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800">
         {/* Close Button */}
         <button
@@ -623,6 +629,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -256,6 +256,13 @@ export default function ProfileModal() {
 
   const handleStartChat = useCallback(async () => {
     if (!profile) return;
+    
+    if (!user) {
+      closeProfile();
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
+      return;
+    }
+
     setConnectLoading(true);
     try {
       if (typeof window !== 'undefined') {
