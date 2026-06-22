@@ -75,9 +75,12 @@ export default function ResetPasswordPage() {
                </svg>
             </div>
             <p className="text-green-400 font-medium mb-4">{message}</p>
-            <Link href="/login" className="text-pink-400 hover:text-pink-300 font-semibold">
+            <button 
+              onClick={() => { router.push("/"); setTimeout(() => window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } })), 300); }} 
+              className="text-pink-400 hover:text-pink-300 font-semibold"
+            >
               Go to Login
-            </Link>
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -124,9 +127,13 @@ export default function ResetPasswordPage() {
             </button>
             
              <p className="text-center mt-4 text-sm text-zinc-400">
-              <Link href="/login" className="text-zinc-500 hover:text-zinc-300">
+              <button 
+                type="button"
+                onClick={() => { router.push("/"); setTimeout(() => window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } })), 300); }} 
+                className="text-zinc-500 hover:text-zinc-300"
+              >
                 Back to Login
-              </Link>
+              </button>
             </p>
           </form>
         )}

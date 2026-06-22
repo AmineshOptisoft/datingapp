@@ -147,7 +147,7 @@ export default function CharacterDetailPage() {
 
   const handleLike = useCallback(async () => {
     if (!user) {
-      router.push('/login');
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
       return;
     }
     if (!characterId || likeLoading) return;

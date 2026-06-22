@@ -23,7 +23,8 @@ export default function VerifyClient({
   useEffect(() => {
     if (verified) {
       const t = setTimeout(() => {
-        router.push("/login");
+        router.push("/");
+        setTimeout(() => window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } })), 300);
       }, 2000);
       return () => clearTimeout(t);
     }

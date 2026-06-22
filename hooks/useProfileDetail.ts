@@ -36,24 +36,31 @@ export function useProfileDetail(
   const hasFreshCache =
     fullCached !== undefined && Date.now() - fullCached.timestamp < CACHE_DURATION;
 
-  const [profile, setProfile] = useState<AIProfileDetail | null>(
-    () => fullCached?.data ?? (preview as any) ?? null
+  // Use state to hold the fetched profile, but we will augment it during render
+  const [fetchedProfile, setFetchedProfile] = useState<AIProfileDetail | null>(
+    () => fullCached?.data ?? null
   );
-  // Only show loading state if we have neither a full cache hit nor a preview
-  const [loading, setLoading] = useState(() => !hasFreshCache && !preview);
+  
+  // We compute the "current" profile synchronously so it never flashes null when cacheKey changes
+  const profile = fetchedProfile ?? fullCached?.data ?? (preview as any) ?? null;
+
+  // We compute loading synchronously based on whether we have any profile data to show
+  const [isFetching, setIsFetching] = useState(false);
+  const loading = isFetching && !profile;
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!legacyId || !cacheKey) {
-      setProfile(null);
-      setLoading(false);
+      setFetchedProfile(null);
+      setIsFetching(false);
       return;
     }
 
     // Full cache hit — no fetch needed
     if (hasFreshCache) {
-      setProfile(fullCached!.data);
-      setLoading(false);
+      setFetchedProfile(fullCached!.data);
+      setIsFetching(false);
       return;
     }
 
@@ -61,11 +68,7 @@ export function useProfileDetail(
     const controller = new AbortController();
 
     async function fetchProfile() {
-      // If we have a preview, don't show the loading skeleton — let the UI
-      // render with partial data while the full fetch completes in background.
-      if (!preview) {
-        setLoading(true);
-      }
+      setIsFetching(true);
       setError(null);
 
       try {
@@ -82,7 +85,7 @@ export function useProfileDetail(
 
         const payload = await response.json();
         if (!cancelled) {
-          setProfile(payload.data);
+          setFetchedProfile(payload.data);
           // Cache all profile types (characters included) — invalidate explicitly on mutation
           profileCache.set(cacheKey!, {
             data: payload.data,
@@ -95,7 +98,7 @@ export function useProfileDetail(
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setIsFetching(false);
         }
       }
     }

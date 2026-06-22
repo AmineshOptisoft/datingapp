@@ -117,7 +117,7 @@ export default function GirlCard({
     e.stopPropagation();
 
     if (!user) {
-      router.push('/login');
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
       return;
     }
 
@@ -132,6 +132,17 @@ export default function GirlCard({
     const newLikesCount = prevLikes + (newLiked ? 1 : -1);
     setLikesCount(newLikesCount);
     setLikeLoading(true);
+
+    // Optimistically update localStorage so re-renders/remounts read the correct state
+    if (typeof window !== 'undefined') {
+      const likedList = JSON.parse(localStorage.getItem('lily:liked-profiles') || '[]');
+      if (newLiked && !likedList.includes(dbCharacterId)) {
+        likedList.push(dbCharacterId);
+        localStorage.setItem('lily:liked-profiles', JSON.stringify(likedList));
+      } else if (!newLiked) {
+        localStorage.setItem('lily:liked-profiles', JSON.stringify(likedList.filter((id: string) => id !== dbCharacterId)));
+      }
+    }
 
     // Dispatch global event instantly
     window.dispatchEvent(new CustomEvent('lily:like-updated', {

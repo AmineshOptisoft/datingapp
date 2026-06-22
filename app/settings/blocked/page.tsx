@@ -27,7 +27,7 @@ export default function BlockedListPage() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/login');
+        window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
         return;
       }
 

@@ -103,7 +103,7 @@ export default function BoyDetailPage() {
 
   const handleLike = useCallback(async () => {
     if (!user) {
-      router.push('/login');
+      window.dispatchEvent(new CustomEvent('lily:auth', { detail: { mode: 'login' } }));
       return;
     }
     if (!profile || likeLoading) return;
